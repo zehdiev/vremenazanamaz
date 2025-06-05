@@ -91,8 +91,9 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        /* Style for the city select dropdown */
-        .city-select {
+        
+        /* General button style for location and date */
+        .action-button {
             background-color: #4a5568;
             color: #e2e8f0;
             border: 1px solid #68d391;
@@ -100,37 +101,41 @@
             padding: 0.5rem 1rem;
             font-size: 1rem;
             cursor: pointer;
-            appearance: none; /* Remove default arrow */
-            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20fill%3D%22%23e2e8f0%22%20d%3D%22M9.293%2012.95l.707.707L15.657%208l-1.414-1.414L10%2010.828%205.757%206.586%204.343%208z%22%2F%3E%3C%2Fsvg%3E');
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 0.8em auto;
-            min-width: 120px; /* Ensure it's wide enough */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            white-space: nowrap; /* Prevent text wrapping */
+            transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         }
-        .city-select:focus {
+        .action-button:hover {
+            background-color: #5a677d;
+        }
+        .action-button:focus {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(104, 211, 145, 0.5); /* Focus ring */
+            box-shadow: 0 0 0 3px rgba(104, 211, 145, 0.5);
         }
-        /* Style for the date picker */
-        .date-picker {
-            background-color: #4a5568;
-            color: #e2e8f0;
-            border: 1px solid #68d391;
-            border-radius: 0.5rem;
-            padding: 0.5rem 1rem;
-            font-size: 1rem;
+
+        /* Styling for the date button itself */
+        .date-picker-button {
+            padding: 0.5rem; /* Smaller padding for emoji-only button */
+            min-width: auto; /* Remove min-width inherited from action-button */
+            width: 3rem; /* Fixed width for emoji button */
+            height: 3rem; /* Fixed height for emoji button */
+            font-size: 1.5rem; /* Larger emoji */
+        }
+        
+        /* Hidden input for date selection */
+        .hidden-date-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
             cursor: pointer;
-            -webkit-appearance: none; /* Remove default date picker icon for WebKit browsers */
-            appearance: none;
-            text-align: center;
         }
-        .date-picker::-webkit-calendar-picker-indicator {
-            filter: invert(1); /* Make the calendar icon white */
-        }
-        .date-picker:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(104, 211, 145, 0.5); /* Focus ring */
-        }
+        
         /* Modal Styles */
         .modal-overlay {
             position: fixed;
@@ -144,6 +149,7 @@
             justify-content: center;
             z-index: 50;
             padding: 1rem;
+            backdrop-filter: blur(5px); /* Optional: blur background */
         }
         .modal-content {
             background-color: #2d3748;
@@ -153,6 +159,25 @@
             max-width: 400px;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             color: #e2e8f0;
+            max-height: 90vh; /* Limit modal height */
+            overflow-y: auto; /* Enable scrolling for long lists */
+        }
+        .city-list-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #4a5568;
+            cursor: pointer;
+            transition: background-color 0.15s ease-in-out;
+        }
+        .city-list-item:hover {
+            background-color: #3a475d;
+        }
+        .city-list-item:last-child {
+            border-bottom: none;
+        }
+        .city-list-item.selected {
+            background-color: #68d391;
+            color: #1a202c;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -173,8 +198,15 @@
         <!-- Second row: Location Select & Date Picker (left), Current Time & Save Button (right) -->
         <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
             <div class="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4 w-full md:w-auto">
-                <select id="city-select" class="city-select w-full md:w-auto"></select>
-                <input type="date" id="date-picker" class="date-picker w-full md:w-auto">
+                <!-- Location Button -->
+                <button id="location-select-btn" class="action-button w-full md:w-auto">
+                    📍 <span id="selected-city-display">София</span>
+                </button>
+                <!-- Date Button (emoji only) -->
+                <div class="relative">
+                    <button id="date-picker-btn" class="action-button date-picker-button">🗓️</button>
+                    <input type="date" id="hidden-date-input" class="hidden-date-input">
+                </div>
             </div>
             <div class="flex items-center space-x-2 mt-4 md:mt-0">
                 <div id="current-time" class="text-2xl md:text-xl font-semibold text-gray-300"></div>
@@ -198,6 +230,19 @@
         </div>
     </div>
 
+    <!-- City Selection Modal -->
+    <div id="city-selection-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-semibold text-white mb-4">Изберете град</h3>
+            <div id="city-list" class="flex flex-col gap-2 mb-6">
+                <!-- City options will be populated here by JavaScript -->
+            </div>
+            <div class="flex justify-end">
+                <button id="close-city-modal-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-xl focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Затвори</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Prayer Adjustment Modal -->
     <div id="adjustment-modal" class="modal-overlay hidden">
         <div class="modal-content">
@@ -215,49 +260,18 @@
     </div>
 
     <script>
-        // --- OFFLINE PRAYER DATA (REPLACE THIS WITH YOUR GENERATED DATA) ---
-        // This object should contain pre-calculated prayer times for the BASE city (Sofia in this case).
-        // The other cities' times will be derived from these base times using cityOffsets.
-        // Format: { "YYYY-MM-DD": { Fajr: "HH:MM", Sunrise: "HH:MM", ..., hijri: { day: "", month: { en: "" }, year: "" } } }
-        const offlinePrayerDataSofia = {
-            // Данни за юни 2024 (София - базови времена от Диянет)
-            "2024-06-01": { Fajr: "03:49", Sunrise: "05:29", Dhuhr: "13:00", Asr: "17:11", Maghrib: "20:26", Isha: "21:56", hijri: { day: "24", month: { en: "Dhul-Qadah" }, year: "1445" } },
-            "2024-06-02": { Fajr: "03:48", Sunrise: "05:28", Dhuhr: "13:00", Asr: "17:12", Maghrib: "20:27", Isha: "21:57", hijri: { day: "25", month: { en: "Dhul-Qadah" }, year: "1445" } },
-            "2024-06-03": { Fajr: "03:47", Sunrise: "05:27", Dhuhr: "13:00", Asr: "17:13", Maghrib: "20:28", Isha: "21:58", hijri: { day: "26", month: { en: "Dhul-Qadah" }, year: "1445" } },
-            "2024-06-04": { Fajr: "03:46", Sunrise: "05:26", Dhuhr: "13:00", Asr: "17:14", Maghrib: "20:29", Isha: "21:59", hijri: { day: "27", month: { en: "Dhul-Qadah" }, year: "1445" } },
-            "2024-06-05": { Fajr: "03:45", Sunrise: "05:25", Dhuhr: "13:00", Asr: "17:15", Maghrib: "20:30", Isha: "22:00", hijri: { day: "28", month: { en: "Dhul-Qadah" }, year: "1445" } },
-            "2024-06-06": { Fajr: "03:44", Sunrise: "05:24", Dhuhr: "13:00", Asr: "17:16", Maghrib: "20:31", Isha: "22:01", hijri: { day: "29", month: { en: "Dhul-Qadah" }, year: "1445" } },
-            "2024-06-07": { Fajr: "03:43", Sunrise: "05:23", Dhuhr: "13:00", Asr: "17:17", Maghrib: "20:32", Isha: "22:02", hijri: { day: "1", month: { en: "Dhul-Hijjah" }, year: "1445" } },
-            "2024-06-08": { Fajr: "03:42", Sunrise: "05:22", Dhuhr: "13:00", Asr: "17:18", Maghrib: "20:33", Isha: "22:03", hijri: { day: "2", month: { en: "Dhul-Hijjah" }, year: "1445" } },
-            "2024-06-09": { Fajr: "03:41", Sunrise: "05:21", Dhuhr: "13:00", Asr: "17:19", Maghrib: "20:34", Isha: "22:04", hijri: { day: "3", month: { en: "Dhul-Hijjah" }, year: "1445" } },
-            "2024-06-10": { Fajr: "03:40", Sunrise: "05:20", Dhuhr: "13:00", Asr: "17:20", Maghrib: "20:35", Isha: "22:05", hijri: { day: "4", month: { en: "Dhul-Hijjah" }, year: "1445" } },
-            // Данни за юни 2025 (София - базови времена от Диянет)
-            "2025-06-01": { Fajr: "03:45", Sunrise: "05:25", Dhuhr: "13:00", Asr: "17:15", Maghrib: "20:30", Isha: "22:00", hijri: { day: "4", month: { en: "Dhul-Hijjah" }, year: "1446" } },
-            "2025-06-02": { Fajr: "03:44", Sunrise: "05:24", Dhuhr: "13:00", Asr: "17:16", Maghrib: "20:31", Isha: "22:01", hijri: { day: "5", month: { en: "Dhul-Hijjah" }, year: "1446" } },
-            "2025-06-03": { Fajr: "03:43", Sunrise: "05:23", Dhuhr: "13:00", Asr: "17:17", Maghrib: "20:32", Isha: "22:02", hijri: { day: "6", month: { en: "Dhul-Hijjah" }, year: "1446" } },
-            "2025-06-04": { Fajr: "03:42", Sunrise: "05:22", Dhuhr: "13:00", Asr: "17:18", Maghrib: "20:33", Isha: "22:03", hijri: { day: "7", month: { en: "Dhul-Hijjah" }, year: "1446" } },
-            "2025-06-05": { Fajr: "03:40", Sunrise: "05:20", Dhuhr: "13:05", Asr: "17:20", Maghrib: "20:35", Isha: "22:05", hijri: { day: "8", month: { en: "Dhul-Hijjah" }, year: "1446" } },
-            "2025-06-06": { Fajr: "03:39", Sunrise: "05:19", Dhuhr: "13:05", Asr: "17:21", Maghrib: "20:36", Isha: "22:06", hijri: { day: "10", month: { en: "Dhul-Hijjah" }, year: "1446" } }, // Коригирана Хиджра дата
-            "2025-06-07": { Fajr: "03:38", Sunrise: "05:18", Dhuhr: "13:05", Asr: "17:22", Maghrib: "20:37", Isha: "22:07", hijri: { day: "10", month: { en: "Dhul-Hijjah" }, year: "1446" } }, // Добавена за съвпадение с предходната
-            "2025-06-08": { Fajr: "03:37", Sunrise: "05:17", Dhuhr: "13:05", Asr: "17:23", Maghrib: "20:38", Isha: "22:08", hijri: { day: "11", month: { en: "Dhul-Hijjah" }, year: "1446" } },
-            "2025-06-09": { Fajr: "03:36", Sunrise: "05:16", Dhuhr: "13:05", Asr: "17:24", Maghrib: "20:39", Isha: "22:09", hijri: { day: "12", month: { en: "Dhul-Hijjah" }, year: "1446" } },
-            "2025-06-10": { Fajr: "03:35", Sunrise: "05:15", Dhuhr: "13:05", Asr: "17:25", Maghrib: "20:40", Isha: "22:10", hijri: { day: "13", month: { en: "Dhul-Hijjah" }, year: "1446" } },
-            // ... Добавете още дати и години за София
-        };
-        // --- END OF OFFLINE PRAYER DATA ---
-
         // --- SACRED DAYS DATA (EXAMPLE) ---
         // This is a hardcoded example list of sacred days for demonstration.
         // For a comprehensive solution, this data would need to be pre-generated for many years.
         const sacredDays = {
-            "2024-06-06": "Денят Арафа (9 Зилхидже 1445)", // Corrected from 9 to 10 for 2025, but 2024 is 9.
-            "2024-06-16": "Рамазан Байрам (1 Шаввал 1445)", // Example for 2024
-            "2025-06-06": "Курбан Байрам - Ден 1 (10 Зилхидже 1446)", // 10 Зилхидже е Курбан Байрам
-            "2025-06-07": "Курбан Байрам - Ден 2 (11 Зилхидже 1446)",
-            "2025-06-08": "Курбан Байрам - Ден 3 (12 Зилхидже 1446)",
-            "2025-06-09": "Курбан Байрам - Ден 4 (13 Зилхидже 1446)",
-            "2025-07-27": "Нощта Мирадж (27 Реджеб 1446)",
-            "2025-08-13": "Нощта Берат (15 Шабан 1446)",
+            "2024-06-06": "Денят Арафа", 
+            "2024-06-16": "Рамазан Байрам", 
+            "2025-06-06": "Курбан Байрам - Ден 1", 
+            "2025-06-07": "Курбан Байрам - Ден 2",
+            "2025-06-08": "Курбан Байрам - Ден 3",
+            "2025-06-09": "Курбан Байрам - Ден 4",
+            "2025-07-27": "Нощта Мирадж",
+            "2025-08-13": "Нощта Берат",
             // ... добавете още свещени дни и нощи за други години.
         };
         // --- END OF SACRED DAYS DATA ---
@@ -270,15 +284,21 @@
         const currentDateEl = document.getElementById('current-date');
         const currentDayEl = document.getElementById('current-day');
         const hijriDateEl = document.getElementById('hijri-date');
-        const sacredDayInfoEl = document.getElementById('sacred-day-info'); // New element for sacred day
+        const sacredDayInfoEl = document.getElementById('sacred-day-info'); 
         const prayerTimesListEl = document.getElementById('prayer-times-list');
         const loadingIndicatorEl = document.getElementById('loading-indicator');
         const errorMessageEl = document.getElementById('error-message');
-        const citySelectEl = document.getElementById('city-select');
-        const datePickerEl = document.getElementById('date-picker');
+        const locationSelectBtn = document.getElementById('location-select-btn'); 
+        const selectedCityDisplay = document.getElementById('selected-city-display'); 
+        const datePickerBtn = document.getElementById('date-picker-btn'); // The new button for date picker
+        const hiddenDateInput = document.getElementById('hidden-date-input'); // The actual hidden date input
         const saveSettingsBtn = document.getElementById('save-settings-btn'); 
 
-        // Modal Elements
+        // Modals and their elements
+        const citySelectionModal = document.getElementById('city-selection-modal');
+        const cityListEl = document.getElementById('city-list');
+        const closeCityModalBtn = document.getElementById('close-city-modal-btn');
+
         const adjustmentModal = document.getElementById('adjustment-modal');
         const modalPrayerNameEl = document.getElementById('modal-prayer-name');
         const adjustedMinutesOffsetInput = document.getElementById('adjusted-minutes-offset');
@@ -289,7 +309,7 @@
         const prayerNamesBg = {
             Fajr: 'Зора',
             Sunrise: 'Изгрев',
-            Dhuhr: 'Обедна', // Defaulted to Обедна, updated by getDhuhrName
+            Dhuhr: 'Обедна', 
             Asr: 'Следобедна',
             Maghrib: 'Вечерна',
             Isha: 'Нощна'
@@ -306,6 +326,7 @@
         };
 
         // Custom city offsets relative to Sofia (minutes to be added/subtracted from Sofia's times)
+        // These offsets will now be applied to the API-fetched times for Sofia.
         const cityOffsets = {
             "София": 0, // Base city, no offset
             "Гоце Делчев": -1,
@@ -354,7 +375,7 @@
             "Каварна": -19
         };
 
-        // Mapping for Hijri month names to Bulgarian, exactly as provided by the user
+        // Mapping for Hijri month names to Bulgarian
         const hijriMonthsBg = {
             "Muharram": "Мухаррем",
             "Safar": "Сафер",
@@ -379,8 +400,9 @@
         let customPrayerAdjustments = {}; // Stores user-defined adjustments for each prayer {Fajr: 5, Dhuhr: -2}
         let currentAdjustingPrayer = null; // To keep track of which prayer is being adjusted in the modal
 
-        // Populate city dropdown
-        function populateCitySelect() {
+        // Populate city list in modal
+        function populateCityList() {
+            cityListEl.innerHTML = ''; // Clear previous list
             const sortedCities = Object.keys(cityOffsets).sort((a, b) => {
                 if (a === "София") return -1;
                 if (b === "София") return 1;
@@ -388,12 +410,21 @@
             });
 
             sortedCities.forEach(city => {
-                const option = document.createElement('option');
-                option.value = city;
-                option.textContent = city;
-                citySelectEl.appendChild(option);
+                const cityItem = document.createElement('div');
+                cityItem.className = 'city-list-item';
+                if (city === selectedCity) {
+                    cityItem.classList.add('selected');
+                }
+                cityItem.textContent = city;
+                cityItem.dataset.city = city;
+                cityItem.addEventListener('click', () => {
+                    selectedCity = city;
+                    selectedCityDisplay.textContent = selectedCity; // Update display button text
+                    closeCitySelectionModal();
+                    fetchPrayerTimes(); // Re-fetch times for the new city
+                });
+                cityListEl.appendChild(cityItem);
             });
-            citySelectEl.value = selectedCity;
         }
 
         // Function to format time to HH:MM
@@ -411,7 +442,7 @@
             return `${day}.${month}.${year}`;
         }
 
-        // Function to format date to YYYY-MM-DD for input type="date" and offline data lookup
+        // Function to format date to YYYY-MM-DD for input type="date" and API calls
         function formatDateForInputAndLookup(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -436,54 +467,81 @@
             currentTimeEl.textContent = formatTime(now);
         }
 
-        // Function to fetch prayer times from OFFLINE DATA (always Sofia's base data)
+        // Function to fetch prayer times from API
         async function fetchPrayerTimes() {
             loadingIndicatorEl.classList.remove('hidden');
             errorMessageEl.classList.add('hidden'); 
             prayerTimesListEl.innerHTML = ''; // Clear previous times
 
             const dateKey = formatDateForInputAndLookup(selectedDate);
+            const currentDateStringForAPI = `${String(selectedDate.getDate()).padStart(2, '0')}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${selectedDate.getFullYear()}`;
 
             // Update Gregorian date and day display
             currentDateEl.textContent = formatDate(selectedDate);
             currentDayEl.textContent = getDayNameBg(selectedDate);
+            selectedCityDisplay.textContent = selectedCity; // Update the city display button
 
-            // --- OFFLINE LOGIC START ---
-            // Always try to get base times for Sofia
-            const sofiaBaseData = offlinePrayerDataSofia[dateKey];
+            // Fetch base times for Sofia using Diyanet method (method=10)
+            const diyanetApiUrl = `https://api.aladhan.com/v1/timingsByCity/${currentDateStringForAPI}?city=Sofia&country=Bulgaria&method=10`;
+            
+            // Fetch Isha time specifically using Muslim World League method (method=3)
+            const mwlIshaApiUrl = `https://api.aladhan.com/v1/timingsByCity/${currentDateStringForAPI}?city=Sofia&country=Bulgaria&method=3`;
 
-            if (sofiaBaseData) {
-                // Apply general prayer-specific adjustments to Sofia's base times first
-                // Then apply city-specific offset for the selected city
-                const currentCityCustomOffset = cityOffsets[selectedCity] || 0;
+            try {
+                const [diyanetResponse, mwlIshaResponse] = await Promise.all([
+                    fetch(diyanetApiUrl),
+                    fetch(mwlIshaApiUrl)
+                ]);
 
-                const adjustedPrayerTimes = {};
-                for (const key in sofiaBaseData) {
-                    if (sofiaBaseData.hasOwnProperty(key) && key !== 'hijri') {
-                        let [hour, minute] = sofiaBaseData[key].split(':').map(Number);
-                        let tempDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour, minute, 0);
-
-                        // Apply general prayer-specific adjustment
-                        if (adjustments[key] !== undefined) { 
-                            tempDate.setMinutes(tempDate.getMinutes() + adjustments[key]);
-                        }
-                        // Apply city-specific custom offset
-                        tempDate.setMinutes(tempDate.getMinutes() + currentCityCustomOffset);
-
-                        // *** Apply custom user adjustment (if exists for this prayer) ***
-                        if (customPrayerAdjustments[key] !== undefined) {
-                            tempDate.setMinutes(tempDate.getMinutes() + customPrayerAdjustments[key]);
-                        }
-
-                        adjustedPrayerTimes[key] = formatTime(tempDate);
-                    }
+                if (!diyanetResponse.ok || !mwlIshaResponse.ok) {
+                    throw new Error(`HTTP error! Statuses: Diyanet ${diyanetResponse.status}, MWL ${mwlIshaResponse.status}`);
                 }
-                
-                prayerTimes = adjustedPrayerTimes; // Store the fully adjusted times
 
-                // Use Hijri date from Sofia's base data
-                const hijri = sofiaBaseData.hijri;
-                if (hijri && hijri.month && hijri.month.en) {
+                const diyanetData = await diyanetResponse.json();
+                const mwlIshaData = await mwlIshaResponse.json();
+
+                if (diyanetData.data && diyanetData.data.timings && diyanetData.data.date && diyanetData.data.date.hijri &&
+                    mwlIshaData.data && mwlIshaData.data.timings) {
+                    
+                    // Combine timings: Diyanet for all, MWL for Isha
+                    const sofiaBaseTimings = {
+                        Fajr: diyanetData.data.timings.Fajr,
+                        Sunrise: diyanetData.data.timings.Sunrise,
+                        Dhuhr: diyanetData.data.timings.Dhuhr,
+                        Asr: diyanetData.data.timings.Asr,
+                        Maghrib: diyanetData.data.timings.Maghrib,
+                        Isha: mwlIshaData.data.timings.Isha // Override Isha with MWL time
+                    };
+
+                    const currentCityCustomOffset = cityOffsets[selectedCity] || 0;
+                    const adjustedPrayerTimes = {};
+
+                    // Apply general and city-specific offsets to the API-fetched Sofia times
+                    for (const key in sofiaBaseTimings) {
+                        if (sofiaBaseTimings.hasOwnProperty(key)) {
+                            let [hour, minute] = sofiaBaseTimings[key].split(':').map(Number);
+                            let tempDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour, minute, 0);
+
+                            // Apply general prayer-specific adjustment
+                            if (adjustments[key] !== undefined) { 
+                                tempDate.setMinutes(tempDate.getMinutes() + adjustments[key]);
+                            }
+                            // Apply city-specific custom offset
+                            tempDate.setMinutes(tempDate.getMinutes() + currentCityCustomOffset);
+
+                            // Apply custom user adjustment (from local storage)
+                            if (customPrayerAdjustments[key] !== undefined) {
+                                tempDate.setMinutes(tempDate.getMinutes() + customPrayerAdjustments[key]);
+                            }
+
+                            adjustedPrayerTimes[key] = formatTime(tempDate);
+                        }
+                    }
+                    
+                    prayerTimes = adjustedPrayerTimes; // Store the fully adjusted times
+
+                    // Extract and format Hijri date (from Diyanet data, as it's the main source for Hijri)
+                    const hijri = diyanetData.data.date.hijri;
                     const hijriDay = hijri.day;
                     const hijriMonthEnglish = hijri.month.en;
                     const hijriYear = hijri.year;
@@ -494,35 +552,30 @@
                     // Check and display sacred day/night
                     const sacredDayKey = formatDateForInputAndLookup(selectedDate);
                     if (sacredDays[sacredDayKey]) {
-                        sacredDayInfoEl.textContent = sacredDays[sacredDayKey];
+                        sacredDayInfoEl.textContent = sacredDays[sacredDayKey]; // Display without date in parentheses
                         sacredDayInfoEl.classList.remove('hidden');
                     } else {
                         sacredDayInfoEl.textContent = '';
                         sacredDayInfoEl.classList.add('hidden');
                     }
 
+                    displayPrayerTimes(); 
                 } else {
-                    hijriDateEl.textContent = 'Хиджра дата не е налична'; 
-                    sacredDayInfoEl.textContent = ''; // Clear sacred day if Hijri is not available
-                    sacredDayInfoEl.classList.add('hidden');
+                    throw new Error('Невалиден отговор от API или липсващи данни.');
                 }
-
-                displayPrayerTimes(); // Display times based on the fully adjusted 'prayerTimes'
-                loadingIndicatorEl.classList.add('hidden');
-            } else {
-                // Data not found locally for Sofia for the selected date
-                console.error('Prayer times data not found for Sofia for the selected date. Please ensure offlinePrayerDataSofia is populated for this date.');
+            } catch (error) {
+                console.error('Error fetching prayer times:', error);
                 errorMessageEl.classList.remove('hidden');
-                errorMessageEl.textContent = 'Няма налични данни за избраната дата. Моля, изберете друга дата или актуализирайте приложението.';
-                loadingIndicatorEl.classList.add('hidden');
-                // Clear displayed prayer times and Hijri/Sacred info if no data
+                errorMessageEl.textContent = 'Възникна грешка при зареждане на времената за намаз. Моля, проверете връзката си и опитайте отново.';
+                // Clear displayed prayer times and Hijri/Sacred info on error
                 prayerTimes = {};
                 prayerTimesListEl.innerHTML = '';
                 hijriDateEl.textContent = '';
                 sacredDayInfoEl.textContent = '';
                 sacredDayInfoEl.classList.add('hidden');
+            } finally {
+                loadingIndicatorEl.classList.add('hidden');
             }
-            // --- OFFLINE LOGIC END ---
         }
 
         // Function to display prayer times in the list
@@ -619,89 +672,106 @@
             // Recalculate prayersArray with ALL current adjustments for countdown
             let prayersArrayForCountdown = [];
             const currentCityCustomOffset = cityOffsets[selectedCity] || 0;
-            const dateKey = formatDateForInputAndLookup(selectedDate);
-            const sofiaBaseData = offlinePrayerDataSofia[dateKey]; // Get base data for selected date
+            const currentDateStringForAPI = `${String(selectedDate.getDate()).padStart(2, '0')}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${selectedDate.getFullYear()}`;
+            
+            // Re-fetch base times for Sofia to apply dynamic adjustments
+            Promise.all([
+                fetch(`https://api.aladhan.com/v1/timingsByCity/${currentDateStringForAPI}?city=Sofia&country=Bulgaria&method=10`),
+                fetch(`https://api.aladhan.com/v1/timingsByCity/${currentDateStringForAPI}?city=Sofia&country=Bulgaria&method=3`)
+            ]).then(async ([diyanetResponse, mwlIshaResponse]) => {
+                const diyanetData = await diyanetResponse.json();
+                const mwlIshaData = await mwlIshaResponse.json();
 
-            if (!sofiaBaseData) { // If no base data, can't calculate countdown
+                if (!diyanetData.data || !diyanetData.data.timings || !mwlIshaData.data || !mwlIshaData.data.timings) {
+                    console.error('Missing data from API for countdown calculation.');
+                    countdownEl.textContent = '--:--:--';
+                    countdownTextEl.textContent = 'Няма налични данни за избраната дата.';
+                    return;
+                }
+
+                const sofiaBaseTimingsForCountdown = {
+                    Fajr: diyanetData.data.timings.Fajr,
+                    Sunrise: diyanetData.data.timings.Sunrise,
+                    Dhuhr: diyanetData.data.timings.Dhuhr,
+                    Asr: diyanetData.data.timings.Asr,
+                    Maghrib: diyanetData.data.timings.Maghrib,
+                    Isha: mwlIshaData.data.timings.Isha 
+                };
+
+                for (const key in sofiaBaseTimingsForCountdown) {
+                    if (sofiaBaseTimingsForCountdown.hasOwnProperty(key)) {
+                        const [hour, minute] = sofiaBaseTimingsForCountdown[key].split(':').map(Number);
+                        let prayerDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0);
+
+                        if (adjustments[key] !== undefined) {
+                            prayerDate.setMinutes(prayerDate.getMinutes() + adjustments[key]);
+                        }
+                        prayerDate.setMinutes(prayerDate.getMinutes() + currentCityCustomOffset);
+
+                        if (customPrayerAdjustments[key] !== undefined) {
+                            prayerDate.setMinutes(prayerDate.getMinutes() + customPrayerAdjustments[key]);
+                        }
+
+                        let displayName = prayerNamesBg[key] || key;
+                        if (key === 'Dhuhr') {
+                            displayName = getDhuhrName(now);
+                        }
+
+                        prayersArrayForCountdown.push({
+                            name: key,
+                            displayName: displayName,
+                            time: formatTime(prayerDate),
+                            date: prayerDate
+                        });
+                    }
+                }
+                prayersArrayForCountdown.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+                nextPrayerIndex = -1; 
+                for (let i = 0; i < prayersArrayForCountdown.length; i++) {
+                    if (prayersArrayForCountdown[i].date > now) {
+                        nextPrayerIndex = i;
+                        break;
+                    }
+                }
+                
+                if (nextPrayerIndex === -1 && prayersArrayForCountdown.length > 0) {
+                    nextPrayerIndex = 0; 
+                    const nextDayFajr = new Date(prayersArrayForCountdown[0].date);
+                    nextDayFajr.setDate(nextDayFajr.getDate() + 1);
+                    nextPrayerTimeDate = nextDayFajr;
+                    nextPrayerDisplayName = prayersArrayForCountdown[0].displayName;
+                    countdownTextEl.textContent = `до ${nextPrayerDisplayName} утре`;
+                } else if (nextPrayerIndex !== -1) {
+                    const nextPrayer = prayersArrayForCountdown[nextPrayerIndex];
+                    nextPrayerTimeDate = nextPrayer.date;
+                    nextPrayerDisplayName = nextPrayer.displayName;
+                    countdownTextEl.textContent = `до ${nextPrayerDisplayName}`;
+                } else {
+                    countdownEl.textContent = '00:00:00';
+                    countdownTextEl.textContent = 'Всички намази за днес са минали.';
+                    return;
+                }
+
+                const diff = nextPrayerTimeDate.getTime() - now.getTime();
+
+                if (diff <= 0) {
+                    countdownEl.textContent = '00:00:00';
+                    countdownTextEl.textContent = 'Намазът е сега!';
+                    fetchPrayerTimes(); 
+                    return;
+                }
+
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                countdownEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }).catch(error => {
+                console.error('Error fetching API data for countdown:', error);
                 countdownEl.textContent = '--:--:--';
-                countdownTextEl.textContent = 'Няма налични данни за избраната дата.';
-                return;
-            }
-
-            for (const key in sofiaBaseData) {
-                if (sofiaBaseData.hasOwnProperty(key) && key !== 'hijri') {
-                    const [hour, minute] = sofiaBaseData[key].split(':').map(Number);
-                    let prayerDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0);
-
-                    // Apply general prayer-specific adjustments
-                    if (adjustments[key] !== undefined) {
-                        prayerDate.setMinutes(prayerDate.getMinutes() + adjustments[key]);
-                    }
-                    // Apply city-specific custom offset
-                    prayerDate.setMinutes(prayerDate.getMinutes() + currentCityCustomOffset);
-
-                    // Apply custom user adjustment
-                    if (customPrayerAdjustments[key] !== undefined) {
-                        prayerDate.setMinutes(prayerDate.getMinutes() + customPrayerAdjustments[key]);
-                    }
-
-                    let displayName = prayerNamesBg[key] || key;
-                    if (key === 'Dhuhr') {
-                        displayName = getDhuhrName(now);
-                    }
-
-                    prayersArrayForCountdown.push({
-                        name: key,
-                        displayName: displayName,
-                        time: formatTime(prayerDate),
-                        date: prayerDate
-                    });
-                }
-            }
-            prayersArrayForCountdown.sort((a, b) => a.date.getTime() - b.date.getTime());
-
-            // Find next prayer for countdown
-            nextPrayerIndex = -1; // Reset for countdown logic
-            for (let i = 0; i < prayersArrayForCountdown.length; i++) {
-                if (prayersArrayForCountdown[i].date > now) {
-                    nextPrayerIndex = i;
-                    break;
-                }
-            }
-            // If all prayers for today have passed, set countdown to Fajr of next day
-            if (nextPrayerIndex === -1 && prayersArrayForCountdown.length > 0) {
-                nextPrayerIndex = 0; // Next prayer is Fajr of next day
-                const nextDayFajr = new Date(prayersArrayForCountdown[0].date);
-                nextDayFajr.setDate(nextDayFajr.getDate() + 1);
-                nextPrayerTimeDate = nextDayFajr;
-                nextPrayerDisplayName = prayersArrayForCountdown[0].displayName;
-                countdownTextEl.textContent = `до ${nextPrayerDisplayName} утре`;
-            } else if (nextPrayerIndex !== -1) {
-                const nextPrayer = prayersArrayForCountdown[nextPrayerIndex];
-                nextPrayerTimeDate = nextPrayer.date;
-                nextPrayerDisplayName = nextPrayer.displayName;
-                countdownTextEl.textContent = `до ${nextPrayerDisplayName}`;
-            } else {
-                // Should not happen if prayersArrayForCountdown is populated, but as a fallback
-                countdownEl.textContent = '00:00:00';
-                countdownTextEl.textContent = 'Всички намази за днес са минали.';
-                return;
-            }
-
-            const diff = nextPrayerTimeDate.getTime() - now.getTime();
-
-            if (diff <= 0) {
-                countdownEl.textContent = '00:00:00';
-                countdownTextEl.textContent = 'Намазът е сега!';
-                fetchPrayerTimes(); // Re-fetch to update for the next day/prayer
-                return;
-            }
-
-            const hours = Math.floor(diff / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-            countdownEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                countdownTextEl.textContent = 'Грешка при зареждане на отброяването.';
+            });
         }
 
         // Function to fetch prayer times for the next day (called when all prayers for today have passed)
@@ -709,7 +779,7 @@
             const tomorrow = new Date(selectedDate);
             tomorrow.setDate(tomorrow.getDate() + 1);
             selectedDate = tomorrow; // Update selectedDate to tomorrow
-            datePickerEl.value = formatDateForInputAndLookup(selectedDate); // Update date picker
+            hiddenDateInput.value = formatDateForInputAndLookup(selectedDate); // Update hidden input value
             fetchPrayerTimes(); // Fetch times for the new selectedDate
         }
 
@@ -748,6 +818,15 @@
             closeAdjustmentModal();
         }
 
+        function openCitySelectionModal() {
+            populateCityList(); // Populate list before opening
+            citySelectionModal.classList.remove('hidden');
+        }
+
+        function closeCitySelectionModal() {
+            citySelectionModal.classList.add('hidden');
+        }
+
         // --- Local Storage Functions ---
         function saveSettings() {
             const settingsToSave = {
@@ -782,8 +861,8 @@
                     }
                     customPrayerAdjustments = savedSettings.customPrayerAdjustments || {};
                     
-                    // Update city select dropdown to reflect loaded city
-                    citySelectEl.value = selectedCity;
+                    // Update city display button to reflect loaded city
+                    selectedCityDisplay.textContent = selectedCity;
                 }
             } catch (e) {
                 console.error("Неуспешно зареждане на настройките от localStorage:", e);
@@ -795,23 +874,25 @@
 
         // Initial setup and periodic updates
         window.onload = function() {
-            populateCitySelect();
             loadSettings(); // Load settings first
             
-            // Set date picker value based on loaded/default selectedDate
-            datePickerEl.value = formatDateForInputAndLookup(selectedDate);
+            // Set initial value for the hidden date input based on loaded/default selectedDate
+            hiddenDateInput.value = formatDateForInputAndLookup(selectedDate);
             
             updateClock(); // Start current time display
             fetchPrayerTimes(); // Initial fetch of prayer times using loaded settings
 
-            // Event listener for city selection change
-            citySelectEl.addEventListener('change', (event) => {
-                selectedCity = event.target.value;
-                fetchPrayerTimes(); // Re-fetch times for the new city
+            // Event listener for Location button to open city selection modal
+            locationSelectBtn.addEventListener('click', openCitySelectionModal);
+            closeCityModalBtn.addEventListener('click', closeCitySelectionModal);
+
+            // Event listener for the new date picker button to trigger the hidden input
+            datePickerBtn.addEventListener('click', () => {
+                hiddenDateInput.showPicker(); // Opens the native date picker
             });
 
-            // Event listener for date picker change
-            datePickerEl.addEventListener('change', (event) => {
+            // Event listener for hidden date input change
+            hiddenDateInput.addEventListener('change', (event) => {
                 selectedDate = new Date(event.target.value);
                 fetchPrayerTimes(); // Re-fetch times for the newly selected date
             });
