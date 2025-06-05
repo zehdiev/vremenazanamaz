@@ -94,7 +94,7 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* General button style for action buttons (location and date) */
+        /* General button style for action buttons (date, language, save) */
         .action-button {
             background-color: #4a5568;
             color: #e2e8f0;
@@ -172,6 +172,9 @@
         .city-list-item:last-child {
             border-bottom: none;
         }
+
+        /* Style for the city select dropdown removed, using general action-button for location now */
+        /* .city-select { ... } */
     </style>
 </head>
 <body class="antialiased">
@@ -181,42 +184,49 @@
             <div id="gregorian-date-info" class="flex flex-col items-start font-medium text-gray-400">
                 <span id="current-date"></span>
                 <span id="current-day"></span>
-                <div id="current-time" class="text-lg font-semibold text-gray-300 mt-1"></div> <!-- Moved here -->
+                <div id="current-time" class="text-lg font-semibold text-gray-300 mt-1"></div>
             </div>
             <div id="hijri-and-sacred-info" class="flex flex-col items-end text-gray-500">
                 <span id="hijri-date"></span>
                 <span id="sacred-day-info" class="text-green-400 font-semibold text-xs mt-1"></span>
-                <span id="selected-city-display" class="text-gray-400 text-sm mt-1">София</span> <!-- Moved here -->
+                <span id="selected-city-display" class="text-gray-400 text-sm mt-1">София</span>
             </div>
-        </div>
-
-        <!-- Second row: Location and Date Buttons (centered or flexible) & Save button -->
-        <div class="flex justify-center md:justify-between items-center mb-4 gap-4 w-full">
-            <div class="flex items-center space-x-4">
-                <!-- Location Button (emoji only) -->
-                <button id="location-select-btn" class="action-button">📍</button>
-                <!-- Date Button (emoji only) -->
-                <div class="relative">
-                    <button id="date-picker-btn" class="action-button">🗓️</button>
-                    <input type="date" id="hidden-date-input" class="hidden-date-input">
-                </div>
-            </div>
-            <button id="save-settings-btn" class="bg-green-600 hover:bg-green-700 text-white text-lg py-1 px-2 rounded-lg focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">💾</button>
         </div>
 
         <div class="text-center">
             <div id="countdown" class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-400">--:--:--</div>
             <div id="countdown-text" class="countdown-text">зареждане...</div>
         </div>
+        
+        <!-- Loading Indicator - Moved here to be a persistent element -->
+        <div id="loading-indicator" class="flex justify-center items-center py-8 hidden">
+            <div class="loading-spinner"></div>
+        </div>
 
         <div id="prayer-times-list" class="flex flex-col gap-2">
-            <div class="flex justify-center items-center py-8" id="loading-indicator">
-                <div class="loading-spinner"></div>
-            </div>
+            <!-- Prayer times will be populated here -->
         </div>
 
         <div id="error-message" class="hidden text-center text-red-400 text-sm mt-4">
             Възникна грешка при зареждане на времената за намаз. Моля, опитайте отново по-късно.
+        </div>
+
+        <!-- New bottom row for action buttons -->
+        <div class="flex justify-center md:justify-around items-center mt-6 flex-wrap gap-4">
+            <!-- Location Button (emoji only, opens modal) -->
+            <button id="location-select-btn" class="action-button">📍</button>
+
+            <!-- Date Button (emoji only) -->
+            <div class="relative">
+                <button id="date-picker-btn" class="action-button">🗓️</button>
+                <input type="date" id="hidden-date-input" class="hidden-date-input">
+            </div>
+
+            <!-- Language Toggle Button -->
+            <button id="language-toggle-btn" class="action-button">💬</button>
+
+            <!-- Save Button -->
+            <button id="save-settings-btn" class="bg-green-600 hover:bg-green-700 text-white text-lg py-1 px-2 rounded-lg focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">💾</button>
         </div>
     </div>
 
@@ -278,14 +288,16 @@
         const prayerTimesListEl = document.getElementById('prayer-times-list');
         const loadingIndicatorEl = document.getElementById('loading-indicator');
         const errorMessageEl = document.getElementById('error-message');
-        const locationSelectBtn = document.getElementById('location-select-btn'); 
+        const locationSelectBtn = document.getElementById('location-select-btn'); // Now a button
         const selectedCityDisplay = document.getElementById('selected-city-display'); 
         const datePickerBtn = document.getElementById('date-picker-btn'); 
         const hiddenDateInput = document.getElementById('hidden-date-input'); 
         const saveSettingsBtn = document.getElementById('save-settings-btn'); 
+        // citySelectEl is no longer used for the main city selection, but for the modal list
+        const languageToggleBtn = document.getElementById('language-toggle-btn'); 
 
         // Modals and their elements
-        const citySelectionModal = document.getElementById('city-selection-modal');
+        const citySelectionModal = document.getElementById('city-selection-modal'); // Re-introduced
         const cityListEl = document.getElementById('city-list');
         const closeCityModalBtn = document.getElementById('close-city-modal-btn');
 
@@ -296,13 +308,22 @@
         const saveAdjustmentBtn = document.getElementById('save-adjustment-btn');
 
         // Prayer names in Bulgarian (Dhuhr will be handled conditionally)
-        const prayerNamesBg = {
+        const prayerNamesStandard = {
             Fajr: 'Зора',
             Sunrise: 'Изгрев',
             Dhuhr: 'Обедна', 
             Asr: 'Следобедна',
             Maghrib: 'Вечерна',
             Isha: 'Нощна'
+        };
+
+        const prayerNamesClassical = {
+            Fajr: 'Заговеване', 
+            Sunrise: 'Изгиране на слонце', 
+            Dhuhr: 'Пладен', 
+            Asr: 'Икиндие', 
+            Maghrib: 'Ашем', 
+            Isha: 'Йецие' 
         };
 
         // General prayer-specific adjustments in minutes (applied on top of base times)
@@ -381,7 +402,6 @@
             "Dhul-Hijjah": "Зилхидже"
         };
 
-
         let prayerTimes = {}; // Stores fetched prayer times (after all adjustments for selected city)
         let nextPrayerIndex = -1; // Index of the next prayer in the list
         let selectedCity = "София"; // Default selected city
@@ -389,6 +409,12 @@
         let selectedDate = new Date(); // Stores the currently selected date (defaults to today)
         let customPrayerAdjustments = {}; // Stores user-defined adjustments for each prayer {Fajr: 5, Dhuhr: -2}
         let currentAdjustingPrayer = null; // To keep track of which prayer is being adjusted in the modal
+        let isClassicalNamesActive = false; // New state for naming convention
+
+        // Get current prayer names based on state
+        function getCurrentPrayerNames() {
+            return isClassicalNamesActive ? prayerNamesClassical : prayerNamesStandard;
+        }
 
         // Populate city list in modal
         function populateCityList() {
@@ -446,9 +472,12 @@
             return days[date.getDay()];
         }
 
-        // Function to determine Dhuhr name based on day of the week
+        // Function to determine Dhuhr name based on day of the week and current naming style
         function getDhuhrName(date) {
-            return date.getDay() === 5 ? 'Джума' : 'Обедна'; // Friday is 5
+            if (date.getDay() === 5) { // Friday
+                return "Джума"; // Assuming "Джума" is standard across both styles
+            }
+            return isClassicalNamesActive ? "Пладен" : "Обедна";
         }
 
         // Function to update the current time display
@@ -459,11 +488,11 @@
 
         // Function to fetch prayer times from API
         async function fetchPrayerTimes() {
+            // Show loading indicator
             loadingIndicatorEl.classList.remove('hidden');
             errorMessageEl.classList.add('hidden'); 
             prayerTimesListEl.innerHTML = ''; // Clear previous times
 
-            const dateKey = formatDateForInputAndLookup(selectedDate);
             const currentDateStringForAPI = `${String(selectedDate.getDate()).padStart(2, '0')}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${selectedDate.getFullYear()}`;
 
             // Update Gregorian date and day display
@@ -564,6 +593,7 @@
                 sacredDayInfoEl.textContent = '';
                 sacredDayInfoEl.classList.add('hidden');
             } finally {
+                // Hide loading indicator
                 loadingIndicatorEl.classList.add('hidden');
             }
         }
@@ -576,19 +606,21 @@
             const targetDate = selectedDate; // Use selectedDate for prayer time calculations
             
             let prayersArray = [];
+            const currentPrayerNames = getCurrentPrayerNames();
+
             for (const key in prayerTimes) {
                 if (prayerTimes.hasOwnProperty(key)) {
                     const [hour, minute] = prayerTimes[key].split(':').map(Number);
                     let prayerDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), hour, minute, 0);
 
-                    let displayName = prayerNamesBg[key] || key;
+                    let displayName = currentPrayerNames[key] || key;
                     if (key === 'Dhuhr') {
-                        displayName = getDhuhrName(targetDate);
+                        displayName = getDhuhrName(targetDate); // Dhuhr has special handling
                     }
 
                     prayersArray.push({
                         name: key, // Original key for internal logic
-                        displayName: displayName, // Name to display
+                        displayName: displayName, // Name to display (standard or classical)
                         time: formatTime(prayerDate), // Format adjusted time
                         date: prayerDate
                     });
@@ -688,6 +720,8 @@
                     Isha: mwlIshaData.data.timings.Isha 
                 };
 
+                const currentPrayerNames = getCurrentPrayerNames();
+
                 for (const key in sofiaBaseTimingsForCountdown) {
                     if (sofiaBaseTimingsForCountdown.hasOwnProperty(key)) {
                         const [hour, minute] = sofiaBaseTimingsForCountdown[key].split(':').map(Number);
@@ -702,7 +736,7 @@
                             prayerDate.setMinutes(prayerDate.getMinutes() + customPrayerAdjustments[key]);
                         }
 
-                        let displayName = prayerNamesBg[key] || key;
+                        let displayName = currentPrayerNames[key] || key;
                         if (key === 'Dhuhr') {
                             displayName = getDhuhrName(now);
                         }
@@ -776,7 +810,8 @@
         // --- Modal Logic ---
         function openAdjustmentModal(prayerName) {
             currentAdjustingPrayer = prayerName;
-            modalPrayerNameEl.textContent = `Корекция за ${prayerNamesBg[prayerName] || prayerName}`;
+            const currentPrayerNames = getCurrentPrayerNames();
+            modalPrayerNameEl.textContent = `Корекция за ${currentPrayerNames[prayerName] || prayerName}`;
             
             // Populate input with current custom adjustment for this prayer, default to 0
             adjustedMinutesOffsetInput.value = customPrayerAdjustments[prayerName] !== undefined ? customPrayerAdjustments[prayerName] : 0;
@@ -808,6 +843,7 @@
             closeAdjustmentModal();
         }
 
+        // Functions for City Selection Modal
         function openCitySelectionModal() {
             populateCityList(); // Populate list before opening
             citySelectionModal.classList.remove('hidden');
@@ -821,8 +857,8 @@
         function saveSettings() {
             const settingsToSave = {
                 selectedCity: selectedCity,
-                // selectedDate is intentionally not saved
-                customPrayerAdjustments: customPrayerAdjustments
+                customPrayerAdjustments: customPrayerAdjustments,
+                isClassicalNamesActive: isClassicalNamesActive // Save language preference
             };
             try {
                 localStorage.setItem('prayerApp_settings', JSON.stringify(settingsToSave));
@@ -841,6 +877,7 @@
                 if (savedSettings) {
                     selectedCity = savedSettings.selectedCity || "София";
                     customPrayerAdjustments = savedSettings.customPrayerAdjustments || {};
+                    isClassicalNamesActive = savedSettings.isClassicalNamesActive || false; // Load language preference
                     
                     // Update city display element
                     selectedCityDisplay.textContent = selectedCity;
@@ -861,16 +898,12 @@
         window.onload = function() {
             loadSettings(); // Load settings first
             
-            // Set initial value for the hidden date input based on loaded/default selectedDate
-            // This line is now redundant after changes in loadSettings, but harmless.
-            // hiddenDateInput.value = formatDateForInputAndLookup(selectedDate); 
-            
             updateClock(); // Start current time display
             fetchPrayerTimes(); // Initial fetch of prayer times using loaded settings
 
             // Event listener for Location button to open city selection modal
             locationSelectBtn.addEventListener('click', openCitySelectionModal);
-            closeCityModalBtn.addEventListener('click', closeCityModalBtn); // Corrected typo here, was closeCityModalBtn
+            closeCityModalBtn.addEventListener('click', closeCitySelectionModal);
 
             // Event listener for the new date picker button to trigger the hidden input
             datePickerBtn.addEventListener('click', () => {
@@ -881,6 +914,13 @@
             hiddenDateInput.addEventListener('change', (event) => {
                 selectedDate = new Date(event.target.value);
                 fetchPrayerTimes(); // Re-fetch times for the newly selected date
+            });
+
+            // Event listener for the language toggle button
+            languageToggleBtn.addEventListener('click', () => {
+                isClassicalNamesActive = !isClassicalNamesActive;
+                saveSettings(); // Save the new language preference
+                fetchPrayerTimes(); // Re-fetch/re-display to apply new names
             });
 
             // Event listener for the main "Save Settings" button
