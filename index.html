@@ -288,16 +288,15 @@
         const prayerTimesListEl = document.getElementById('prayer-times-list');
         const loadingIndicatorEl = document.getElementById('loading-indicator');
         const errorMessageEl = document.getElementById('error-message');
-        const locationSelectBtn = document.getElementById('location-select-btn'); // Now a button
+        const locationSelectBtn = document.getElementById('location-select-btn'); 
         const selectedCityDisplay = document.getElementById('selected-city-display'); 
         const datePickerBtn = document.getElementById('date-picker-btn'); 
         const hiddenDateInput = document.getElementById('hidden-date-input'); 
         const saveSettingsBtn = document.getElementById('save-settings-btn'); 
-        // citySelectEl is no longer used for the main city selection, but for the modal list
         const languageToggleBtn = document.getElementById('language-toggle-btn'); 
 
         // Modals and their elements
-        const citySelectionModal = document.getElementById('city-selection-modal'); // Re-introduced
+        const citySelectionModal = document.getElementById('city-selection-modal'); 
         const cityListEl = document.getElementById('city-list');
         const closeCityModalBtn = document.getElementById('close-city-modal-btn');
 
@@ -475,7 +474,7 @@
         // Function to determine Dhuhr name based on day of the week and current naming style
         function getDhuhrName(date) {
             if (date.getDay() === 5) { // Friday
-                return "Джума"; // Assuming "Джума" is standard across both styles
+                return isClassicalNamesActive ? "Джумайо" : "Джума"; // Corrected logic for Juma
             }
             return isClassicalNamesActive ? "Пладен" : "Обедна";
         }
