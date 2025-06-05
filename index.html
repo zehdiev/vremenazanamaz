@@ -94,7 +94,7 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* General button style for action buttons (date, language, save) */
+        /* General button style for action buttons (date, language, adjustments) */
         .action-button {
             background-color: #4a5568;
             color: #e2e8f0;
@@ -109,6 +109,7 @@
             align-items: center;
             justify-content: center;
             transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            white-space: nowrap; /* Prevent text wrap for text buttons */
         }
         .action-button:hover {
             background-color: #5a677d;
@@ -117,6 +118,14 @@
             outline: none;
             box-shadow: 0 0 0 3px rgba(104, 211, 145, 0.5);
         }
+        /* Specific style for adjustment button that contains text */
+        #open-adjustment-modal-btn {
+            padding: 0.5rem; /* Adjust padding for emoji only */
+            width: 3rem; /* Fixed width for emoji only */
+            font-size: 1.5rem; /* Larger font for emoji only */
+            gap: 0; /* No gap as there's no text */
+        }
+
 
         /* Hidden input for date selection */
         .hidden-date-input {
@@ -173,8 +182,27 @@
             border-bottom: none;
         }
 
-        /* Style for the city select dropdown removed, using general action-button for location now */
-        /* .city-select { ... } */
+        /* Styles for the new adjustment modal inputs */
+        .adjustment-input-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .adjustment-input-row label {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: #cbd5e0;
+        }
+        .adjustment-input-row input[type="number"] {
+            width: 80px; /* Fixed width for the number input */
+            text-align: center;
+            background-color: #4a5568;
+            border: 1px solid #68d391;
+            color: #e2e8f0;
+            border-radius: 0.375rem; /* rounded-md */
+            padding: 0.375rem 0.5rem;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -225,8 +253,8 @@
             <!-- Language Toggle Button -->
             <button id="language-toggle-btn" class="action-button">💬</button>
 
-            <!-- Save Button -->
-            <button id="save-settings-btn" class="bg-green-600 hover:bg-green-700 text-white text-lg py-1 px-2 rounded-lg focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">💾</button>
+            <!-- New Adjustment Button -->
+            <button id="open-adjustment-modal-btn" class="action-button">⚙️</button>
         </div>
     </div>
 
@@ -243,18 +271,17 @@
         </div>
     </div>
 
-    <!-- Prayer Adjustment Modal -->
+    <!-- Global Prayer Adjustment Modal (reworked) -->
     <div id="adjustment-modal" class="modal-overlay hidden">
         <div class="modal-content">
-            <h3 class="text-xl font-semibold text-white mb-4" id="modal-prayer-name"></h3>
+            <h3 class="text-xl font-semibold text-white mb-4">Корекции на времена за намаз</h3>
             <p class="text-gray-300 text-sm mb-4">Въведете корекция в минути (+ за напред, - за назад):</p>
-            <div class="mb-6">
-                <label for="adjusted-minutes-offset" class="sr-only">Корекция в минути:</label>
-                <input type="number" id="adjusted-minutes-offset" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-600 border-gray-500 text-white" placeholder="Напр. 5 или -3">
+            <div id="prayer-adjustment-inputs" class="mb-6">
+                <!-- Adjustment inputs will be dynamically generated here -->
             </div>
             <div class="flex justify-end space-x-4">
                 <button id="cancel-adjustment-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-xl focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Отказ</button>
-                <button id="save-adjustment-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Запази</button>
+                <button id="save-all-adjustments-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Запази</button>
             </div>
         </div>
     </div>
@@ -292,8 +319,8 @@
         const selectedCityDisplay = document.getElementById('selected-city-display'); 
         const datePickerBtn = document.getElementById('date-picker-btn'); 
         const hiddenDateInput = document.getElementById('hidden-date-input'); 
-        const saveSettingsBtn = document.getElementById('save-settings-btn'); 
         const languageToggleBtn = document.getElementById('language-toggle-btn'); 
+        const openAdjustmentModalBtn = document.getElementById('open-adjustment-modal-btn'); // New adjustment button
 
         // Modals and their elements
         const citySelectionModal = document.getElementById('city-selection-modal'); 
@@ -301,10 +328,9 @@
         const closeCityModalBtn = document.getElementById('close-city-modal-btn');
 
         const adjustmentModal = document.getElementById('adjustment-modal');
-        const modalPrayerNameEl = document.getElementById('modal-prayer-name');
-        const adjustedMinutesOffsetInput = document.getElementById('adjusted-minutes-offset');
+        const prayerAdjustmentInputsContainer = document.getElementById('prayer-adjustment-inputs'); // New container for inputs
         const cancelAdjustmentBtn = document.getElementById('cancel-adjustment-btn');
-        const saveAdjustmentBtn = document.getElementById('save-adjustment-btn');
+        const saveAllAdjustmentsBtn = document.getElementById('save-all-adjustments-btn'); // Renamed button
 
         // Prayer names in Bulgarian (Dhuhr will be handled conditionally)
         const prayerNamesStandard = {
@@ -324,6 +350,9 @@
             Maghrib: 'Ашем', 
             Isha: 'Йецие' 
         };
+
+        // All prayer keys for iteration
+        const allPrayerKeys = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
         // General prayer-specific adjustments in minutes (applied on top of base times)
         const adjustments = {
@@ -407,7 +436,6 @@
         let currentHijriDate = ''; // To store and display Hijri date
         let selectedDate = new Date(); // Stores the currently selected date (defaults to today)
         let customPrayerAdjustments = {}; // Stores user-defined adjustments for each prayer {Fajr: 5, Dhuhr: -2}
-        let currentAdjustingPrayer = null; // To keep track of which prayer is being adjusted in the modal
         let isClassicalNamesActive = false; // New state for naming convention
 
         // Get current prayer names based on state
@@ -437,6 +465,7 @@
                     selectedCityDisplay.textContent = selectedCity; // Update display text for selected city
                     closeCitySelectionModal();
                     fetchPrayerTimes(); // Re-fetch times for the new city
+                    saveSettings(); // Automatically save city change
                 });
                 cityListEl.appendChild(cityItem);
             });
@@ -474,7 +503,7 @@
         // Function to determine Dhuhr name based on day of the week and current naming style
         function getDhuhrName(date) {
             if (date.getDay() === 5) { // Friday
-                return isClassicalNamesActive ? "Джумайо" : "Джума"; // Corrected logic for Juma
+                return isClassicalNamesActive ? "Джумайо" : "Джума"; 
             }
             return isClassicalNamesActive ? "Пладен" : "Обедна";
         }
@@ -535,7 +564,7 @@
                     const adjustedPrayerTimes = {};
 
                     // Apply general and city-specific offsets to the API-fetched Sofia times
-                    for (const key in sofiaBaseTimings) {
+                    for (const key of allPrayerKeys) { // Iterate through allPrayerKeys for consistent order
                         if (sofiaBaseTimings.hasOwnProperty(key)) {
                             let [hour, minute] = sofiaBaseTimings[key].split(':').map(Number);
                             let tempDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour, minute, 0);
@@ -607,7 +636,7 @@
             let prayersArray = [];
             const currentPrayerNames = getCurrentPrayerNames();
 
-            for (const key in prayerTimes) {
+            for (const key of allPrayerKeys) { // Iterate through allPrayerKeys for consistent order
                 if (prayerTimes.hasOwnProperty(key)) {
                     const [hour, minute] = prayerTimes[key].split(':').map(Number);
                     let prayerDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), hour, minute, 0);
@@ -658,22 +687,15 @@
 
                 prayerRow.innerHTML = `
                     <span class="prayer-name">${prayer.displayName}</span>
-                    <div class="flex items-center"> <!-- Group time and button together -->
+                    <div class="flex items-center">
                         <span class="prayer-time">${prayer.time}</span>
-                        <button class="adjust-prayer-btn text-gray-500 hover:text-green-400 text-lg ml-2" data-prayer-name="${prayer.name}">⚙️</button>
+                        <!-- Removed individual adjustment button -->
                     </div>
                 `;
                 prayerTimesListEl.appendChild(prayerRow);
             });
 
-            // Add event listener for the adjustment buttons using delegation
-            // This ensures listeners work even if prayer rows are re-rendered
-            prayerTimesListEl.querySelectorAll('.adjust-prayer-btn').forEach(button => {
-                button.addEventListener('click', (event) => {
-                    const prayerName = event.currentTarget.dataset.prayerName;
-                    openAdjustmentModal(prayerName);
-                });
-            });
+            // No need to add event listeners for individual adjustment buttons anymore
 
             updateCountdown(); // Start/update countdown after displaying times
         }
@@ -721,7 +743,7 @@
 
                 const currentPrayerNames = getCurrentPrayerNames();
 
-                for (const key in sofiaBaseTimingsForCountdown) {
+                for (const key of allPrayerKeys) {
                     if (sofiaBaseTimingsForCountdown.hasOwnProperty(key)) {
                         const [hour, minute] = sofiaBaseTimingsForCountdown[key].split(':').map(Number);
                         let prayerDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0);
@@ -806,41 +828,61 @@
             fetchPrayerTimes(); // Fetch times for the new selectedDate
         }
 
-        // --- Modal Logic ---
-        function openAdjustmentModal(prayerName) {
-            currentAdjustingPrayer = prayerName;
+        // --- Modals Logic ---
+
+        // Global Prayer Adjustment Modal
+        function openAdjustmentModal() {
+            prayerAdjustmentInputsContainer.innerHTML = ''; // Clear previous inputs
             const currentPrayerNames = getCurrentPrayerNames();
-            modalPrayerNameEl.textContent = `Корекция за ${currentPrayerNames[prayerName] || prayerName}`;
-            
-            // Populate input with current custom adjustment for this prayer, default to 0
-            adjustedMinutesOffsetInput.value = customPrayerAdjustments[prayerName] !== undefined ? customPrayerAdjustments[prayerName] : 0;
+
+            allPrayerKeys.forEach(key => {
+                const adjustmentValue = customPrayerAdjustments[key] !== undefined ? customPrayerAdjustments[key] : 0;
+                const displayName = currentPrayerNames[key] || key; // Use current language
+                const dhuhrDisplayName = key === 'Dhuhr' ? getDhuhrName(new Date()) : displayName; // Special handling for Dhuhr
+
+                const inputRow = document.createElement('div');
+                inputRow.className = 'adjustment-input-row';
+                inputRow.innerHTML = `
+                    <label for="adj-${key}">${dhuhrDisplayName}:</label>
+                    <input type="number" id="adj-${key}" data-prayer-key="${key}" value="${adjustmentValue}" class="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-600 border-gray-500 text-white" placeholder="Напр. 5 или -3">
+                `;
+                prayerAdjustmentInputsContainer.appendChild(inputRow);
+            });
             
             adjustmentModal.classList.remove('hidden');
         }
 
         function closeAdjustmentModal() {
             adjustmentModal.classList.add('hidden');
-            currentAdjustingPrayer = null;
             errorMessageEl.classList.add('hidden'); // Clear error message when closing modal
         }
 
-        function saveIndividualAdjustment() {
-            if (!currentAdjustingPrayer) return;
+        function saveAllAdjustments() {
+            let changesMade = false;
+            allPrayerKeys.forEach(key => {
+                const inputElement = document.getElementById(`adj-${key}`);
+                if (inputElement) {
+                    const newOffset = parseInt(inputElement.value, 10);
+                    if (isNaN(newOffset)) {
+                        errorMessageEl.textContent = `Невалидно число за корекция на ${getCurrentPrayerNames()[key] || key}. Моля, въведете валидно число (напр. 5 или -3).`;
+                        errorMessageEl.classList.remove('hidden');
+                        return; // Exit if any input is invalid
+                    }
 
-            const newOffset = parseInt(adjustedMinutesOffsetInput.value, 10);
+                    if (customPrayerAdjustments[key] !== newOffset) {
+                        customPrayerAdjustments[key] = newOffset;
+                        changesMade = true;
+                    }
+                }
+            });
 
-            if (isNaN(newOffset)) {
-                 errorMessageEl.textContent = 'Моля, въведете валидно число за корекция (напр. 5 или -3).';
-                 errorMessageEl.classList.remove('hidden');
-                 return;
+            if (changesMade) {
+                saveSettings(); // Automatically save all updated adjustments
+                fetchPrayerTimes(); // Re-fetch and display with new custom adjustments
             }
-            errorMessageEl.classList.add('hidden'); // Clear error if input is valid
-
-            customPrayerAdjustments[currentAdjustingPrayer] = newOffset;
-            saveSettings(); // Save all settings including new custom adjustment
-            fetchPrayerTimes(); // Re-fetch and display with new custom adjustment
             closeAdjustmentModal();
         }
+
 
         // Functions for City Selection Modal
         function openCitySelectionModal() {
@@ -918,16 +960,14 @@
             // Event listener for the language toggle button
             languageToggleBtn.addEventListener('click', () => {
                 isClassicalNamesActive = !isClassicalNamesActive;
-                saveSettings(); // Save the new language preference
+                saveSettings(); // Automatically save language preference
                 fetchPrayerTimes(); // Re-fetch/re-display to apply new names
             });
-
-            // Event listener for the main "Save Settings" button
-            saveSettingsBtn.addEventListener('click', saveSettings);
-
-            // Event listeners for modal buttons
+            
+            // Event listeners for the global adjustment modal
+            openAdjustmentModalBtn.addEventListener('click', openAdjustmentModal);
             cancelAdjustmentBtn.addEventListener('click', closeAdjustmentModal);
-            saveAdjustmentBtn.addEventListener('click', saveIndividualAdjustment);
+            saveAllAdjustmentsBtn.addEventListener('click', saveAllAdjustments); // Call saveAllAdjustments
 
             // Update clock every second
             setInterval(updateClock, 1000);
