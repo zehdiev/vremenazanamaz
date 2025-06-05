@@ -59,7 +59,7 @@
         }
         .prayer-time {
             font-size: 1.25rem;
-            font-weight: 600; /* Corrected typo: was 60, should be 600 */
+            font-weight: 600; 
             color: #a0aec0;
         }
         .highlighted-prayer .prayer-name,
@@ -146,15 +146,26 @@
 </head>
 <body class="antialiased">
     <div class="container">
+        <!-- Top row for Gregorian Date & Day (left) and Hijri Date (right) -->
         <div class="flex justify-between items-center mb-4">
-            <div class="flex items-center space-x-2">
+            <div id="current-date-info" class="flex items-center space-x-2 text-lg font-medium text-gray-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.727A8 8 0 016.343 7.273L17.657 16.727zm0 0A8 8 0 0110.323 20.323L13.657 13.657m0 0a8 8 0 01-1.414 1.414L10.323 20.323m0 0A8 8 0 017.273 6.343L16.727 17.657m0 0a8 8 0 011.414-1.414L20.323 10.323M13.657 13.657a2 2 0 11-2.828-2.828 2 2 0 012.828 2.828z" />
                 </svg>
-                <select id="city-select" class="city-select">
-                    </select>
+                <span id="current-date"></span>
+                <span class="mx-2">|</span>
+                <span id="current-day"></span>
             </div>
-            <div class="flex items-center space-x-2"> <!-- New div to group current time and save button -->
+            <div id="hijri-date" class="text-base text-gray-500 text-right"></div>
+        </div>
+
+        <!-- Second row for Location Select & Date Picker (left) and Current Time & Save Button (right) -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center space-x-4">
+                <select id="city-select" class="city-select"></select>
+                <input type="date" id="date-picker" class="date-picker">
+            </div>
+            <div class="flex items-center space-x-2">
                 <div id="current-time" class="text-xl font-semibold text-gray-300"></div>
                 <button id="save-settings-btn" class="bg-green-600 hover:bg-green-700 text-white text-lg py-1 px-2 rounded-lg focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">💾</button>
             </div>
@@ -163,19 +174,6 @@
         <div class="text-center">
             <div id="countdown" class="time-display">--:--:--</div>
             <div id="countdown-text" class="countdown-text">зареждане...</div>
-        </div>
-
-        <div class="flex flex-col items-center text-lg font-medium text-gray-400">
-            <div class="flex items-center">
-                <span id="current-date"></span>
-                <span class="mx-2">|</span>
-                <span id="current-day"></span>
-            </div>
-            <div id="hijri-date" class="text-base text-gray-500 mt-1"></div>
-        </div>
-
-        <div class="flex justify-center mt-4">
-            <input type="date" id="date-picker" class="date-picker">
         </div>
 
         <div id="prayer-times-list" class="flex flex-col gap-2">
