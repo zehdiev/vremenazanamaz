@@ -25,11 +25,23 @@
             border-radius: 1.5rem; /* More rounded corners */
             padding: 2rem;
             width: 100%;
-            max-width: 480px; /* Max width for mobile-first design */
+            max-width: 480px; /* Default max width for mobile */
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
         }
+        /* Responsive max-width for larger screens */
+        @media (min-width: 768px) { /* md breakpoint */
+            .container {
+                max-width: 640px; /* md:max-w-xl */
+            }
+        }
+        @media (min-width: 1024px) { /* lg breakpoint */
+            .container {
+                max-width: 768px; /* lg:max-w-2xl */
+            }
+        }
+
         .time-display {
             font-size: 5rem; /* Slightly larger current time */
             font-weight: 700;
@@ -59,7 +71,7 @@
         }
         .prayer-time {
             font-size: 1.25rem;
-            font-weight: 600; 
+            font-weight: 600;
             color: #a0aec0;
         }
         .highlighted-prayer .prayer-name,
@@ -146,27 +158,26 @@
 </head>
 <body class="antialiased">
     <div class="container">
-        <!-- Top row for Gregorian Date & Day (left) and Hijri Date (right) -->
-        <div class="flex justify-between items-center mb-4">
-            <div id="current-date-info" class="flex items-center space-x-2 text-lg font-medium text-gray-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.727A8 8 0 016.343 7.273L17.657 16.727zm0 0A8 8 0 0110.323 20.323L13.657 13.657m0 0a8 8 0 01-1.414 1.414L10.323 20.323m0 0A8 8 0 017.273 6.343L16.727 17.657m0 0a8 8 0 011.414-1.414L20.323 10.323M13.657 13.657a2 2 0 11-2.828-2.828 2 2 0 012.828 2.828z" />
-                </svg>
+        <!-- Top row: Gregorian Date & Day (left), Hijri Date & Sacred Day (right) -->
+        <div class="flex justify-between items-start mb-4 text-sm md:text-base">
+            <div id="gregorian-date-info" class="flex flex-col items-start font-medium text-gray-400">
                 <span id="current-date"></span>
-                <span class="mx-2">|</span>
                 <span id="current-day"></span>
             </div>
-            <div id="hijri-date" class="text-base text-gray-500 text-right"></div>
+            <div id="hijri-and-sacred-info" class="flex flex-col items-end text-gray-500">
+                <span id="hijri-date"></span>
+                <span id="sacred-day-info" class="text-green-400 font-semibold text-xs mt-1"></span>
+            </div>
         </div>
 
-        <!-- Second row for Location Select & Date Picker (left) and Current Time & Save Button (right) -->
-        <div class="flex justify-between items-center mb-4">
-            <div class="flex items-center space-x-4">
-                <select id="city-select" class="city-select"></select>
-                <input type="date" id="date-picker" class="date-picker">
+        <!-- Second row: Location Select & Date Picker (left), Current Time & Save Button (right) -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+            <div class="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4 w-full md:w-auto">
+                <select id="city-select" class="city-select w-full md:w-auto"></select>
+                <input type="date" id="date-picker" class="date-picker w-full md:w-auto">
             </div>
-            <div class="flex items-center space-x-2">
-                <div id="current-time" class="text-xl font-semibold text-gray-300"></div>
+            <div class="flex items-center space-x-2 mt-4 md:mt-0">
+                <div id="current-time" class="text-2xl md:text-xl font-semibold text-gray-300"></div>
                 <button id="save-settings-btn" class="bg-green-600 hover:bg-green-700 text-white text-lg py-1 px-2 rounded-lg focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">💾</button>
             </div>
         </div>
@@ -226,14 +237,30 @@
             "2025-06-03": { Fajr: "03:43", Sunrise: "05:23", Dhuhr: "13:00", Asr: "17:17", Maghrib: "20:32", Isha: "22:02", hijri: { day: "6", month: { en: "Dhul-Hijjah" }, year: "1446" } },
             "2025-06-04": { Fajr: "03:42", Sunrise: "05:22", Dhuhr: "13:00", Asr: "17:18", Maghrib: "20:33", Isha: "22:03", hijri: { day: "7", month: { en: "Dhul-Hijjah" }, year: "1446" } },
             "2025-06-05": { Fajr: "03:40", Sunrise: "05:20", Dhuhr: "13:05", Asr: "17:20", Maghrib: "20:35", Isha: "22:05", hijri: { day: "8", month: { en: "Dhul-Hijjah" }, year: "1446" } },
-            "2025-06-06": { Fajr: "03:39", Sunrise: "05:19", Dhuhr: "13:05", Asr: "17:21", Maghrib: "20:36", Isha: "22:06", hijri: { day: "9", month: { en: "Dhul-Hijjah" }, year: "1446" } },
-            "2025-06-07": { Fajr: "03:38", Sunrise: "05:18", Dhuhr: "13:05", Asr: "17:22", Maghrib: "20:37", Isha: "22:07", hijri: { day: "10", month: { en: "Dhul-Hijjah" }, year: "1446" } },
+            "2025-06-06": { Fajr: "03:39", Sunrise: "05:19", Dhuhr: "13:05", Asr: "17:21", Maghrib: "20:36", Isha: "22:06", hijri: { day: "10", month: { en: "Dhul-Hijjah" }, year: "1446" } }, // Коригирана Хиджра дата
+            "2025-06-07": { Fajr: "03:38", Sunrise: "05:18", Dhuhr: "13:05", Asr: "17:22", Maghrib: "20:37", Isha: "22:07", hijri: { day: "10", month: { en: "Dhul-Hijjah" }, year: "1446" } }, // Добавена за съвпадение с предходната
             "2025-06-08": { Fajr: "03:37", Sunrise: "05:17", Dhuhr: "13:05", Asr: "17:23", Maghrib: "20:38", Isha: "22:08", hijri: { day: "11", month: { en: "Dhul-Hijjah" }, year: "1446" } },
             "2025-06-09": { Fajr: "03:36", Sunrise: "05:16", Dhuhr: "13:05", Asr: "17:24", Maghrib: "20:39", Isha: "22:09", hijri: { day: "12", month: { en: "Dhul-Hijjah" }, year: "1446" } },
             "2025-06-10": { Fajr: "03:35", Sunrise: "05:15", Dhuhr: "13:05", Asr: "17:25", Maghrib: "20:40", Isha: "22:10", hijri: { day: "13", month: { en: "Dhul-Hijjah" }, year: "1446" } },
             // ... Добавете още дати и години за София
         };
         // --- END OF OFFLINE PRAYER DATA ---
+
+        // --- SACRED DAYS DATA (EXAMPLE) ---
+        // This is a hardcoded example list of sacred days for demonstration.
+        // For a comprehensive solution, this data would need to be pre-generated for many years.
+        const sacredDays = {
+            "2024-06-06": "Денят Арафа (9 Зилхидже 1445)", // Corrected from 9 to 10 for 2025, but 2024 is 9.
+            "2024-06-16": "Рамазан Байрам (1 Шаввал 1445)", // Example for 2024
+            "2025-06-06": "Курбан Байрам - Ден 1 (10 Зилхидже 1446)", // 10 Зилхидже е Курбан Байрам
+            "2025-06-07": "Курбан Байрам - Ден 2 (11 Зилхидже 1446)",
+            "2025-06-08": "Курбан Байрам - Ден 3 (12 Зилхидже 1446)",
+            "2025-06-09": "Курбан Байрам - Ден 4 (13 Зилхидже 1446)",
+            "2025-07-27": "Нощта Мирадж (27 Реджеб 1446)",
+            "2025-08-13": "Нощта Берат (15 Шабан 1446)",
+            // ... добавете още свещени дни и нощи за други години.
+        };
+        // --- END OF SACRED DAYS DATA ---
 
 
         // DOM Elements
@@ -243,12 +270,13 @@
         const currentDateEl = document.getElementById('current-date');
         const currentDayEl = document.getElementById('current-day');
         const hijriDateEl = document.getElementById('hijri-date');
+        const sacredDayInfoEl = document.getElementById('sacred-day-info'); // New element for sacred day
         const prayerTimesListEl = document.getElementById('prayer-times-list');
         const loadingIndicatorEl = document.getElementById('loading-indicator');
         const errorMessageEl = document.getElementById('error-message');
         const citySelectEl = document.getElementById('city-select');
         const datePickerEl = document.getElementById('date-picker');
-        const saveSettingsBtn = document.getElementById('save-settings-btn'); // New button
+        const saveSettingsBtn = document.getElementById('save-settings-btn'); 
 
         // Modal Elements
         const adjustmentModal = document.getElementById('adjustment-modal');
@@ -261,6 +289,7 @@
         const prayerNamesBg = {
             Fajr: 'Зора',
             Sunrise: 'Изгрев',
+            Dhuhr: 'Обедна', // Defaulted to Обедна, updated by getDhuhrName
             Asr: 'Следобедна',
             Maghrib: 'Вечерна',
             Isha: 'Нощна'
@@ -461,8 +490,21 @@
                     const hijriMonthBg = hijriMonthsBg[hijriMonthEnglish] || hijriMonthEnglish; 
                     currentHijriDate = `${hijriDay} ${hijriMonthBg} ${hijriYear} г.`; 
                     hijriDateEl.textContent = currentHijriDate;
+
+                    // Check and display sacred day/night
+                    const sacredDayKey = formatDateForInputAndLookup(selectedDate);
+                    if (sacredDays[sacredDayKey]) {
+                        sacredDayInfoEl.textContent = sacredDays[sacredDayKey];
+                        sacredDayInfoEl.classList.remove('hidden');
+                    } else {
+                        sacredDayInfoEl.textContent = '';
+                        sacredDayInfoEl.classList.add('hidden');
+                    }
+
                 } else {
                     hijriDateEl.textContent = 'Хиджра дата не е налична'; 
+                    sacredDayInfoEl.textContent = ''; // Clear sacred day if Hijri is not available
+                    sacredDayInfoEl.classList.add('hidden');
                 }
 
                 displayPrayerTimes(); // Display times based on the fully adjusted 'prayerTimes'
@@ -473,6 +515,12 @@
                 errorMessageEl.classList.remove('hidden');
                 errorMessageEl.textContent = 'Няма налични данни за избраната дата. Моля, изберете друга дата или актуализирайте приложението.';
                 loadingIndicatorEl.classList.add('hidden');
+                // Clear displayed prayer times and Hijri/Sacred info if no data
+                prayerTimes = {};
+                prayerTimesListEl.innerHTML = '';
+                hijriDateEl.textContent = '';
+                sacredDayInfoEl.textContent = '';
+                sacredDayInfoEl.classList.add('hidden');
             }
             // --- OFFLINE LOGIC END ---
         }
