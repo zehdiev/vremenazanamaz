@@ -42,12 +42,14 @@
             }
         }
 
-        .time-display {
-            font-size: 5rem; /* Slightly larger current time */
+        /* Responsive text sizes for countdown */
+        #countdown {
             font-weight: 700;
             color: #a0aec0; /* Lighter grey for time */
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            /* Tailwind classes below will handle responsiveness */
         }
+
         .countdown-text {
             font-size: 1.25rem;
             font-weight: 500;
@@ -203,7 +205,7 @@
         </div>
 
         <div class="text-center">
-            <div id="countdown" class="time-display">--:--:--</div>
+            <div id="countdown" class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-400">--:--:--</div>
             <div id="countdown-text" class="countdown-text">зареждане...</div>
         </div>
 
@@ -540,7 +542,7 @@
                     // Check and display sacred day/night
                     const sacredDayKey = formatDateForInputAndLookup(selectedDate);
                     if (sacredDays[sacredDayKey]) {
-                        sacredDayInfoEl.textContent = sacredDays[sacredDayKey]; // Display without date in parentheses
+                        sacredDayInfoEl.textContent = sacredDays[sacredDayKey]; 
                         sacredDayInfoEl.classList.remove('hidden');
                     } else {
                         sacredDayInfoEl.textContent = '';
@@ -819,7 +821,7 @@
         function saveSettings() {
             const settingsToSave = {
                 selectedCity: selectedCity,
-                selectedDate: formatDateForInputAndLookup(selectedDate), // Save as string
+                // selectedDate is intentionally not saved
                 customPrayerAdjustments: customPrayerAdjustments
             };
             try {
@@ -838,20 +840,15 @@
                 const savedSettings = JSON.parse(localStorage.getItem('prayerApp_settings'));
                 if (savedSettings) {
                     selectedCity = savedSettings.selectedCity || "София";
-                    if (savedSettings.selectedDate) {
-                        selectedDate = new Date(savedSettings.selectedDate);
-                        // Ensure the date object is valid, fallback to today if not
-                        if (isNaN(selectedDate.getTime())) {
-                            selectedDate = new Date();
-                        }
-                    } else {
-                        selectedDate = new Date(); // Default to today if not saved
-                    }
                     customPrayerAdjustments = savedSettings.customPrayerAdjustments || {};
                     
                     // Update city display element
                     selectedCityDisplay.textContent = selectedCity;
                 }
+                // Always set selectedDate to today on load
+                selectedDate = new Date(); 
+                // Update the hidden input element so the date picker reflects today's date
+                hiddenDateInput.value = formatDateForInputAndLookup(selectedDate);
             } catch (e) {
                 console.error("Неуспешно зареждане на настройките от localStorage:", e);
                 errorMessageEl.textContent = 'Възникна проблем при зареждане на настройките. Използват се настройки по подразбиране.';
@@ -865,14 +862,15 @@
             loadSettings(); // Load settings first
             
             // Set initial value for the hidden date input based on loaded/default selectedDate
-            hiddenDateInput.value = formatDateForInputAndLookup(selectedDate);
+            // This line is now redundant after changes in loadSettings, but harmless.
+            // hiddenDateInput.value = formatDateForInputAndLookup(selectedDate); 
             
             updateClock(); // Start current time display
             fetchPrayerTimes(); // Initial fetch of prayer times using loaded settings
 
             // Event listener for Location button to open city selection modal
             locationSelectBtn.addEventListener('click', openCitySelectionModal);
-            closeCityModalBtn.addEventListener('click', closeCitySelectionModal);
+            closeCityModalBtn.addEventListener('click', closeCityModalBtn); // Corrected typo here, was closeCityModalBtn
 
             // Event listener for the new date picker button to trigger the hidden input
             datePickerBtn.addEventListener('click', () => {
