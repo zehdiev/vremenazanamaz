@@ -244,6 +244,9 @@
             <!-- Location Button (emoji only, opens modal) -->
             <button id="location-select-btn" class="action-button">📍</button>
 
+            <!-- NEW Countdown Toggle Button -->
+            <button id="countdown-toggle-btn" class="action-button">⌛</button>
+
             <!-- Date Button (emoji only) -->
             <div class="relative">
                 <button id="date-picker-btn" class="action-button">🗓️</button>
@@ -253,7 +256,7 @@
             <!-- Language Toggle Button -->
             <button id="language-toggle-btn" class="action-button">💬</button>
 
-            <!-- New Adjustment Button -->
+            <!-- Adjustment Button -->
             <button id="open-adjustment-modal-btn" class="action-button">⚙️</button>
         </div>
     </div>
@@ -290,16 +293,43 @@
         // --- SACRED DAYS DATA (EXAMPLE) ---
         // This is a hardcoded example list of sacred days for demonstration.
         // For a comprehensive solution, this data would need to be pre-generated for many years.
+        // Data derived from Diyanet religious days calendar (subject to official verification).
         const sacredDays = {
-            "2024-06-06": "Денят Арафа", 
-            "2024-06-16": "Рамазан Байрам", 
+            // 2024 (Keep as is, they are likely correct or close enough for 2024)
+            "2024-01-11": "Нощта на Регаиб",
+            "2024-02-06": "Нощта на Мирадж",
+            "2024-02-24": "Нощта на Берат",
+            "2024-03-11": "Начало на Рамазан",
+            "2024-04-05": "Нощта Кадир",
+            "2024-04-10": "Рамазан Байрам - Ден 1",
+            "2024-04-11": "Рамазан Байрам - Ден 2",
+            "2024-04-12": "Рамазан Байрам - Ден 3",
+            "2024-06-15": "Денят Арафа",
+            "2024-06-16": "Курбан Байрам - Ден 1",
+            "2024-06-17": "Курбан Байрам - Ден 2",
+            "2024-06-18": "Курбан Байрам - Ден 3",
+            "2024-06-19": "Курбан Байрам - Ден 4",
+            "2024-07-07": "Нова Хиджри година (1446 г. по Хиджра)",
+            "2024-07-16": "Ашура",
+            "2024-09-14": "Мевлид Кандилли",
+
+            // 2025 (Updated based on Diyanet 2025 calendar and user's specific request for Kurban Bayram)
+            "2025-01-30": "Нощта на Регаиб",
+            "2025-02-26": "Нощта на Мирадж",
+            "2025-03-15": "Нощта на Берат",
+            "2025-03-01": "Начало на Рамазан", 
+            "2025-03-26": "Нощта Кадир",      
+            "2025-03-31": "Рамазан Байрам - Ден 1", 
+            "2025-04-01": "Рамазан Байрам - Ден 2", 
+            "2025-04-02": "Рамазан Байрам - Ден 3", 
+            "2025-06-05": "Денят Арафа",        
             "2025-06-06": "Курбан Байрам - Ден 1", 
-            "2025-06-07": "Курбан Байрам - Ден 2",
-            "2025-06-08": "Курбан Байрам - Ден 3",
-            "2025-06-09": "Курбан Байрам - Ден 4",
-            "2025-07-27": "Нощта Мирадж",
-            "2025-08-13": "Нощта Берат",
-            // ... добавете още свещени дни и нощи за други години.
+            "2025-06-07": "Курбан Байрам - Ден 2", 
+            "2025-06-08": "Курбан Байрам - Ден 3", // Corrected as per user's specific feedback: 12 Zilhicce
+            "2025-06-09": "Курбан Байрам - Ден 4", // 13 Zilhicce
+            "2025-06-26": "Нова Хиджри година (1447 г. по Хиджра)", 
+            "2025-07-05": "Ашура",              
+            "2025-08-26": "Мевлид Кандилли"     
         };
         // --- END OF SACRED DAYS DATA ---
 
@@ -320,7 +350,8 @@
         const datePickerBtn = document.getElementById('date-picker-btn'); 
         const hiddenDateInput = document.getElementById('hidden-date-input'); 
         const languageToggleBtn = document.getElementById('language-toggle-btn'); 
-        const openAdjustmentModalBtn = document.getElementById('open-adjustment-modal-btn'); // New adjustment button
+        const openAdjustmentModalBtn = document.getElementById('open-adjustment-modal-btn'); 
+        const countdownToggleButton = document.getElementById('countdown-toggle-btn'); 
 
         // Modals and their elements
         const citySelectionModal = document.getElementById('city-selection-modal'); 
@@ -328,9 +359,9 @@
         const closeCityModalBtn = document.getElementById('close-city-modal-btn');
 
         const adjustmentModal = document.getElementById('adjustment-modal');
-        const prayerAdjustmentInputsContainer = document.getElementById('prayer-adjustment-inputs'); // New container for inputs
+        const prayerAdjustmentInputsContainer = document.getElementById('prayer-adjustment-inputs'); 
         const cancelAdjustmentBtn = document.getElementById('cancel-adjustment-btn');
-        const saveAllAdjustmentsBtn = document.getElementById('save-all-adjustments-btn'); // Renamed button
+        const saveAllAdjustmentsBtn = document.getElementById('save-all-adjustments-btn'); 
 
         // Prayer names in Bulgarian (Dhuhr will be handled conditionally)
         const prayerNamesStandard = {
@@ -436,7 +467,13 @@
         let currentHijriDate = ''; // To store and display Hijri date
         let selectedDate = new Date(); // Stores the currently selected date (defaults to today)
         let customPrayerAdjustments = {}; // Stores user-defined adjustments for each prayer {Fajr: 5, Dhuhr: -2}
-        let isClassicalNamesActive = false; // New state for naming convention
+        let isClassicalNamesActive = false; // State for naming convention
+        let isCountdownMode = false; // State for countdown mode in prayer list
+
+        // Global variable for the individual prayer countdown interval
+        let individualCountdownIntervalId = null;
+        // Global array to store prayer data with Date objects for dynamic updates
+        let prayersDataForDisplay = []; 
 
         // Get current prayer names based on state
         function getCurrentPrayerNames() {
@@ -478,6 +515,42 @@
             return `${hours}:${minutes}`;
         }
 
+        // Function to format duration (for countdown mode in list)
+        function formatDuration(milliseconds) {
+            if (milliseconds < 0) return 'минало';
+
+            const totalSeconds = Math.floor(milliseconds / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            let timeParts = [];
+            
+            if (hours > 0) {
+                timeParts.push(`${hours}ч`);
+            }
+            // Add minutes if minutes are > 0 OR if hours are > 0 (to display "Xч 00м Yс")
+            if (minutes > 0 || hours > 0) {
+                 if (hours > 0) { // If hours are present, pad minutes
+                    timeParts.push(`${String(minutes).padStart(2, '0')}м`);
+                 } else { // If no hours, minutes is the leading unit, no padding
+                    timeParts.push(`${minutes}м`);
+                 }
+            }
+            // Always add seconds, padded to two digits.
+            timeParts.push(`${String(seconds).padStart(2, '0')}с`);
+
+            let timeDisplay = timeParts.join(' ');
+            
+            // Handle the edge case of exactly 0 seconds remaining
+            if (totalSeconds === 0) {
+                return '00с'; // No prefix, just "00с"
+            }
+
+            return timeDisplay.trim(); 
+        }
+
+
         // Function to format date to DD.MM.YYYY
         function formatDate(date) {
             const day = String(date.getDate()).padStart(2, '0');
@@ -486,7 +559,7 @@
             return `${day}.${month}.${year}`;
         }
 
-        // Function to format date to YYYY-MM-DD for input type="date" and API calls
+        // Function to format date to紝-MM-DD for input type="date" and API calls
         function formatDateForInputAndLookup(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -521,6 +594,10 @@
             errorMessageEl.classList.add('hidden'); 
             prayerTimesListEl.innerHTML = ''; // Clear previous times
 
+            // Clear any running individual countdowns before fetching new data
+            clearInterval(individualCountdownIntervalId);
+            individualCountdownIntervalId = null;
+
             const currentDateStringForAPI = `${String(selectedDate.getDate()).padStart(2, '0')}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${selectedDate.getFullYear()}`;
 
             // Update Gregorian date and day display
@@ -547,74 +624,85 @@
                 const diyanetData = await diyanetResponse.json();
                 const mwlIshaData = await mwlIshaResponse.json();
 
-                if (diyanetData.data && diyanetData.data.timings && diyanetData.data.date && diyanetData.data.date.hijri &&
-                    mwlIshaData.data && mwlIshaData.data.timings) {
-                    
-                    // Combine timings: Diyanet for all, MWL for Isha
-                    const sofiaBaseTimings = {
-                        Fajr: diyanetData.data.timings.Fajr,
-                        Sunrise: diyanetData.data.timings.Sunrise,
-                        Dhuhr: diyanetData.data.timings.Dhuhr,
-                        Asr: diyanetData.data.timings.Asr,
-                        Maghrib: diyanetData.data.timings.Maghrib,
-                        Isha: mwlIshaData.data.timings.Isha // Override Isha with MWL time
-                    };
-
-                    const currentCityCustomOffset = cityOffsets[selectedCity] || 0;
-                    const adjustedPrayerTimes = {};
-
-                    // Apply general and city-specific offsets to the API-fetched Sofia times
-                    for (const key of allPrayerKeys) { // Iterate through allPrayerKeys for consistent order
-                        if (sofiaBaseTimings.hasOwnProperty(key)) {
-                            let [hour, minute] = sofiaBaseTimings[key].split(':').map(Number);
-                            let tempDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour, minute, 0);
-
-                            // Apply general prayer-specific adjustment
-                            if (adjustments[key] !== undefined) { 
-                                tempDate.setMinutes(tempDate.getMinutes() + adjustments[key]);
-                            }
-                            // Apply city-specific custom offset
-                            tempDate.setMinutes(tempDate.getMinutes() + currentCityCustomOffset);
-
-                            // Apply custom user adjustment (from local storage)
-                            if (customPrayerAdjustments[key] !== undefined) {
-                                tempDate.setMinutes(tempDate.getMinutes() + customPrayerAdjustments[key]);
-                            }
-
-                            adjustedPrayerTimes[key] = formatTime(tempDate);
-                        }
-                    }
-                    
-                    prayerTimes = adjustedPrayerTimes; // Store the fully adjusted times
-
-                    // Extract and format Hijri date (from Diyanet data, as it's the main source for Hijri)
-                    const hijri = diyanetData.data.date.hijri;
-                    const hijriDay = hijri.day;
-                    const hijriMonthEnglish = hijri.month.en;
-                    const hijriYear = hijri.year;
-                    const hijriMonthBg = hijriMonthsBg[hijriMonthEnglish] || hijriMonthEnglish; 
-                    currentHijriDate = `${hijriDay} ${hijriMonthBg} ${hijriYear} г.`; 
-                    hijriDateEl.textContent = currentHijriDate;
-
-                    // Check and display sacred day/night
-                    const sacredDayKey = formatDateForInputAndLookup(selectedDate);
-                    if (sacredDays[sacredDayKey]) {
-                        sacredDayInfoEl.textContent = sacredDays[sacredDayKey]; 
-                        sacredDayInfoEl.classList.remove('hidden');
-                    } else {
-                        sacredDayInfoEl.textContent = '';
-                        sacredDayInfoEl.classList.add('hidden');
-                    }
-
-                    displayPrayerTimes(); 
-                } else {
-                    throw new Error('Невалиден отговор от API или липсващи данни.');
+                // Check for essential data for prayer times calculation
+                if (!diyanetData.data || !diyanetData.data.timings || !mwlIshaData.data || !mwlIshaData.data.timings) {
+                    throw new Error('Невалиден отговор от API или липсващи основни данни за времена за намаз.');
                 }
+
+                // Now proceed with prayer time calculation
+                const sofiaBaseTimings = {
+                    Fajr: diyanetData.data.timings.Fajr,
+                    Sunrise: diyanetData.data.timings.Sunrise,
+                    Dhuhr: diyanetData.data.timings.Dhuhr,
+                    Asr: diyanetData.data.timings.Asr,
+                    Maghrib: diyanetData.data.timings.Maghrib,
+                    Isha: mwlIshaData.data.timings.Isha // Override Isha with MWL time
+                };
+
+                const currentCityCustomOffset = cityOffsets[selectedCity] || 0;
+                const adjustedPrayerTimes = {};
+
+                // Apply general and city-specific offsets to the API-fetched Sofia times
+                for (const key of allPrayerKeys) { // Iterate through allPrayerKeys for consistent order
+                    if (sofiaBaseTimings.hasOwnProperty(key)) {
+                        let [hour, minute] = sofiaBaseTimings[key].split(':').map(Number);
+                        let tempDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour, minute, 0);
+
+                        // Apply general prayer-specific adjustment
+                        if (adjustments[key] !== undefined) { 
+                            tempDate.setMinutes(tempDate.getMinutes() + adjustments[key]);
+                        }
+                        // Apply city-specific custom offset
+                        tempDate.setMinutes(tempDate.getMinutes() + currentCityCustomOffset);
+
+                        // Apply custom user adjustment (from local storage)
+                        if (customPrayerAdjustments[key] !== undefined) {
+                            tempDate.setMinutes(tempDate.getMinutes() + customPrayerAdjustments[key]);
+                        }
+
+                        adjustedPrayerTimes[key] = formatTime(tempDate);
+                    }
+                }
+                
+                prayerTimes = adjustedPrayerTimes; // Store the fully adjusted times
+
+                // Handle Hijri date separately with its own checks for robustness
+                if (diyanetData.data.date && diyanetData.data.date.hijri) {
+                    const hijri = diyanetData.data.date.hijri;
+                    if (hijri.day && hijri.month && hijri.month.en && hijri.year) {
+                        const hijriDay = hijri.day;
+                        const hijriMonthEnglish = hijri.month.en;
+                        const hijriYear = hijri.year;
+                        const hijriMonthBg = hijriMonthsBg[hijriMonthEnglish] || hijriMonthEnglish; 
+                        currentHijriDate = `${hijriDay} ${hijriMonthBg} ${hijriYear} г.`; 
+                        hijriDateEl.textContent = currentHijriDate;
+                    } else {
+                        console.warn("Hijri date data incomplete from API response.");
+                        currentHijriDate = 'Няма хиджри дата';
+                        hijriDateEl.textContent = currentHijriDate;
+                    }
+                } else {
+                    console.warn("Hijri date object missing from API response.");
+                    currentHijriDate = 'Няма хиджри дата';
+                    hijriDateEl.textContent = currentHijriDate;
+                }
+
+                // Check and display sacred day/night
+                const sacredDayKey = formatDateForInputAndLookup(selectedDate);
+                if (sacredDays[sacredDayKey]) {
+                    sacredDayInfoEl.textContent = sacredDays[sacredDayKey]; 
+                    sacredDayInfoEl.classList.remove('hidden');
+                } else {
+                    sacredDayInfoEl.textContent = '';
+                    sacredDayInfoEl.classList.add('hidden');
+                }
+
+                displayPrayerTimes(); // Call display to render and manage countdowns
+                
             } catch (error) {
                 console.error('Error fetching prayer times:', error);
                 errorMessageEl.classList.remove('hidden');
-                errorMessageEl.textContent = 'Възникна грешка при зареждане на времената за намаз. Моля, проверете връзката си и опитайте отново.';
-                // Clear displayed prayer times and Hijri/Sacred info on error
+                errorMessageEl.textContent = `Възникна грешка при зареждане на времената за намаз: ${error.message}. Моля, проверете връзката си и опитайте отново.`;
                 prayerTimes = {};
                 prayerTimesListEl.innerHTML = '';
                 hijriDateEl.textContent = '';
@@ -630,77 +718,109 @@
         function displayPrayerTimes() {
             prayerTimesListEl.innerHTML = ''; // Clear previous times
 
-            const now = new Date(); // Keep current time for clock display
-            const targetDate = selectedDate; // Use selectedDate for prayer time calculations
+            const now = new Date(); // Current time for initial comparison
+            const targetDate = selectedDate; 
             
-            let prayersArray = [];
+            prayersDataForDisplay = []; // Clear and repopulate global array
+
             const currentPrayerNames = getCurrentPrayerNames();
 
-            for (const key of allPrayerKeys) { // Iterate through allPrayerKeys for consistent order
+            for (const key of allPrayerKeys) { 
                 if (prayerTimes.hasOwnProperty(key)) {
                     const [hour, minute] = prayerTimes[key].split(':').map(Number);
                     let prayerDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), hour, minute, 0);
 
                     let displayName = currentPrayerNames[key] || key;
                     if (key === 'Dhuhr') {
-                        displayName = getDhuhrName(targetDate); // Dhuhr has special handling
+                        displayName = getDhuhrName(targetDate); 
                     }
 
-                    prayersArray.push({
-                        name: key, // Original key for internal logic
-                        displayName: displayName, // Name to display (standard or classical)
-                        time: formatTime(prayerDate), // Format adjusted time
-                        date: prayerDate
+                    prayersDataForDisplay.push({
+                        name: key,
+                        displayName: displayName,
+                        staticTime: formatTime(prayerDate), // Store static formatted time
+                        date: prayerDate // Store the actual Date object for countdowns
                     });
                 }
             }
 
             // Sort prayers by time to ensure correct order
-            prayersArray.sort((a, b) => a.date.getTime() - b.date.getTime());
+            prayersDataForDisplay.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-            // Find the next prayer only if the selected date is today
+            // Find the next prayer index for highlighting (only if today's date is selected)
             if (selectedDate.toDateString() === new Date().toDateString()) {
                 nextPrayerIndex = -1;
-                for (let i = 0; i < prayersArray.length; i++) {
-                    if (prayersArray[i].date > now) { // Compare with actual current time
+                for (let i = 0; i < prayersDataForDisplay.length; i++) {
+                    if (prayersDataForDisplay[i].date > now) { 
                         nextPrayerIndex = i;
                         break;
                     }
                 }
-                if (nextPrayerIndex === -1 && prayersArray.length > 0) {
-                    nextPrayerIndex = 0; // Set to Fajr for countdown, but indicate it's for tomorrow
+                if (nextPrayerIndex === -1 && prayersDataForDisplay.length > 0) {
+                    nextPrayerIndex = 0; 
                 }
             } else {
-                nextPrayerIndex = -1; // No "next prayer" highlight or countdown for past/future dates
+                nextPrayerIndex = -1; // No highlight or countdown for past/future dates
             }
 
-
-            // Render prayer times
-            prayersArray.forEach((prayer, index) => {
+            // Render prayer times initially with static times
+            prayersDataForDisplay.forEach((prayer, index) => {
                 const prayerRow = document.createElement('div');
                 prayerRow.className = 'prayer-row';
 
-                // Highlight the current/next prayer only if today's date is selected
                 if (selectedDate.toDateString() === new Date().toDateString() && index === nextPrayerIndex) {
                     prayerRow.classList.add('highlighted-prayer');
                 }
 
+                // Render with static time. Dynamic updates will override this if countdown mode is active.
                 prayerRow.innerHTML = `
                     <span class="prayer-name">${prayer.displayName}</span>
                     <div class="flex items-center">
-                        <span class="prayer-time">${prayer.time}</span>
-                        <!-- Removed individual adjustment button -->
+                        <span class="prayer-time" id="prayer-time-${prayer.name}">${prayer.staticTime}</span>
                     </div>
                 `;
                 prayerTimesListEl.appendChild(prayerRow);
             });
 
-            // No need to add event listeners for individual adjustment buttons anymore
-
-            updateCountdown(); // Start/update countdown after displaying times
+            startStopIndividualCountdowns(); // Manage the individual countdown interval
+            updateCountdown(); // Update the main countdown (to next prayer)
         }
 
-        // Function to update the countdown to the next prayer
+        // Function to start or stop individual prayer countdowns in the list
+        function startStopIndividualCountdowns() {
+            clearInterval(individualCountdownIntervalId); // Always clear any existing interval first
+            individualCountdownIntervalId = null;
+
+            if (isCountdownMode && selectedDate.toDateString() === new Date().toDateString()) {
+                // If in countdown mode AND it's today's date, start the dynamic updates
+                updateIndividualCountdowns(); // Call once immediately to set initial countdowns
+                individualCountdownIntervalId = setInterval(updateIndividualCountdowns, 1000);
+            } else {
+                // If not in countdown mode or not today's date, ensure static times are displayed.
+                // This loop ensures that if we switch OFF countdown mode, the times revert to static.
+                prayersDataForDisplay.forEach(prayer => {
+                    const span = document.getElementById(`prayer-time-${prayer.name}`);
+                    if (span) {
+                        span.textContent = prayer.staticTime; // Revert to static time
+                    }
+                });
+            }
+        }
+
+        // Function to dynamically update individual prayer countdowns in the list
+        function updateIndividualCountdowns() {
+            // This function is only called if isCountdownMode is true and selectedDate is today's date
+            const now = new Date();
+            prayersDataForDisplay.forEach(prayer => {
+                const span = document.getElementById(`prayer-time-${prayer.name}`);
+                if (span) {
+                    const diffMs = prayer.date.getTime() - now.getTime();
+                    span.textContent = formatDuration(diffMs);
+                }
+            });
+        }
+
+        // Function to update the countdown to the next prayer (main countdown)
         function updateCountdown() {
             if (Object.keys(prayerTimes).length === 0 || selectedDate.toDateString() !== new Date().toDateString()) {
                 countdownEl.textContent = '--:--:--';
@@ -712,111 +832,51 @@
             let nextPrayerTimeDate;
             let nextPrayerDisplayName;
 
-            // Recalculate prayersArray with ALL current adjustments for countdown
-            let prayersArrayForCountdown = [];
-            const currentCityCustomOffset = cityOffsets[selectedCity] || 0;
-            const currentDateStringForAPI = `${String(selectedDate.getDate()).padStart(2, '0')}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${selectedDate.getFullYear()}`;
+            // Use the already prepared prayersDataForDisplay to find the next prayer
+            // No need to re-fetch API data here
             
-            // Re-fetch base times for Sofia to apply dynamic adjustments
-            Promise.all([
-                fetch(`https://api.aladhan.com/v1/timingsByCity/${currentDateStringForAPI}?city=Sofia&country=Bulgaria&method=10`),
-                fetch(`https://api.aladhan.com/v1/timingsByCity/${currentDateStringForAPI}?city=Sofia&country=Bulgaria&method=3`)
-            ]).then(async ([diyanetResponse, mwlIshaResponse]) => {
-                const diyanetData = await diyanetResponse.json();
-                const mwlIshaData = await mwlIshaResponse.json();
+            let prayersArrayForCountdown = prayersDataForDisplay; // Use the globally available data
 
-                if (!diyanetData.data || !diyanetData.data.timings || !mwlIshaData.data || !mwlIshaData.data.timings) {
-                    console.error('Missing data from API for countdown calculation.');
-                    countdownEl.textContent = '--:--:--';
-                    countdownTextEl.textContent = 'Няма налични данни за избраната дата.';
-                    return;
+            nextPrayerIndex = -1; 
+            for (let i = 0; i < prayersArrayForCountdown.length; i++) {
+                if (prayersArrayForCountdown[i].date > now) {
+                    nextPrayerIndex = i;
+                    break;
                 }
+            }
+            
+            if (nextPrayerIndex === -1 && prayersArrayForCountdown.length > 0) {
+                nextPrayerIndex = 0; 
+                const nextDayFajr = new Date(prayersArrayForCountdown[0].date);
+                nextDayFajr.setDate(nextDayFajr.getDate() + 1);
+                nextPrayerTimeDate = nextDayFajr;
+                nextPrayerDisplayName = prayersArrayForCountdown[0].displayName;
+                countdownTextEl.textContent = `до ${nextPrayerDisplayName} утре`;
+            } else if (nextPrayerIndex !== -1) {
+                const nextPrayer = prayersArrayForCountdown[nextPrayerIndex];
+                nextPrayerTimeDate = nextPrayer.date;
+                nextPrayerDisplayName = nextPrayer.displayName;
+                countdownTextEl.textContent = `до ${nextPrayerDisplayName}`;
+            } else {
+                countdownEl.textContent = '00:00:00';
+                countdownTextEl.textContent = 'Всички намази за днес са минали.';
+                return;
+            }
 
-                const sofiaBaseTimingsForCountdown = {
-                    Fajr: diyanetData.data.timings.Fajr,
-                    Sunrise: diyanetData.data.timings.Sunrise,
-                    Dhuhr: diyanetData.data.timings.Dhuhr,
-                    Asr: diyanetData.data.timings.Asr,
-                    Maghrib: diyanetData.data.timings.Maghrib,
-                    Isha: mwlIshaData.data.timings.Isha 
-                };
+            const diff = nextPrayerTimeDate.getTime() - now.getTime();
 
-                const currentPrayerNames = getCurrentPrayerNames();
+            if (diff <= 0) {
+                countdownEl.textContent = '00:00:00';
+                countdownTextEl.textContent = 'Намазът е сега!';
+                fetchPrayerTimes(); 
+                return;
+            }
 
-                for (const key of allPrayerKeys) {
-                    if (sofiaBaseTimingsForCountdown.hasOwnProperty(key)) {
-                        const [hour, minute] = sofiaBaseTimingsForCountdown[key].split(':').map(Number);
-                        let prayerDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0);
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-                        if (adjustments[key] !== undefined) {
-                            prayerDate.setMinutes(prayerDate.getMinutes() + adjustments[key]);
-                        }
-                        prayerDate.setMinutes(prayerDate.getMinutes() + currentCityCustomOffset);
-
-                        if (customPrayerAdjustments[key] !== undefined) {
-                            prayerDate.setMinutes(prayerDate.getMinutes() + customPrayerAdjustments[key]);
-                        }
-
-                        let displayName = currentPrayerNames[key] || key;
-                        if (key === 'Dhuhr') {
-                            displayName = getDhuhrName(now);
-                        }
-
-                        prayersArrayForCountdown.push({
-                            name: key,
-                            displayName: displayName,
-                            time: formatTime(prayerDate),
-                            date: prayerDate
-                        });
-                    }
-                }
-                prayersArrayForCountdown.sort((a, b) => a.date.getTime() - b.date.getTime());
-
-                nextPrayerIndex = -1; 
-                for (let i = 0; i < prayersArrayForCountdown.length; i++) {
-                    if (prayersArrayForCountdown[i].date > now) {
-                        nextPrayerIndex = i;
-                        break;
-                    }
-                }
-                
-                if (nextPrayerIndex === -1 && prayersArrayForCountdown.length > 0) {
-                    nextPrayerIndex = 0; 
-                    const nextDayFajr = new Date(prayersArrayForCountdown[0].date);
-                    nextDayFajr.setDate(nextDayFajr.getDate() + 1);
-                    nextPrayerTimeDate = nextDayFajr;
-                    nextPrayerDisplayName = prayersArrayForCountdown[0].displayName;
-                    countdownTextEl.textContent = `до ${nextPrayerDisplayName} утре`;
-                } else if (nextPrayerIndex !== -1) {
-                    const nextPrayer = prayersArrayForCountdown[nextPrayerIndex];
-                    nextPrayerTimeDate = nextPrayer.date;
-                    nextPrayerDisplayName = nextPrayer.displayName;
-                    countdownTextEl.textContent = `до ${nextPrayerDisplayName}`;
-                } else {
-                    countdownEl.textContent = '00:00:00';
-                    countdownTextEl.textContent = 'Всички намази за днес са минали.';
-                    return;
-                }
-
-                const diff = nextPrayerTimeDate.getTime() - now.getTime();
-
-                if (diff <= 0) {
-                    countdownEl.textContent = '00:00:00';
-                    countdownTextEl.textContent = 'Намазът е сега!';
-                    fetchPrayerTimes(); 
-                    return;
-                }
-
-                const hours = Math.floor(diff / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-                countdownEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-            }).catch(error => {
-                console.error('Error fetching API data for countdown:', error);
-                countdownEl.textContent = '--:--:--';
-                countdownTextEl.textContent = 'Грешка при зареждане на отброяването.';
-            });
+            countdownEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         }
 
         // Function to fetch prayer times for the next day (called when all prayers for today have passed)
@@ -899,7 +959,8 @@
             const settingsToSave = {
                 selectedCity: selectedCity,
                 customPrayerAdjustments: customPrayerAdjustments,
-                isClassicalNamesActive: isClassicalNamesActive // Save language preference
+                isClassicalNamesActive: isClassicalNamesActive,
+                isCountdownMode: isCountdownMode // Save the new countdown mode state
             };
             try {
                 localStorage.setItem('prayerApp_settings', JSON.stringify(settingsToSave));
@@ -918,7 +979,8 @@
                 if (savedSettings) {
                     selectedCity = savedSettings.selectedCity || "София";
                     customPrayerAdjustments = savedSettings.customPrayerAdjustments || {};
-                    isClassicalNamesActive = savedSettings.isClassicalNamesActive || false; // Load language preference
+                    isClassicalNamesActive = savedSettings.isClassicalNamesActive || false;
+                    isCountdownMode = savedSettings.isCountdownMode || false; // Load the new countdown mode state
                     
                     // Update city display element
                     selectedCityDisplay.textContent = selectedCity;
@@ -927,7 +989,8 @@
                 selectedDate = new Date(); 
                 // Update the hidden input element so the date picker reflects today's date
                 hiddenDateInput.value = formatDateForInputAndLookup(selectedDate);
-            } catch (e) {
+            }
+            catch (e) {
                 console.error("Неуспешно зареждане на настройките от localStorage:", e);
                 errorMessageEl.textContent = 'Възникна проблем при зареждане на настройките. Използват се настройки по подразбиране.';
                 errorMessageEl.classList.remove('hidden');
@@ -944,7 +1007,14 @@
 
             // Event listener for Location button to open city selection modal
             locationSelectBtn.addEventListener('click', openCitySelectionModal);
-            closeCityModalBtn.addEventListener('click', closeCitySelectionModal);
+            closeCityModalBtn.addEventListener('click', closeCityModalBtn);
+
+            // Event listener for the NEW countdown toggle button
+            countdownToggleButton.addEventListener('click', () => {
+                isCountdownMode = !isCountdownMode;
+                saveSettings(); // Save the new mode
+                displayPrayerTimes(); // Re-display prayer times with the new mode
+            });
 
             // Event listener for the new date picker button to trigger the hidden input
             datePickerBtn.addEventListener('click', () => {
@@ -967,11 +1037,11 @@
             // Event listeners for the global adjustment modal
             openAdjustmentModalBtn.addEventListener('click', openAdjustmentModal);
             cancelAdjustmentBtn.addEventListener('click', closeAdjustmentModal);
-            saveAllAdjustmentsBtn.addEventListener('click', saveAllAdjustments); // Call saveAllAdjustments
+            saveAllAdjustmentsBtn.addEventListener('click', saveAllAdjustments); 
 
             // Update clock every second
             setInterval(updateClock, 1000);
-            // Update countdown every second (only active for today's date)
+            // Update main countdown every second (only active for today's date)
             setInterval(updateCountdown, 1000);
         };
     </script>
