@@ -224,8 +224,11 @@
             </div>
         </div>
 
-        <div class="text-center">
-            <div id="countdown" class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-400">--:--:--</div>
+        <div class="text-center flex flex-col items-center"> <!-- Added flex-col and items-center -->
+            <div class="flex items-center justify-center gap-2 mb-2"> <!-- New flex container for countdown and button -->
+                <div id="countdown" class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-400">--:--:--</div>
+                <button id="return-today-btn" class="action-button !w-12 !h-12 !text-2xl hidden">🔄</button> <!-- New button, hidden by default -->
+            </div>
             <div id="countdown-text" class="countdown-text">зареждане...</div>
         </div>
         
@@ -243,7 +246,8 @@
         </div>
 
         <!-- New bottom row for action buttons -->
-        <div class="flex justify-center md:justify-around items-center mt-6 flex-wrap gap-4">
+        <!-- Removed flex-wrap to keep buttons on a single row -->
+        <div class="flex justify-center md:justify-around items-center mt-6 gap-4">
             <!-- Location Button (emoji only, opens modal) -->
             <button id="location-select-btn" class="action-button">📍</button>
 
@@ -355,6 +359,7 @@
         const languageToggleBtn = document.getElementById('language-toggle-btn'); 
         const openAdjustmentModalBtn = document.getElementById('open-adjustment-modal-btn'); 
         const countdownToggleButton = document.getElementById('countdown-toggle-btn'); 
+        const returnTodayBtn = document.getElementById('return-today-btn'); // New button element
 
         // Modals and their elements
         const citySelectionModal = document.getElementById('city-selection-modal'); 
@@ -552,7 +557,7 @@
             return `${day}.${month}.${year}`;
         }
 
-        // Function to format date to YYYY-MM-DD for input type="date" and API calls
+        // Function to format date to紝-MM-DD for input type="date" and API calls
         function formatDateForInputAndLookup(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -813,15 +818,78 @@
             });
         }
 
+        // Helper function to calculate year, month, and day difference between two dates
+        function getYearsMonthsDaysDifference(d1, d2) { // d1 = start date (now), d2 = end date (selectedDate)
+            let years = d2.getFullYear() - d1.getFullYear();
+            let months = d2.getMonth() - d1.getMonth();
+            let days = d2.getDate() - d1.getDate();
+
+            // Adjust for negative days (d2.getDate() < d1.getDate())
+            if (days < 0) {
+                months--;
+                // Get the number of days in the month *before* d2's month in d2's year
+                let daysInPrevMonthOfD2 = new Date(d2.getFullYear(), d2.getMonth(), 0).getDate();
+                days += daysInPrevMonthOfD2;
+            }
+
+            // Adjust for negative months (d2.getMonth() < d1.getMonth())
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            return { years, months, days };
+        }
+
         // Function to update the countdown to the next prayer (main countdown)
         function updateCountdown() {
-            if (Object.keys(prayerTimes).length === 0 || selectedDate.toDateString() !== new Date().toDateString()) {
+            const now = new Date();
+
+            if (selectedDate.toDateString() !== now.toDateString()) {
+                // Handle future/past selected dates
+                const diff = getYearsMonthsDaysDifference(now, selectedDate);
+                let displayMessage = '';
+                returnTodayBtn.classList.remove('hidden'); // Show return to today button
+
+                if (selectedDate > now) { // Future date
+                    if (diff.years > 0) {
+                        displayMessage += `след ${diff.years} г.`;
+                        if (diff.months > 0) {
+                            displayMessage += ` ${diff.months} м.`;
+                        }
+                    } else if (diff.months > 0) {
+                        displayMessage += `след ${diff.months} м.`;
+                        if (diff.days > 0) {
+                            displayMessage += ` ${diff.days} дни`;
+                        }
+                    } else if (diff.days > 0) {
+                        displayMessage += `след ${diff.days} дни`;
+                    } else { // Very close future, within the same day's times
+                        // This case should ideally be handled by the "today's date" logic if `selectedDate` is literally today.
+                        // If it's a future date that's just a few hours/minutes away but still on *this* specific date,
+                        // we can show a placeholder or transition to the "today" logic.
+                        countdownEl.textContent = '--:--:--'; // No ticking countdown for conceptual future dates
+                        countdownTextEl.textContent = 'Избрана е бъдеща дата.'; 
+                        return; // Exit as this is not today's ticking countdown
+                    }
+                    countdownEl.textContent = '--:--:--'; // No ticking countdown for conceptual future dates
+                    countdownTextEl.textContent = displayMessage || 'Изберете дата.'; // Fallback
+                } else { // Past date
+                    countdownEl.textContent = '--:--:--';
+                    countdownTextEl.textContent = 'Избрана е минала дата.';
+                }
+                return; // Exit as this is not today's countdown
+            }
+
+            // If selectedDate IS today's date, proceed with normal countdown logic
+            returnTodayBtn.classList.add('hidden'); // Hide return to today button
+
+            if (Object.keys(prayerTimes).length === 0) {
                 countdownEl.textContent = '--:--:--';
                 countdownTextEl.textContent = 'Няма отброяване за избраната дата.';
                 return;
             }
 
-            const now = new Date();
             let nextPrayerTimeDate;
             let nextPrayerDisplayName;
 
@@ -872,13 +940,11 @@
             countdownEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         }
 
-        // Function to fetch prayer times for the next day (called when all prayers for today have passed)
-        function fetchPrayerTimesForNextDay() {
-            const tomorrow = new Date(selectedDate);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            selectedDate = tomorrow; // Update selectedDate to tomorrow
-            hiddenDateInput.value = formatDateForInputAndLookup(selectedDate); // Update hidden input value
-            fetchPrayerTimes(); // Fetch times for the new selectedDate
+        // Function to return to today's date
+        function returnToToday() {
+            selectedDate = new Date();
+            hiddenDateInput.value = formatDateForInputAndLookup(selectedDate);
+            fetchPrayerTimes(); // Re-fetch to display times for today
         }
 
         // --- Modals Logic ---
@@ -1042,9 +1108,12 @@
             cancelAdjustmentBtn.addEventListener('click', closeAdjustmentModal);
             saveAllAdjustmentsBtn.addEventListener('click', saveAllAdjustments); 
 
+            // Event listener for the new "Return to Today" button
+            returnTodayBtn.addEventListener('click', returnToToday);
+
             // Update clock every second
             setInterval(updateClock, 1000);
-            // Update main countdown every second (only active for today's date)
+            // Update main countdown every second (only active for today's date or specific logic for future/past)
             setInterval(updateCountdown, 1000);
         };
     </script>
