@@ -745,28 +745,32 @@
             // Sort prayers by time to ensure correct order
             prayersDataForDisplay.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-            // Find the next prayer index for highlighting (only if today's date is selected)
+            // --- START FIX: Separate highlighting logic from main countdown nextPrayerIndex ---
+            let highlightIndex = -1; // Use a separate variable for highlighting
+
             if (selectedDate.toDateString() === new Date().toDateString()) {
-                nextPrayerIndex = -1;
+                // Only highlight if it's today's date
                 for (let i = 0; i < prayersDataForDisplay.length; i++) {
                     if (prayersDataForDisplay[i].date > now) { 
-                        nextPrayerIndex = i;
+                        highlightIndex = i; // Found a future prayer on current day to highlight
                         break;
                     }
                 }
-                if (nextPrayerIndex === -1 && prayersDataForDisplay.length > 0) {
-                    nextPrayerIndex = 0; 
-                }
+                // If all prayers for today have passed, highlightIndex will remain -1,
+                // meaning no prayer will be highlighted, which is the desired behavior.
             } else {
-                nextPrayerIndex = -1; // No highlight or countdown for past/future dates
+                // For past or future selected dates, no highlighting should occur.
+                highlightIndex = -1; 
             }
+            // --- END FIX ---
 
             // Render prayer times initially with static times
             prayersDataForDisplay.forEach((prayer, index) => {
                 const prayerRow = document.createElement('div');
                 prayerRow.className = 'prayer-row';
 
-                if (selectedDate.toDateString() === new Date().toDateString() && index === nextPrayerIndex) {
+                // Apply highlighting based on the separate highlightIndex
+                if (index === highlightIndex) {
                     prayerRow.classList.add('highlighted-prayer');
                 }
 
@@ -907,6 +911,7 @@
                 }
             
             if (nextPrayerIndex === -1 && prayersArrayForCountdown.length > 0) {
+                // All prayers for today have passed. Set nextPrayerIndex to 0 for tomorrow's Fajr countdown.
                 nextPrayerIndex = 0; 
                 const nextDayFajr = new Date(prayersArrayForCountdown[0].date);
                 nextDayFajr.setDate(nextDayFajr.getDate() + 1);
