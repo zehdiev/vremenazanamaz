@@ -312,7 +312,7 @@
             "2024-06-17": "Курбан Байрам - Ден 2",
             "2024-06-18": "Курбан Байрам - Ден 3",
             "2024-06-19": "Курбан Байрам - Ден 4",
-            "2024-07-07": "Нова Хиджри година (1446 г. по Хиджра)",
+            "2024-07-07": "Нова Хиджri година (1446 г. по Хиджра)",
             "2024-07-16": "Ашура",
             "2024-09-14": "Мевлид Кандилли",
 
@@ -520,7 +520,11 @@
 
         // Function to format duration (for countdown mode in list)
         function formatDuration(milliseconds) {
-            if (milliseconds < 0) return 'минало';
+            let prefix = '';
+            if (milliseconds < 0) {
+                prefix = '-';
+                milliseconds = Math.abs(milliseconds); // Use absolute value for calculation
+            }
 
             const totalSeconds = Math.floor(milliseconds / 1000);
             const hours = Math.floor(totalSeconds / 3600);
@@ -529,28 +533,14 @@
 
             let timeParts = [];
             
-            if (hours > 0) {
-                timeParts.push(`${hours}ч`);
-            }
-            // Add minutes if minutes are > 0 OR if hours are > 0 (to display "Xч 00м Yс")
-            if (minutes > 0 || hours > 0) {
-                 if (hours > 0) { // If hours are present, pad minutes
-                    timeParts.push(`${String(minutes).padStart(2, '0')}м`);
-                 } else { // If no hours, minutes is the leading unit, no padding
-                    timeParts.push(`${minutes}м`);
-                 }
-            }
-            // Always add seconds, padded to two digits.
+            // Always include hours, minutes, and seconds, padded to two digits.
+            timeParts.push(`${String(hours).padStart(2, '0')}ч`);
+            timeParts.push(`${String(minutes).padStart(2, '0')}м`);
             timeParts.push(`${String(seconds).padStart(2, '0')}с`);
 
             let timeDisplay = timeParts.join(' ');
             
-            // Handle the edge case of exactly 0 seconds remaining
-            if (totalSeconds === 0) {
-                return '00с'; // No prefix, just "00с"
-            }
-
-            return timeDisplay.trim(); 
+            return prefix + timeDisplay.trim(); 
         }
 
 
@@ -562,7 +552,7 @@
             return `${day}.${month}.${year}`;
         }
 
-        // Function to format date to紝-MM-DD for input type="date" and API calls
+        // Function to format date to YYYY-MM-DD for input type="date" and API calls
         function formatDateForInputAndLookup(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -845,8 +835,8 @@
                 if (prayersArrayForCountdown[i].date > now) {
                     nextPrayerIndex = i;
                     break;
+                    }
                 }
-            }
             
             if (nextPrayerIndex === -1 && prayersArrayForCountdown.length > 0) {
                 nextPrayerIndex = 0; 
@@ -1010,7 +1000,17 @@
 
             // Event listener for Location button to open city selection modal
             locationSelectBtn.addEventListener('click', openCitySelectionModal);
-            closeCityModalBtn.addEventListener('click', closeCityModalBtn);
+            
+            // Fixed event listener for closing city modal using the close button
+            closeCityModalBtn.addEventListener('click', closeCitySelectionModal);
+
+            // Event listener for closing city modal by clicking on the overlay
+            citySelectionModal.addEventListener('click', (event) => {
+                // Check if the click occurred directly on the modal-overlay (not its content)
+                if (event.target === citySelectionModal) {
+                    closeCitySelectionModal();
+                }
+            });
 
             // Event listener for the NEW countdown toggle button
             countdownToggleButton.addEventListener('click', () => {
