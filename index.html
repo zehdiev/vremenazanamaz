@@ -695,7 +695,11 @@
                     sacredDayInfoEl.classList.add('hidden');
                 }
 
-                displayPrayerTimes(); // Call display to render and manage countdowns
+                // --- START FIX: Add a small timeout to defer display update ---
+                setTimeout(() => {
+                    displayPrayerTimes(); // Call display to render and manage countdowns
+                }, 0); // Defer to the next event loop tick for better iOS rendering reliability
+                // --- END FIX ---
                 
             } catch (error) {
                 console.error('Error fetching prayer times:', error);
