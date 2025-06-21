@@ -133,15 +133,9 @@
 
         /* Hidden input for date selection */
         .hidden-date-input {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-            /* START FIX: Prevent it from capturing clicks */
-            pointer-events: none; 
+            /* Old styles that made it overlap were: position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; pointer-events: none; */
+            /* START FIX: Make it truly hidden but programmatically accessible */
+            display: none; 
             /* END FIX */
         }
         
@@ -260,6 +254,9 @@
             <!-- Date Button (emoji only) -->
             <div class="relative">
                 <button id="date-picker-btn" class="action-button">🗓️</button>
+                <!-- Moved hidden-date-input outside the button for better clarity, 
+                     though display:none; achieves the same in terms of non-interaction.
+                     The 'relative' div is still needed for any positioning within it later. -->
                 <input type="date" id="hidden-date-input" class="hidden-date-input">
             </div>
 
