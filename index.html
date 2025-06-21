@@ -21,6 +21,8 @@
             margin: 0;
             padding: 0.5rem; /* Reduced overall body padding */
             box-sizing: border-box;
+            /* Prevent scrolling when side menu is open */
+            overflow: hidden; /* This will be toggled by JS */
         }
         .container {
             background-color: #2d3748; /* Slightly lighter dark background for the card */
@@ -33,6 +35,10 @@
             flex-direction: column;
             gap: 0.75rem; /* Further reduced gap for better fit */
             box-sizing: border-box; /* Ensure padding is included in element's total width and height */
+            position: relative; /* Needed for z-index */
+            z-index: 1; /* Ensure container is below overlay */
+            height: calc(100vh - 1rem); /* Make it fill height, accounting for body padding */
+            overflow-y: auto; /* Allow scrolling inside container if content overflows */
         }
         /* Responsive max-width for larger screens */
         @media (min-width: 768px) { /* md breakpoint */
@@ -122,27 +128,89 @@
             outline: none;
             box-shadow: 0 0 0 3px rgba(104, 211, 145, 0.5);
         }
-        /* Specific style for adjustment button that contains text */
-        #open-adjustment-modal-btn {
-            padding: 0.5rem; /* Adjust padding for emoji only */
-            width: 3rem; /* Fixed width for emoji only */
-            font-size: 1.5rem; /* Larger font for emoji only */
-            gap: 0; /* No gap as there's no text */
+
+        /* Styles for hamburger menu */
+        #hamburger-menu-btn {
+            position: fixed; /* Keep it fixed on screen */
+            top: 1rem;
+            left: 1rem;
+            z-index: 101; /* Ensure it's above everything else */
+            width: 3rem; /* Standard button size */
+            height: 3rem;
         }
 
-
-        /* Hidden input for date selection */
-        .hidden-date-input {
-            position: absolute;
+        /* Side Menu Styles */
+        .side-menu {
+            position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
+            height: 100vh; /* Full viewport height */
+            width: 280px; /* Width for the menu */
+            background-color: #2d3748; /* Same as container, or slightly darker */
+            z-index: 100; /* Higher than modal overlay */
+            transform: translateX(-100%); /* Initially hidden off-screen */
+            transition: transform 0.3s ease-out; /* Smooth slide transition */
+            padding: 1.5rem;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5); /* Shadow for depth */
+            display: flex;
+            flex-direction: column;
+            gap: 1rem; /* Space between menu items */
+            box-sizing: border-box;
+            overflow-y: auto; /* Enable scrolling if menu content is too long */
         }
-        
-        /* Modal Styles */
+        .side-menu.open {
+            transform: translateX(0); /* Slide into view */
+        }
+
+        /* Overlay for when menu is open */
+        #menu-overlay {
+            position: fixed;
+            inset: 0; /* Cover the whole viewport */
+            background-color: rgba(0, 0, 0, 0.75); /* Dark translucent background */
+            z-index: 90; /* Between content and menu */
+            display: none; /* Initially hidden */
+        }
+        #menu-overlay.open {
+            display: block; /* Show when menu is open */
+        }
+
+        /* Adjustments for the buttons inside the menu to fit the new text + emoji layout */
+        .side-menu .action-button {
+            width: 100%; /* Make them full width within the menu */
+            justify-content: flex-start; /* Align text to start */
+            padding: 0.75rem 1rem; /* Larger padding for better touch targets */
+            font-size: 1rem; /* Smaller font for text buttons */
+            height: auto; /* Auto height for text buttons */
+            gap: 0.75rem; /* Space between emoji and text */
+        }
+        .side-menu .action-button > span { /* For the emojis inside text buttons */
+            font-size: 1.5rem; /* Keep emoji size consistent */
+        }
+
+        /* Close button in menu */
+        #close-side-menu-btn {
+            background: none;
+            border: none;
+            color: #e2e8f0;
+            font-size: 2rem;
+            padding: 0;
+            cursor: pointer;
+            align-self: flex-end; /* Align to the right within the flex column */
+            margin-bottom: 1rem;
+            width: auto; /* Don't force fixed width */
+            height: auto; /* Don't force fixed height */
+        }
+        #close-side-menu-btn:hover {
+            color: #68d391;
+            background-color: transparent; /* No background on hover */
+        }
+
+        /* Hidden input for date selection - truly hidden */
+        #hidden-date-input {
+            display: none; 
+        }
+
+        /* Modal Styles (kept the same, but higher z-index for hamburger-related modals) */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -153,23 +221,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 50;
-            padding: 0.5rem; /* Reduced padding for modals */
-            backdrop-filter: blur(5px); /* Optional: blur background */
+            z-index: 110; /* Higher than side menu and its overlay */
+            padding: 0.5rem;
+            backdrop-filter: blur(5px);
         }
         .modal-content {
             background-color: #2d3748;
             border-radius: 1.5rem;
-            padding: 1.5rem; /* Reduced padding */
+            padding: 1.5rem;
             width: 100%;
             max-width: 400px;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             color: #e2e8f0;
-            max-height: 95vh; /* Allow slightly more height for modal if needed */
-            overflow-y: auto; /* Enable scrolling for long lists inside modal */
+            max-height: 95vh;
+            overflow-y: auto;
         }
         .city-list-item {
-            padding: 0.6rem 1rem; /* Reduced padding */
+            padding: 0.6rem 1rem;
             border-bottom: 1px solid #4a5568;
             cursor: pointer;
             transition: background-color 0.15s ease-in-out;
@@ -186,30 +254,59 @@
             border-bottom: none;
         }
 
-        /* Styles for the new adjustment modal inputs */
         .adjustment-input-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem; /* Reduced margin */
+            margin-bottom: 0.5rem;
         }
         .adjustment-input-row label {
-            font-size: 1rem; /* Slightly smaller */
+            font-size: 1rem;
             font-weight: 500;
             color: #cbd5e0;
         }
         .adjustment-input-row input[type="number"] {
-            width: 70px; /* Reduced width */
+            width: 70px;
             text-align: center;
             background-color: #4a5568;
             border: 1px solid #68d391;
             color: #e2e8f0;
-            border-radius: 0.375rem; /* rounded-md */
-            padding: 0.25rem 0.4rem; /* Reduced padding */
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.4rem;
         }
     </style>
 </head>
 <body class="antialiased">
+    <!-- Hamburger Menu Button -->
+    <button id="hamburger-menu-btn" class="action-button">☰</button>
+
+    <!-- Side Menu -->
+    <div id="side-menu" class="side-menu">
+        <button id="close-side-menu-btn" class="action-button">✖</button>
+        
+        <button id="location-select-btn" class="action-button">
+            <span>📍</span> Изберете град
+        </button>
+        <button id="countdown-toggle-btn" class="action-button">
+            <span>⌛</span> Режим Отброяване
+        </button>
+        <div class="relative w-full">
+            <button id="date-picker-btn" class="action-button">
+                <span>🗓️</span> Изберете Дата
+            </button>
+            <input type="date" id="hidden-date-input">
+        </div>
+        <button id="language-toggle-btn" class="action-button">
+            <span>💬</span> Смени Езика
+        </button>
+        <button id="open-adjustment-modal-btn" class="action-button">
+            <span>⚙️</span> Корекции
+        </button>
+    </div>
+
+    <!-- Overlay for when the menu is open -->
+    <div id="menu-overlay"></div>
+
     <div class="container">
         <!-- Top row: Gregorian Date & Day + Current Time (left), Hijri Date & Sacred Day + Location (right) -->
         <div class="flex justify-between items-start text-sm md:text-base">
@@ -246,26 +343,7 @@
             Възникна грешка при зареждане на времената за намаз. Моля, опитайте отново по-късно.
         </div>
 
-        <!-- New bottom row for action buttons -->
-        <div class="flex justify-center md:justify-around items-center mt-4 gap-3"> <!-- Reduced margin-top and gap -->
-            <!-- Location Button (emoji only, opens modal) -->
-            <button id="location-select-btn" class="action-button">📍</button>
-
-            <!-- NEW Countdown Toggle Button -->
-            <button id="countdown-toggle-btn" class="action-button">⌛</button>
-
-            <!-- Date Button (emoji only) -->
-            <div class="relative">
-                <button id="date-picker-btn" class="action-button">🗓️</button>
-                <input type="date" id="hidden-date-input" class="hidden-date-input">
-            </div>
-
-            <!-- Language Toggle Button -->
-            <button id="language-toggle-btn" class="action-button">💬</button>
-
-            <!-- Adjustment Button -->
-            <button id="open-adjustment-modal-btn" class="action-button">⚙️</button>
-        </div>
+        <!-- The bottom row of action buttons is now removed as they are in the hamburger menu -->
     </div>
 
     <!-- City Selection Modal -->
@@ -352,14 +430,28 @@
         const prayerTimesListEl = document.getElementById('prayer-times-list');
         const loadingIndicatorEl = document.getElementById('loading-indicator');
         const errorMessageEl = document.getElementById('error-message');
-        const locationSelectBtn = document.getElementById('location-select-btn'); 
+        // const locationSelectBtn = document.getElementById('location-select-btn'); // Now accessed via hamburger menu
         const selectedCityDisplay = document.getElementById('selected-city-display'); 
-        const datePickerBtn = document.getElementById('date-picker-btn'); 
+        // const datePickerBtn = document.getElementById('date-picker-btn'); // Now accessed via hamburger menu
         const hiddenDateInput = document.getElementById('hidden-date-input'); 
-        const languageToggleBtn = document.getElementById('language-toggle-btn'); 
-        const openAdjustmentModalBtn = document.getElementById('open-adjustment-modal-btn'); 
-        const countdownToggleButton = document.getElementById('countdown-toggle-btn'); 
+        // const languageToggleBtn = document.getElementById('language-toggle-btn'); // Now accessed via hamburger menu
+        // const openAdjustmentModalBtn = document.getElementById('open-adjustment-modal-btn'); // Now accessed via hamburger menu
+        // const countdownToggleButton = document.getElementById('countdown-toggle-btn'); // Now accessed via hamburger menu
         const returnTodayBtn = document.getElementById('return-today-btn'); // New button element
+
+        // New DOM Elements for Hamburger Menu
+        const hamburgerMenuBtn = document.getElementById('hamburger-menu-btn');
+        const sideMenu = document.getElementById('side-menu');
+        const closeSideMenuBtn = document.getElementById('close-side-menu-btn');
+        const menuOverlay = document.getElementById('menu-overlay');
+
+        // References to buttons now inside the side menu
+        const locationSelectBtn = document.getElementById('location-select-btn');
+        const countdownToggleButton = document.getElementById('countdown-toggle-btn');
+        const datePickerBtn = document.getElementById('date-picker-btn');
+        const languageToggleBtn = document.getElementById('language-toggle-btn');
+        const openAdjustmentModalBtn = document.getElementById('open-adjustment-modal-btn');
+
 
         // Modals and their elements
         const citySelectionModal = document.getElementById('city-selection-modal'); 
@@ -509,6 +601,7 @@
                     selectedCity = city;
                     selectedCityDisplay.textContent = selectedCity; // Update display text for selected city
                     closeCitySelectionModal();
+                    closeSideMenu(); // Close side menu after city selection
                     fetchPrayerTimes(); // Re-fetch times for the new city
                     saveSettings(); // Automatically save city change
                 });
@@ -745,8 +838,8 @@
             // Sort prayers by time to ensure correct order
             prayersDataForDisplay.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-            // --- START FIX: Separate highlighting logic from main countdown nextPrayerIndex ---
-            let highlightIndex = -1; // Use a separate variable for highlighting
+            // Use a separate variable for highlighting
+            let highlightIndex = -1; 
 
             if (selectedDate.toDateString() === new Date().toDateString()) {
                 // Only highlight if it's today's date
@@ -762,7 +855,6 @@
                 // For past or future selected dates, no highlighting should occur.
                 highlightIndex = -1; 
             }
-            // --- END FIX ---
 
             // Render prayer times initially with static times
             prayersDataForDisplay.forEach((prayer, index) => {
@@ -979,6 +1071,7 @@
         function closeAdjustmentModal() {
             adjustmentModal.classList.add('hidden');
             errorMessageEl.classList.add('hidden'); // Clear error message when closing modal
+            closeSideMenu(); // Close side menu after modal interaction
         }
 
         function saveAllAdjustments() {
@@ -1016,6 +1109,19 @@
 
         function closeCitySelectionModal() {
             citySelectionModal.classList.add('hidden');
+        }
+
+        // --- Side Menu Functions ---
+        function openSideMenu() {
+            sideMenu.classList.add('open');
+            menuOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden'; // Prevent body scrolling
+        }
+
+        function closeSideMenu() {
+            sideMenu.classList.remove('open');
+            menuOverlay.classList.remove('open');
+            document.body.style.overflow = ''; // Restore body scrolling
         }
 
         // --- Local Storage Functions ---
@@ -1069,11 +1175,18 @@
             updateClock(); // Start current time display
             fetchPrayerTimes(); // Initial fetch of prayer times using loaded settings
 
-            // Event listener for Location button to open city selection modal
+            // Event listener for Hamburger button to open side menu
+            hamburgerMenuBtn.addEventListener('click', openSideMenu);
+            // Event listener for Close button inside side menu
+            closeSideMenuBtn.addEventListener('click', closeSideMenu);
+            // Event listener for overlay to close side menu
+            menuOverlay.addEventListener('click', closeSideMenu);
+
+            // Event listener for Location button to open city selection modal (now inside side menu)
             locationSelectBtn.addEventListener('click', openCitySelectionModal);
             
             // Fixed event listener for closing city modal using the close button
-            closeCityModalBtn.addEventListener('click', closeCitySelectionModal);
+            closeCityModalBtn.addEventListener('click', closeCityModalBtn);
 
             // Event listener for closing city modal by clicking on the overlay
             citySelectionModal.addEventListener('click', (event) => {
@@ -1083,34 +1196,38 @@
                 }
             });
 
-            // Event listener for the NEW countdown toggle button
+            // Event listener for the NEW countdown toggle button (now inside side menu)
             countdownToggleButton.addEventListener('click', () => {
                 isCountdownMode = !isCountdownMode;
                 saveSettings(); // Save the new mode (though not persistent for isCountdownMode)
                 displayPrayerTimes(); // Re-display prayer times with the new mode
+                // No need to close side menu here, as it doesn't open another modal
             });
 
-            // Event listener for the new date picker button to trigger the hidden input
-            datePickerBtn.addEventListener('click', () => {
+            // Event listener for the new date picker button to trigger the hidden input (now inside side menu)
+            datePickerBtn.addEventListener('click', (event) => { // Added event parameter
+                event.stopPropagation(); // Stop propagation to prevent unintended interactions
                 hiddenDateInput.showPicker(); // Opens the native date picker
+                // The menu will not close automatically here, user needs to close it after picking date
             });
 
             // Event listener for hidden date input change
             hiddenDateInput.addEventListener('change', (event) => {
                 selectedDate = new Date(event.target.value);
                 fetchPrayerTimes(); // Re-fetch times for the newly selected date
+                closeSideMenu(); // Close side menu after date selection
             });
 
-           ['click', 'touchend'].forEach(eventType => {
-    languageToggleBtn.addEventListener(eventType, (event) => {
-        event.stopPropagation();
-        isClassicalNamesActive = !isClassicalNamesActive;
-        saveSettings();
-        fetchPrayerTimes();
-    });
-});
+            // Event listener for the language toggle button (now inside side menu)
+            languageToggleBtn.addEventListener('click', (event) => { // Added event parameter
+                event.stopPropagation(); // Stop propagation to prevent unintended interactions
+                isClassicalNamesActive = !isClassicalNamesActive;
+                saveSettings(); // Automatically save language preference
+                fetchPrayerTimes(); // Re-fetch/re-display to apply new names
+                // No need to close side menu here, as it doesn't open another modal
+            });
             
-            // Event listeners for the global adjustment modal
+            // Event listeners for the global adjustment modal (now inside side menu)
             openAdjustmentModalBtn.addEventListener('click', openAdjustmentModal);
             cancelAdjustmentBtn.addEventListener('click', closeAdjustmentModal);
             saveAllAdjustmentsBtn.addEventListener('click', saveAllAdjustments); 
