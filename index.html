@@ -695,11 +695,10 @@
                     sacredDayInfoEl.classList.add('hidden');
                 }
 
-                // --- START FIX: Add a small timeout to defer display update ---
+                // Add a small timeout to defer display update for better iOS rendering reliability
                 setTimeout(() => {
                     displayPrayerTimes(); // Call display to render and manage countdowns
-                }, 0); // Defer to the next event loop tick for better iOS rendering reliability
-                // --- END FIX ---
+                }, 0);
                 
             } catch (error) {
                 console.error('Error fetching prayer times:', error);
@@ -749,8 +748,8 @@
             // Sort prayers by time to ensure correct order
             prayersDataForDisplay.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-            // --- START FIX: Separate highlighting logic from main countdown nextPrayerIndex ---
-            let highlightIndex = -1; // Use a separate variable for highlighting
+            // Use a separate variable for highlighting
+            let highlightIndex = -1; 
 
             if (selectedDate.toDateString() === new Date().toDateString()) {
                 // Only highlight if it's today's date
@@ -766,7 +765,6 @@
                 // For past or future selected dates, no highlighting should occur.
                 highlightIndex = -1; 
             }
-            // --- END FIX ---
 
             // Render prayer times initially with static times
             prayersDataForDisplay.forEach((prayer, index) => {
@@ -1095,7 +1093,8 @@
             });
 
             // Event listener for the new date picker button to trigger the hidden input
-            datePickerBtn.addEventListener('click', () => {
+            datePickerBtn.addEventListener('click', (event) => { // Added event parameter
+                event.stopPropagation(); // Stop propagation to prevent unintended interactions
                 hiddenDateInput.showPicker(); // Opens the native date picker
             });
 
@@ -1106,7 +1105,8 @@
             });
 
             // Event listener for the language toggle button
-            languageToggleBtn.addEventListener('click', () => {
+            languageToggleBtn.addEventListener('click', (event) => { // Added event parameter
+                event.stopPropagation(); // Stop propagation to prevent unintended interactions
                 isClassicalNamesActive = !isClassicalNamesActive;
                 saveSettings(); // Automatically save language preference
                 fetchPrayerTimes(); // Re-fetch/re-display to apply new names
