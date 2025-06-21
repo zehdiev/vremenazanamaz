@@ -140,6 +140,9 @@
             height: 100%;
             opacity: 0;
             cursor: pointer;
+            /* START FIX: Prevent it from capturing clicks */
+            pointer-events: none; 
+            /* END FIX */
         }
         
         /* Modal Styles */
