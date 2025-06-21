@@ -17,21 +17,24 @@
             display: flex;
             justify-content: center;
             align-items: flex-start; /* Изравнява съдържанието в горната част */
-            min-height: 100vh;
+            height: auto; /* Височината се определя от съдържанието */
+            min-height: 100vh; /* Минимална височина на екрана */
             margin: 0;
-            padding: 0; /* Премахнат padding от body, управлява се от app-wrapper */
+            padding: 0.5rem; /* Възстановен padding на body */
             box-sizing: border-box;
+            overflow-x: hidden; /* Предотвратява хоризонтално превъртане на цялото тяло */
+            touch-action: pan-y; /* Позволява вертикално превъртане, но указва хоризонталното да се обработва от JS */
         }
 
         /* Обвиващ елемент за цялото приложение, позволяващ "избутване" на менюто */
         #app-wrapper {
             display: flex;
             width: 100%;
-            min-height: 100vh; /* Поне цялата височина на екрана */
+            height: auto; /* Височината се определя от съдържанието */
             position: relative;
             box-sizing: border-box;
             /* Предотвратява хоризонтално превъртане, ако основното съдържание е избутано извън екрана */
-            overflow-x: hidden;
+            overflow: hidden; /* Скрий всяко преливане от вътрешни елементи, включително при трансформации */
         }
 
         /* Контейнер за основното съдържание на приложението */
@@ -40,7 +43,7 @@
             width: 100%; /* Запълва наличната хоризонтална ширина */
             transition: transform 0.3s ease-out; /* Плавен преход за избутване */
             transform: translateX(0); /* Начално състояние: не е избутан */
-            padding: 0.5rem; /* Вътрешен padding за основния контейнер */
+            padding: 0; /* Премахнат padding от wrapper, управлява се от container */
             box-sizing: border-box;
             display: flex; /* За да може хамбургер бутонът да се позиционира */
             flex-direction: column; /* За да може съдържанието вътре да е подредено */
@@ -58,7 +61,7 @@
             flex-direction: column;
             gap: 0.75rem; /* Намалена празнина за по-добро прилягане */
             box-sizing: border-box;
-            /* Премахнати фиксирана височина и overflow-y, за да се оразмерява естествено */
+            height: auto; /* Височината се определя от съдържанието */
         }
         /* Адаптивна максимална ширина за по-големи екрани */
         @media (min-width: 768px) { /* md breakpoint */
@@ -150,10 +153,10 @@
 
         /* Стилове за бутона на хамбургер менюто */
         #hamburger-menu-btn {
-            position: absolute; /* Позиционира се спрямо main-content-wrapper */
+            position: fixed; /* Позиционира се спрямо viewport-а */
             top: 1rem;
             left: 1rem;
-            z-index: 10; /* Уверете се, че е над съдържанието */
+            z-index: 101; /* Уверете се, че е над всичко останало */
         }
 
         /* Стилове за страничното меню */
@@ -315,7 +318,7 @@
 
         <!-- Основен контейнер за съдържанието, който ще бъде избутван -->
         <div id="main-content-wrapper">
-            <!-- Хамбургер бутон - вече не е фиксиран, а е част от съдържанието -->
+            <!-- Хамбургер бутон - вече е фиксиран, за да стои извън основния блок -->
             <button id="hamburger-menu-btn" class="action-button">☰</button>
 
             <div class="container">
@@ -1123,14 +1126,96 @@
         function openSideMenu() {
             sideMenu.classList.add('open');
             mainContentWrapper.style.transform = `translateX(${sideMenu.offsetWidth}px)`; // Избутване на основното съдържание
-            // document.body.style.overflow = 'hidden'; // Предотвратява превъртане на body - вече не е необходимо, но оставено за справка
+            document.body.style.overflow = 'hidden'; // Предотвратява превъртане на body
         }
 
         function closeSideMenu() {
             sideMenu.classList.remove('open');
             mainContentWrapper.style.transform = `translateX(0)`; // Връщане на основното съдържание
-            // document.body.style.overflow = ''; // Възстановява превъртането на body - вече не е необходимо, но оставено за справка
+            document.body.style.overflow = ''; // Възстановява превъртането на body
         }
+
+        // --- Swipe Logic Variables ---
+        let startX = 0;
+        let currentX = 0;
+        let diffX = 0;
+        let isSwiping = false;
+        const swipeThreshold = 50; // pixels to swipe to trigger action
+
+        // --- Event Listeners for Swipe ---
+        // For opening the menu (swipe right on main content)
+        mainContentWrapper.addEventListener('touchstart', (e) => {
+            if (sideMenu.classList.contains('open')) return; // Only process if menu is closed
+            startX = e.touches[0].clientX;
+            isSwiping = true;
+            mainContentWrapper.style.transition = 'none'; // Disable transition for smooth drag
+            sideMenu.style.transition = 'none';
+        });
+
+        mainContentWrapper.addEventListener('touchmove', (e) => {
+            if (!isSwiping || sideMenu.classList.contains('open')) return;
+            currentX = e.touches[0].clientX;
+            diffX = currentX - startX;
+
+            if (diffX > 0) { // Swiping right
+                e.preventDefault(); // Prevent page scrolling
+                const transformX = Math.min(diffX, sideMenu.offsetWidth);
+                mainContentWrapper.style.transform = `translateX(${transformX}px)`;
+                sideMenu.style.transform = `translateX(${transformX - sideMenu.offsetWidth}px)`;
+            }
+        });
+
+        mainContentWrapper.addEventListener('touchend', (e) => {
+            if (!isSwiping || sideMenu.classList.contains('open')) return;
+            isSwiping = false;
+            mainContentWrapper.style.transition = ''; // Re-enable transition
+            sideMenu.style.transition = '';
+
+            if (diffX > swipeThreshold) { // If swiped enough to the right
+                openSideMenu();
+            } else { // Snap back to closed
+                mainContentWrapper.style.transform = `translateX(0)`;
+                sideMenu.style.transform = `translateX(-${sideMenu.offsetWidth}px)`;
+            }
+            diffX = 0; // Reset diffX
+        });
+
+        // For closing the menu (swipe left on side menu)
+        sideMenu.addEventListener('touchstart', (e) => {
+            if (!sideMenu.classList.contains('open')) return; // Only process if menu is open
+            startX = e.touches[0].clientX;
+            isSwiping = true;
+            mainContentWrapper.style.transition = 'none'; // Disable transition for smooth drag
+            sideMenu.style.transition = 'none';
+        });
+
+        sideMenu.addEventListener('touchmove', (e) => {
+            if (!isSwiping || !sideMenu.classList.contains('open')) return;
+            currentX = e.touches[0].clientX;
+            diffX = currentX - startX;
+
+            if (diffX < 0) { // Swiping left
+                e.preventDefault(); // Prevent page scrolling
+                const transformX = Math.max(diffX, -sideMenu.offsetWidth);
+                mainContentWrapper.style.transform = `translateX(${sideMenu.offsetWidth + transformX}px)`;
+                sideMenu.style.transform = `translateX(${transformX}px)`;
+            }
+        });
+
+        sideMenu.addEventListener('touchend', (e) => {
+            if (!isSwiping || !sideMenu.classList.contains('open')) return;
+            isSwiping = false;
+            mainContentWrapper.style.transition = ''; // Re-enable transition
+            sideMenu.style.transition = '';
+
+            if (diffX < -swipeThreshold) { // If swiped enough to the left
+                closeSideMenu();
+            } else { // Snap back to open
+                mainContentWrapper.style.transform = `translateX(${sideMenu.offsetWidth}px)`;
+                sideMenu.style.transform = `translateX(0)`;
+            }
+            diffX = 0; // Reset diffX
+        });
 
         // --- Функции за локално хранилище ---
         function saveSettings() {
@@ -1187,9 +1272,7 @@
             hamburgerMenuBtn.addEventListener('click', openSideMenu);
             // Слушател на събитие за бутона Затвори вътре в страничното меню
             closeSideMenuBtn.addEventListener('click', closeSideMenu);
-            // Слушател на събитие за overlay за затваряне на страничното меню (вече не е необходим, тъй като няма overlay)
-            // menuOverlay.addEventListener('click', closeSideMenu); // Изключено
-
+            
             // Слушател на събитие за бутона за местоположение за отваряне на модалния прозорец за избор на град (вече вътре в страничното меню)
             locationSelectBtn.addEventListener('click', openCitySelectionModal);
             
@@ -1209,14 +1292,12 @@
                 isCountdownMode = !isCountdownMode;
                 saveSettings(); // Запазване на новия режим (въпреки че не е постоянен за isCountdownMode)
                 displayPrayerTimes(); // Показване отново на времената за намаз с новия режим
-                // Няма нужда да затваряте страничното меню тук, тъй като то не отваря друг модал
+                closeSideMenu(); // Затваряне на страничното меню след изпълнение на действието
             });
 
             // Слушател на събитие за новия бутон за избор на дата, за да задейства скрития вход (вече вътре в страничното меню)
             datePickerBtn.addEventListener('click', (event) => { // Добавен параметър event
-                // event.stopPropagation(); // Спиране на разпространението, за да се предотвратят нежелани взаимодействия - вече не е необходимо, тъй като display:none
                 hiddenDateInput.showPicker(); // Отваряне на нативния избор на дата
-                // Менюто няма да се затвори автоматично тук, потребителят трябва да го затвори след избор на дата
             });
 
             // Слушател на събитие за промяна на скрития вход за дата
@@ -1228,11 +1309,10 @@
 
             // Слушател на събитие за бутона за превключване на езика (вече вътре в страничното меню)
             languageToggleBtn.addEventListener('click', (event) => { // Добавен параметър event
-                // event.stopPropagation(); // Спиране на разпространението, за да се предотвратят нежелани взаимодействия - вече не е необходимо, тъй като display:none
                 isClassicalNamesActive = !isClassicalNamesActive;
                 saveSettings(); // Автоматично запазване на предпочитанията за език
                 fetchPrayerTimes(); // Извличане/показване отново за прилагане на новите имена
-                // Няма нужда да затваряте страничното меню тук, тъй като то не отваря друг модал
+                closeSideMenu(); // Затваряне на страничното меню след изпълнение на действието
             });
             
             // Слушатели на събития за глобалния модален прозорец за корекции (вече вътре в страничното меню)
