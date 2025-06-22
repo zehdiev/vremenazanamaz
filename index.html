@@ -4,66 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Времена за Намаз</title>
-    <!-- Икона за уебсайт (favicon) актуализирана, за да препраща към статичен файл за по-добра съвместимост на хостинг платформи като GitHub Pages. -->
-    <!-- Моля, уверете се, че имате файл 'favicon.png' в основната директория на вашия проект. -->
+    <!-- Web icon (favicon) updated to reference a static file for better compatibility on hosting platforms like GitHub Pages. -->
+    <!-- Please ensure you have a 'favicon.png' file in the root directory of your project. -->
     <link rel="icon" href="/favicon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #1a202c; /* Тъмен фон */
-            color: #e2e8f0; /* Светъл цвят на текста */
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text color */
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Изравнява съдържанието в горната част */
-            height: auto; /* Височината се определя от съдържанието */
-            min-height: 100vh; /* Минимална височина на екрана */
+            align-items: center;
+            min-height: 100vh;
             margin: 0;
-            padding: 0.5rem; /* Възстановен padding на body */
+            padding: 0.5rem; /* Reduced overall body padding */
             box-sizing: border-box;
-            overflow-x: hidden; /* Предотвратява хоризонтално превъртане на цялото тяло */
-            touch-action: pan-y; /* Позволява вертикално превъртане, но указва хоризонталното да се обработва от JS */
         }
-
-        /* Обвиващ елемент за цялото приложение, позволяващ "избутване" на менюто */
-        #app-wrapper {
-            display: flex;
-            width: 100%;
-            height: auto; /* Височината се определя от съдържанието */
-            position: relative;
-            box-sizing: border-box;
-            /* Предотвратява хоризонтално превъртане, ако основното съдържание е избутано извън екрана */
-            overflow: hidden; /* Скрий всяко преливане от вътрешни елементи, включително при трансформации */
-        }
-
-        /* Контейнер за основното съдържание на приложението */
-        #main-content-wrapper {
-            flex-grow: 1; /* Заема цялото останало пространство */
-            width: 100%; /* Запълва наличната хоризонтална ширина */
-            transition: transform 0.3s ease-out; /* Плавен преход за избутване */
-            transform: translateX(0); /* Начално състояние: не е избутан */
-            padding: 0; /* Премахнат padding от wrapper, управлява се от container */
-            box-sizing: border-box;
-            display: flex; /* За да може хамбургер бутонът да се позиционира */
-            flex-direction: column; /* За да може съдържанието вътре да е подредено */
-            align-items: center; /* Центрира контейнера */
-        }
-
         .container {
-            background-color: #2d3748; /* Леко по-тъмен фон за картата */
+            background-color: #2d3748; /* Slightly lighter dark background for the card */
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-radius: 1.5rem; /* По-заоблени ъгли */
-            padding: 1rem; /* Намален padding на контейнера */
+            border-radius: 1.5rem; /* More rounded corners */
+            padding: 1rem; /* Further reduced container padding */
             width: 100%;
-            max-width: 480px; /* Максимална ширина по подразбиране за мобилни устройства */
+            max-width: 480px; /* Default max width for mobile */
             display: flex;
             flex-direction: column;
-            gap: 0.75rem; /* Намалена празнина за по-добро прилягане */
-            box-sizing: border-box;
-            height: auto; /* Височината се определя от съдържанието */
+            gap: 0.75rem; /* Further reduced gap for better fit */
+            box-sizing: border-box; /* Ensure padding is included in element's total width and height */
         }
-        /* Адаптивна максимална ширина за по-големи екрани */
+        /* Responsive max-width for larger screens */
         @media (min-width: 768px) { /* md breakpoint */
             .container {
                 max-width: 640px; /* md:max-w-xl */
@@ -75,42 +46,43 @@
             }
         }
 
-        /* Адаптивни размери на текста за обратно броене */
+        /* Responsive text sizes for countdown */
         #countdown {
             font-weight: 700;
-            color: #a0aec0; /* По-светло сиво за време */
+            color: #a0aec0; /* Lighter grey for time */
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            /* Tailwind classes below will handle responsiveness */
         }
 
         .countdown-text {
-            font-size: 1.1rem; /* Леко по-малък за по-плътно прилягане */
+            font-size: 1.1rem; /* Slightly smaller for tighter fit */
             font-weight: 500;
             color: #cbd5e0;
-            margin-top: 0.25rem; /* Намален margin */
+            margin-top: 0.25rem; /* Reduced margin */
         }
         .prayer-row {
             display: flex;
-            justify-content: space-between; /* Държи името вляво, а времето/бутона вдясно */
+            justify-content: space-between; /* Keeps name left, and time/button group right */
             align-items: center;
-            padding: 0.5rem 0; /* Намален padding */
-            border-bottom: 1px solid #4a5568; /* Деликатен разделител */
+            padding: 0.5rem 0; /* Reduced padding */
+            border-bottom: 1px solid #4a5568; /* Subtle separator */
         }
         .prayer-row:last-child {
             border-bottom: none;
         }
         .prayer-name {
-            font-size: 1rem; /* Леко по-малък */
+            font-size: 1rem; /* Slightly smaller */
             font-weight: 500;
             color: #cbd5e0;
         }
         .prayer-time {
-            font-size: 1.1rem; /* Леко по-малък */
+            font-size: 1.1rem; /* Slightly smaller */
             font-weight: 600;
             color: #a0aec0;
         }
         .highlighted-prayer .prayer-name,
         .highlighted-prayer .prayer-time {
-            color: #68d391; /* Цвят за подчертаване */
+            color: #68d391; /* Highlight color */
             font-weight: 700;
         }
         .loading-spinner {
@@ -126,22 +98,22 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* Общ стил на бутоните за действия (дата, език, корекции) */
+        /* General button style for action buttons (date, language, adjustments) */
         .action-button {
             background-color: #4a5568;
             color: #e2e8f0;
             border: 1px solid #68d391;
             border-radius: 0.5rem;
-            padding: 0.5rem; /* По-малък padding за бутон само с емотикони */
-            width: 3rem; /* Фиксирана ширина за бутон с емотикони */
-            height: 3rem; /* Фиксирана височина за бутон с емотикони */
-            font-size: 1.5rem; /* По-голям емотикон */
+            padding: 0.5rem; /* Smaller padding for emoji-only button */
+            width: 3rem; /* Fixed width for emoji button */
+            height: 3rem; /* Fixed height for emoji button */
+            font-size: 1.5rem; /* Larger emoji */
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-            white-space: nowrap; /* Предотвратява пренасяне на текст за текстови бутони */
+            white-space: nowrap; /* Prevent text wrap for text buttons */
         }
         .action-button:hover {
             background-color: #5a677d;
@@ -150,80 +122,27 @@
             outline: none;
             box-shadow: 0 0 0 3px rgba(104, 211, 145, 0.5);
         }
-
-        /* Стилове за бутона на хамбургер менюто */
-        #hamburger-menu-btn {
-            position: fixed; /* Позиционира се спрямо viewport-а */
-            top: 1rem;
-            left: 1rem;
-            z-index: 101; /* Уверете се, че е над всичко останало */
+        /* Specific style for adjustment button that contains text */
+        #open-adjustment-modal-btn {
+            padding: 0.5rem; /* Adjust padding for emoji only */
+            width: 3rem; /* Fixed width for emoji only */
+            font-size: 1.5rem; /* Larger font for emoji only */
+            gap: 0; /* No gap as there's no text */
         }
 
-        /* Стилове за страничното меню */
-        .side-menu {
-            position: absolute; /* Позициониран спрямо app-wrapper */
+
+        /* Hidden input for date selection */
+        .hidden-date-input {
+            position: absolute;
             top: 0;
             left: 0;
-            height: 100vh; /* Цяла височина на изгледа */
-            width: 280px; /* Ширина на менюто */
-            background-color: #2d3748; /* Същият като контейнера или малко по-тъмен */
-            z-index: 100; /* По-висок от основното съдържание */
-            transform: translateX(-100%); /* Първоначално скрит извън екрана */
-            transition: transform 0.3s ease-out; /* Плавен преход на плъзгане */
-            padding: 1.5rem;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5); /* Сянка за дълбочина */
-            display: flex;
-            flex-direction: column;
-            gap: 1rem; /* Разстояние между елементите на менюто */
-            box-sizing: border-box;
-            overflow-y: auto; /* Позволява превъртане, ако съдържанието на менюто е твърде дълго */
-        }
-        .side-menu.open {
-            transform: translateX(0); /* Плъзга се във видимост */
-        }
-
-        /* Премахнат overlay, тъй като менюто вече "избутва" съдържанието */
-        #menu-overlay {
-            display: none !important; /* Уверете се, че е напълно скрит */
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
         }
         
-        /* Корекции за бутоните вътре в менюто, за да пасват на новото оформление текст + емотикон */
-        .side-menu .action-button {
-            width: 100%; /* Правят се на цяла ширина в менюто */
-            justify-content: flex-start; /* Подравнява текста в началото */
-            padding: 0.75rem 1rem; /* По-голям padding за по-добри зони за докосване */
-            font-size: 1rem; /* По-малък шрифт за текстови бутони */
-            height: auto; /* Автоматична височина за текстови бутони */
-            gap: 0.75rem; /* Разстояние между емотикон и текст */
-        }
-        .side-menu .action-button > span { /* За емотиконите в текстовите бутони */
-            font-size: 1.5rem; /* Запазва размера на емотикона постоянен */
-        }
-
-        /* Бутон за затваряне в менюто */
-        #close-side-menu-btn {
-            background: none;
-            border: none;
-            color: #e2e8f0;
-            font-size: 2rem;
-            padding: 0;
-            cursor: pointer;
-            align-self: flex-end; /* Подравнява се вдясно в гъвкавата колона */
-            margin-bottom: 1rem;
-            width: auto; /* Не насилва фиксирана ширина */
-            height: auto; /* Не насилва фиксирана височина */
-        }
-        #close-side-menu-btn:hover {
-            color: #68d391;
-            background-color: transparent; /* Без фон при hover */
-        }
-
-        /* Скрит инпут за избор на дата - наистина скрит */
-        #hidden-date-input {
-            display: none; 
-        }
-
-        /* Стилове на модалните прозорци (запазени същите, но по-висок z-index за модалите, свързани с хамбургер менюто) */
+        /* Modal Styles */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -234,23 +153,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 110; /* По-висок от страничното меню и неговия overlay */
-            padding: 0.5rem;
-            backdrop-filter: blur(5px);
+            z-index: 50;
+            padding: 0.5rem; /* Reduced padding for modals */
+            backdrop-filter: blur(5px); /* Optional: blur background */
         }
         .modal-content {
             background-color: #2d3748;
             border-radius: 1.5rem;
-            padding: 1.5rem;
+            padding: 1.5rem; /* Reduced padding */
             width: 100%;
             max-width: 400px;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             color: #e2e8f0;
-            max-height: 95vh;
-            overflow-y: auto;
+            max-height: 95vh; /* Allow slightly more height for modal if needed */
+            overflow-y: auto; /* Enable scrolling for long lists inside modal */
         }
         .city-list-item {
-            padding: 0.6rem 1rem;
+            padding: 0.6rem 1rem; /* Reduced padding */
             border-bottom: 1px solid #4a5568;
             cursor: pointer;
             transition: background-color 0.15s ease-in-out;
@@ -267,107 +186,94 @@
             border-bottom: none;
         }
 
+        /* Styles for the new adjustment modal inputs */
         .adjustment-input-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.5rem; /* Reduced margin */
         }
         .adjustment-input-row label {
-            font-size: 1rem;
+            font-size: 1rem; /* Slightly smaller */
             font-weight: 500;
             color: #cbd5e0;
         }
         .adjustment-input-row input[type="number"] {
-            width: 70px;
+            width: 70px; /* Reduced width */
             text-align: center;
             background-color: #4a5568;
             border: 1px solid #68d391;
             color: #e2e8f0;
-            border-radius: 0.375rem;
-            padding: 0.25rem 0.4rem;
+            border-radius: 0.375rem; /* rounded-md */
+            padding: 0.25rem 0.4rem; /* Reduced padding */
         }
     </style>
 </head>
 <body class="antialiased">
-    <!-- Обвиващ елемент за цялото приложение -->
-    <div id="app-wrapper"> 
-        <!-- Странично меню -->
-        <div id="side-menu" class="side-menu">
-            <button id="close-side-menu-btn" class="action-button">✖</button>
-            
-            <button id="location-select-btn" class="action-button">
-                <span>📍</span> Изберете град
-            </button>
-            <button id="countdown-toggle-btn" class="action-button">
-                <span>⌛</span> Режим Отброяване
-            </button>
-            <div class="relative w-full">
-                <button id="date-picker-btn" class="action-button">
-                    <span>🗓️</span> Изберете Дата
-                </button>
-                <input type="date" id="hidden-date-input">
+    <div class="container">
+        <!-- Top row: Gregorian Date & Day + Current Time (left), Hijri Date & Sacred Day + Location (right) -->
+        <div class="flex justify-between items-start text-sm md:text-base">
+            <div id="gregorian-date-info" class="flex flex-col items-start font-medium text-gray-400">
+                <span id="current-date"></span>
+                <span id="current-day"></span>
+                <div id="current-time" class="text-lg font-semibold text-gray-300 mt-1"></div>
             </div>
-            <button id="language-toggle-btn" class="action-button">
-                <span>💬</span> Смени Езика
-            </button>
-            <button id="open-adjustment-modal-btn" class="action-button">
-                <span>⚙️</span> Корекции
-            </button>
+            <div id="hijri-and-sacred-info" class="flex flex-col items-end text-gray-500">
+                <span id="hijri-date"></span>
+                <span id="sacred-day-info" class="text-green-400 font-semibold text-xs mt-1"></span>
+                <span id="selected-city-display" class="text-gray-400 text-sm mt-1">София</span>
+            </div>
         </div>
 
-        <!-- Основен контейнер за съдържанието, който ще бъде избутван -->
-        <div id="main-content-wrapper">
-            <!-- Хамбургер бутон - вече е фиксиран, за да стои извън основния блок -->
-            <button id="hamburger-menu-btn" class="action-button">☰</button>
-
-            <div class="container">
-                <!-- Горен ред: Грегорианска дата и ден + текущо време (ляво), Хиджра дата и свещен ден + местоположение (дясно) -->
-                <div class="flex justify-between items-start text-sm md:text-base">
-                    <div id="gregorian-date-info" class="flex flex-col items-start font-medium text-gray-400">
-                        <span id="current-date"></span>
-                        <span id="current-day"></span>
-                        <div id="current-time" class="text-lg font-semibold text-gray-300 mt-1"></div>
-                    </div>
-                    <div id="hijri-and-sacred-info" class="flex flex-col items-end text-gray-500">
-                        <span id="hijri-date"></span>
-                        <span id="sacred-day-info" class="text-green-400 font-semibold text-xs mt-1"></span>
-                        <span id="selected-city-display" class="text-gray-400 text-sm mt-1">София</span>
-                    </div>
-                </div>
-
-                <div class="text-center flex flex-col items-center">
-                    <div class="flex items-center justify-center gap-2 mb-1">
-                        <div id="countdown" class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-400">--:--:--</div>
-                        <button id="return-today-btn" class="action-button !w-10 !h-10 !text-xl hidden">🔄</button>
-                    </div>
-                    <div id="countdown-text" class="countdown-text">зареждане...</div>
-                </div>
-                
-                <!-- Индикатор за зареждане -->
-                <div id="loading-indicator" class="flex justify-center items-center py-4 hidden">
-                    <div class="loading-spinner"></div>
-                </div>
-
-                <div id="prayer-times-list" class="flex flex-col gap-1">
-                    <!-- Времената за намаз ще бъдат попълнени тук -->
-                </div>
-
-                <div id="error-message" class="hidden text-center text-red-400 text-sm mt-2">
-                    Възникна грешка при зареждане на времената за намаз. Моля, опитайте отново по-късно.
-                </div>
-
-                <!-- Долният ред с бутони за действие е премахнат, тъй като са в хамбургер менюто -->
+        <div class="text-center flex flex-col items-center">
+            <div class="flex items-center justify-center gap-2 mb-1"> <!-- Reduced margin-bottom -->
+                <div id="countdown" class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-400">--:--:--</div>
+                <button id="return-today-btn" class="action-button !w-10 !h-10 !text-xl hidden">🔄</button> <!-- Slightly smaller button -->
             </div>
+            <div id="countdown-text" class="countdown-text">зареждане...</div>
+        </div>
+        
+        <!-- Loading Indicator -->
+        <div id="loading-indicator" class="flex justify-center items-center py-4 hidden"> <!-- Reduced padding -->
+            <div class="loading-spinner"></div>
+        </div>
+
+        <div id="prayer-times-list" class="flex flex-col gap-1"> <!-- Removed max-height and overflow-y-auto -->
+            <!-- Prayer times will be populated here -->
+        </div>
+
+        <div id="error-message" class="hidden text-center text-red-400 text-sm mt-2"> <!-- Reduced margin-top -->
+            Възникна грешка при зареждане на времената за намаз. Моля, опитайте отново по-късно.
+        </div>
+
+        <!-- New bottom row for action buttons -->
+        <div class="flex justify-center md:justify-around items-center mt-4 gap-3"> <!-- Reduced margin-top and gap -->
+            <!-- Location Button (emoji only, opens modal) -->
+            <button id="location-select-btn" class="action-button">📍</button>
+
+            <!-- NEW Countdown Toggle Button -->
+            <button id="countdown-toggle-btn" class="action-button">⌛</button>
+
+            <!-- Date Button (emoji only) -->
+            <div class="relative">
+                <button id="date-picker-btn" class="action-button">🗓️</button>
+                <input type="date" id="hidden-date-input" class="hidden-date-input">
+            </div>
+
+            <!-- Language Toggle Button -->
+            <button id="language-toggle-btn" class="action-button">💬</button>
+
+            <!-- Adjustment Button -->
+            <button id="open-adjustment-modal-btn" class="action-button">⚙️</button>
         </div>
     </div>
 
-    <!-- Модален прозорец за избор на град -->
+    <!-- City Selection Modal -->
     <div id="city-selection-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <h3 class="text-xl font-semibold text-white mb-4">Изберете град</h3>
-            <div id="city-list" class="flex flex-col gap-1 mb-4">
-                <!-- Опциите за град ще бъдат попълнени тук от JavaScript -->
+            <div id="city-list" class="flex flex-col gap-1 mb-4"> <!-- Reduced gap and margin -->
+                <!-- City options will be populated here by JavaScript -->
             </div>
             <div class="flex justify-end">
                 <button id="close-city-modal-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-xl focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Затвори</button>
@@ -375,15 +281,15 @@
         </div>
     </div>
 
-    <!-- Глобален модален прозорец за корекции на намази (преработен) -->
+    <!-- Global Prayer Adjustment Modal (reworked) -->
     <div id="adjustment-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <h3 class="text-xl font-semibold text-white mb-4">Корекции на времена за намаз</h3>
-            <p class="text-gray-300 text-sm mb-3">Въведете корекция в минути (+ за напред, - за назад):</p>
-            <div id="prayer-adjustment-inputs" class="mb-4">
-                <!-- Входовете за корекции ще бъдат генерирани динамично тук -->
+            <p class="text-gray-300 text-sm mb-3">Въведете корекция в минути (+ за напред, - за назад):</p> <!-- Reduced margin -->
+            <div id="prayer-adjustment-inputs" class="mb-4"> <!-- Reduced margin -->
+                <!-- Adjustment inputs will be dynamically generated here -->
             </div>
-            <div class="flex justify-end space-x-3">
+            <div class="flex justify-end space-x-3"> <!-- Reduced space-x -->
                 <button id="cancel-adjustment-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-xl focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Отказ</button>
                 <button id="save-all-adjustments-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Запази</button>
             </div>
@@ -391,12 +297,12 @@
     </div>
 
     <script>
-        // --- ДАННИ ЗА СВЕЩЕНИ ДНИ (ПРИМЕР) ---
-        // Това е твърдо кодиран примерен списък със свещени дни за демонстрация.
-        // За цялостно решение тези данни биха били предварително генерирани за много години.
-        // Данни, извлечени от календара на Диянет за религиозни дни (подлежат на официална проверка).
+        // --- SACRED DAYS DATA (EXAMPLE) ---
+        // This is a hardcoded example list of sacred days for demonstration.
+        // For a comprehensive solution, this data would need to be pre-generated for many years.
+        // Data derived from Diyanet religious days calendar (subject to official verification).
         const sacredDays = {
-            // 2024 (Запазени както са, вероятно са верни или достатъчно близки за 2024 г.)
+            // 2024 (Keep as is, they are likely correct or close enough for 2024)
             "2024-01-11": "Нощта на Регаиб",
             "2024-02-06": "Нощта на Мирадж",
             "2024-02-24": "Нощта на Берат",
@@ -414,7 +320,7 @@
             "2024-07-16": "Ашура",
             "2024-09-14": "Мевлид Кандилли",
 
-            // 2025 (Актуализирани въз основа на календара на Диянет за 2025 г. и конкретна заявка на потребителя за Курбан Байрам)
+            // 2025 (Updated based on Diyanet 2025 calendar and user's specific request for Kurban Bayram)
             "2025-01-30": "Нощта на Регаиб",
             "2025-02-26": "Нощта на Мирадж",
             "2025-03-15": "Нощта на Берат",
@@ -432,10 +338,10 @@
             "2025-07-05": "Ашура",              
             "2025-08-26": "Мевлид Кандилли"     
         };
-        // --- КРАЙ НА ДАННИТЕ ЗА СВЕЩЕНИ ДНИ ---
+        // --- END OF SACRED DAYS DATA ---
 
 
-        // DOM Елементи
+        // DOM Elements
         const currentTimeEl = document.getElementById('current-time');
         const countdownEl = document.getElementById('countdown');
         const countdownTextEl = document.getElementById('countdown-text');
@@ -446,25 +352,16 @@
         const prayerTimesListEl = document.getElementById('prayer-times-list');
         const loadingIndicatorEl = document.getElementById('loading-indicator');
         const errorMessageEl = document.getElementById('error-message');
+        const locationSelectBtn = document.getElementById('location-select-btn'); 
         const selectedCityDisplay = document.getElementById('selected-city-display'); 
+        const datePickerBtn = document.getElementById('date-picker-btn'); 
         const hiddenDateInput = document.getElementById('hidden-date-input'); 
-        const returnTodayBtn = document.getElementById('return-today-btn'); // Нов бутон
+        const languageToggleBtn = document.getElementById('language-toggle-btn'); 
+        const openAdjustmentModalBtn = document.getElementById('open-adjustment-modal-btn'); 
+        const countdownToggleButton = document.getElementById('countdown-toggle-btn'); 
+        const returnTodayBtn = document.getElementById('return-today-btn'); // New button element
 
-        // Нови DOM Елементи за Хамбургер менюто
-        const hamburgerMenuBtn = document.getElementById('hamburger-menu-btn');
-        const sideMenu = document.getElementById('side-menu');
-        const closeSideMenuBtn = document.getElementById('close-side-menu-btn');
-        const mainContentWrapper = document.getElementById('main-content-wrapper'); // Нова обвивка за основното съдържание
-
-        // Препратки към бутони, които вече са вътре в страничното меню
-        const locationSelectBtn = document.getElementById('location-select-btn');
-        const countdownToggleButton = document.getElementById('countdown-toggle-btn');
-        const datePickerBtn = document.getElementById('date-picker-btn');
-        const languageToggleBtn = document.getElementById('language-toggle-btn');
-        const openAdjustmentModalBtn = document.getElementById('open-adjustment-modal-btn');
-
-
-        // Модали и техните елементи
+        // Modals and their elements
         const citySelectionModal = document.getElementById('city-selection-modal'); 
         const cityListEl = document.getElementById('city-list');
         const closeCityModalBtn = document.getElementById('close-city-modal-btn');
@@ -474,7 +371,7 @@
         const cancelAdjustmentBtn = document.getElementById('cancel-adjustment-btn');
         const saveAllAdjustmentsBtn = document.getElementById('save-all-adjustments-btn'); 
 
-        // Имена на намази на български (Обедна ще се обработва условно)
+        // Prayer names in Bulgarian (Dhuhr will be handled conditionally)
         const prayerNamesStandard = {
             Fajr: 'Зора',
             Sunrise: 'Изгрев',
@@ -493,10 +390,10 @@
             Isha: 'Йецие' 
         };
 
-        // Всички ключове на намази за итерация
+        // All prayer keys for iteration
         const allPrayerKeys = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
-        // Общи корекции, специфични за намаз, в минути (прилагат се върху основните времена)
+        // General prayer-specific adjustments in minutes (applied on top of base times)
         const adjustments = {
             Fajr: 0,
             Sunrise: -7,
@@ -506,10 +403,10 @@
             Isha: 0 
         };
 
-        // Персонализирани градски отмествания спрямо София (минути за добавяне/изваждане от времената на София)
-        // Тези отмествания вече ще се прилагат към времената, извлечени от API за София.
+        // Custom city offsets relative to Sofia (minutes to be added/subtracted from Sofia's times)
+        // These offsets will now be applied to the API-fetched times for Sofia.
         const cityOffsets = {
-            "София": 0, // Базов град, без отместване
+            "София": 0, // Base city, no offset
             "Гоце Делчев": -1,
             "Якоруда": -1,
             "Велинград": -3,
@@ -556,7 +453,7 @@
             "Каварна": -19
         };
 
-        // Картиране на имената на хиджра месеците към български
+        // Mapping for Hijri month names to Bulgarian
         const hijriMonthsBg = {
             "Muharram": "Мухаррем",
             "Safar": "Сафер",
@@ -572,28 +469,28 @@
             "Dhul-Hijjah": "Зилхидже"
         };
 
-        let prayerTimes = {}; // Съхранява извлечените времена за намаз (след всички корекции за избрания град)
-        let nextPrayerIndex = -1; // Индекс на следващия намаз в списъка
-        let selectedCity = "София"; // Град по подразбиране
-        let currentHijriDate = ''; // За съхраняване и показване на хиджра дата
-        let selectedDate = new Date(); // Съхранява текущо избраната дата (по подразбиране е днес)
-        let customPrayerAdjustments = {}; // Съхранява дефинирани от потребителя корекции за всеки намаз {Fajr: 5, Dhuhr: -2}
-        let isClassicalNamesActive = false; // Състояние за конвенцията за именуване
-        let isCountdownMode = false; // Състояние за режим на обратно броене в списъка с намази
+        let prayerTimes = {}; // Stores fetched prayer times (after all adjustments for selected city)
+        let nextPrayerIndex = -1; // Index of the next prayer in the list
+        let selectedCity = "София"; // Default selected city
+        let currentHijriDate = ''; // To store and display Hijri date
+        let selectedDate = new Date(); // Stores the currently selected date (defaults to today)
+        let customPrayerAdjustments = {}; // Stores user-defined adjustments for each prayer {Fajr: 5, Dhuhr: -2}
+        let isClassicalNamesActive = false; // State for naming convention
+        let isCountdownMode = false; // State for countdown mode in prayer list
 
-        // Глобална променлива за интервала за обратно броене на отделните намази
+        // Global variable for the individual prayer countdown interval
         let individualCountdownIntervalId = null;
-        // Глобален масив за съхраняване на данни за намази с обекти Date за динамични актуализации
+        // Global array to store prayer data with Date objects for dynamic updates
         let prayersDataForDisplay = []; 
 
-        // Вземане на текущите имена на намази въз основа на състоянието
+        // Get current prayer names based on state
         function getCurrentPrayerNames() {
             return isClassicalNamesActive ? prayerNamesClassical : prayerNamesStandard;
         }
 
-        // Попълване на списъка с градове в модалния прозорец
+        // Populate city list in modal
         function populateCityList() {
-            cityListEl.innerHTML = ''; // Изчиства предишния списък
+            cityListEl.innerHTML = ''; // Clear previous list
             const sortedCities = Object.keys(cityOffsets).sort((a, b) => {
                 if (a === "София") return -1;
                 if (b === "София") return 1;
@@ -610,29 +507,28 @@
                 cityItem.dataset.city = city;
                 cityItem.addEventListener('click', () => {
                     selectedCity = city;
-                    selectedCityDisplay.textContent = selectedCity; // Актуализиране на текста за показване на избрания град
+                    selectedCityDisplay.textContent = selectedCity; // Update display text for selected city
                     closeCitySelectionModal();
-                    closeSideMenu(); // Затваряне на страничното меню след избор на град
-                    fetchPrayerTimes(); // Извличане на времената за новия град
-                    saveSettings(); // Автоматично запазване на промяната на града
+                    fetchPrayerTimes(); // Re-fetch times for the new city
+                    saveSettings(); // Automatically save city change
                 });
                 cityListEl.appendChild(cityItem);
             });
         }
 
-        // Функция за форматиране на времето до HH:MM
+        // Function to format time to HH:MM
         function formatTime(date) {
             const hours = String(date.getHours()).padStart(2, '0');
             const minutes = String(date.getMinutes()).padStart(2, '0');
             return `${hours}:${minutes}`;
         }
 
-        // Функция за форматиране на продължителността (за режим на обратно броене в списъка)
+        // Function to format duration (for countdown mode in list)
         function formatDuration(milliseconds) {
             let prefix = '';
             if (milliseconds < 0) {
                 prefix = '-';
-                milliseconds = Math.abs(milliseconds); // Използвайте абсолютна стойност за изчисление
+                milliseconds = Math.abs(milliseconds); // Use absolute value for calculation
             }
 
             const totalSeconds = Math.floor(milliseconds / 1000);
@@ -642,7 +538,7 @@
 
             let timeParts = [];
             
-            // Винаги включвайте часове, минути и секунди, допълнени с две цифри.
+            // Always include hours, minutes, and seconds, padded to two digits.
             timeParts.push(`${String(hours).padStart(2, '0')}ч`);
             timeParts.push(`${String(minutes).padStart(2, '0')}м`);
             timeParts.push(`${String(seconds).padStart(2, '0')}с`);
@@ -653,15 +549,15 @@
         }
 
 
-        // Функция за форматиране на датата до ДД.ММ.ГГГГ
+        // Function to format date to DD.MM.YYYY
         function formatDate(date) {
             const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0'); // Месецът е базиран на 0
+            const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
             const year = date.getFullYear();
             return `${day}.${month}.${year}`;
         }
 
-        // Функция за форматиране на датата до ГГГГ-ММ-ДД за input type="date" и API повиквания
+        // Function to format date to紝-MM-DD for input type="date" and API calls
         function formatDateForInputAndLookup(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -669,48 +565,48 @@
             return `${year}-${month}-${day}`;
         }
 
-        // Функция за извличане на името на деня от седмицата на български
+        // Function to get day of the week in Bulgarian
         function getDayNameBg(date) {
             const days = ['Неделя', 'Понеделник', 'Вторник', 'Сряда', 'Четвъртък', 'Петък', 'Събота'];
             return days[date.getDay()];
         }
 
-        // Функция за определяне на името на Обедна (Dhuhr) въз основа на деня от седмицата и текущия стил на именуване
+        // Function to determine Dhuhr name based on day of the week and current naming style
         function getDhuhrName(date) {
-            if (date.getDay() === 5) { // Петък
+            if (date.getDay() === 5) { // Friday
                 return isClassicalNamesActive ? "Джумайо" : "Джума"; 
             }
             return isClassicalNamesActive ? "Пладен" : "Обедна";
         }
 
-        // Функция за актуализиране на дисплея на текущото време
+        // Function to update the current time display
         function updateClock() {
             const now = new Date();
             currentTimeEl.textContent = formatTime(now);
         }
 
-        // Функция за извличане на времената за намаз от API
+        // Function to fetch prayer times from API
         async function fetchPrayerTimes() {
-            // Показване на индикатор за зареждане
+            // Show loading indicator
             loadingIndicatorEl.classList.remove('hidden');
             errorMessageEl.classList.add('hidden'); 
-            prayerTimesListEl.innerHTML = ''; // Изчиства предишните времена
+            prayerTimesListEl.innerHTML = ''; // Clear previous times
 
-            // Изчистване на всички текущи индивидуални обратно броене преди извличане на нови данни
+            // Clear any running individual countdowns before fetching new data
             clearInterval(individualCountdownIntervalId);
             individualCountdownIntervalId = null;
 
             const currentDateStringForAPI = `${String(selectedDate.getDate()).padStart(2, '0')}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${selectedDate.getFullYear()}`;
 
-            // Актуализиране на дисплея за грегорианска дата и ден
+            // Update Gregorian date and day display
             currentDateEl.textContent = formatDate(selectedDate);
             currentDayEl.textContent = getDayNameBg(selectedDate);
-            selectedCityDisplay.textContent = selectedCity; // Актуализиране на текста за показване на избрания град
+            selectedCityDisplay.textContent = selectedCity; // Update the selected city display
 
-            // Извличане на базовите времена за София с помощта на метода на Диянет (method=10)
+            // Fetch base times for Sofia using Diyanet method (method=10)
             const diyanetApiUrl = `https://api.aladhan.com/v1/timingsByCity/${currentDateStringForAPI}?city=Sofia&country=Bulgaria&method=10`;
             
-            // Извличане на времето за Нощна (Isha) конкретно с помощта на метода на Мюсюлманската световна лига (method=3)
+            // Fetch Isha time specifically using Muslim World League method (method=3)
             const mwlIshaApiUrl = `https://api.aladhan.com/v1/timingsByCity/${currentDateStringForAPI}?city=Sofia&country=Bulgaria&method=3`;
 
             try {
@@ -720,44 +616,44 @@
                 ]);
 
                 if (!diyanetResponse.ok || !mwlIshaResponse.ok) {
-                    throw new Error(`HTTP грешка! Статуси: Диянет ${diyanetResponse.status}, MWL ${mwlIshaResponse.status}`);
+                    throw new Error(`HTTP error! Statuses: Diyanet ${diyanetResponse.status}, MWL ${mwlIshaResponse.status}`);
                 }
 
                 const diyanetData = await diyanetResponse.json();
                 const mwlIshaData = await mwlIshaResponse.json();
 
-                // Проверка за основни данни за изчисление на времената за намаз
+                // Check for essential data for prayer times calculation
                 if (!diyanetData.data || !diyanetData.data.timings || !mwlIshaData.data || !mwlIshaData.data.timings) {
                     throw new Error('Невалиден отговор от API или липсващи основни данни за времена за намаз.');
                 }
 
-                // Продължете с изчисляването на времената за намаз
+                // Now proceed with prayer time calculation
                 const sofiaBaseTimings = {
                     Fajr: diyanetData.data.timings.Fajr,
                     Sunrise: diyanetData.data.timings.Sunrise,
                     Dhuhr: diyanetData.data.timings.Dhuhr,
                     Asr: diyanetData.data.timings.Asr,
                     Maghrib: diyanetData.data.timings.Maghrib,
-                    Isha: mwlIshaData.data.timings.Isha // Заменяне на Isha с времето на MWL
+                    Isha: mwlIshaData.data.timings.Isha // Override Isha with MWL time
                 };
 
                 const currentCityCustomOffset = cityOffsets[selectedCity] || 0;
                 const adjustedPrayerTimes = {};
 
-                // Прилагане на общи и градски отмествания към извлечените от API времена за София
-                for (const key of allPrayerKeys) { // Итериране през всички ключове на намази за последователен ред
+                // Apply general and city-specific offsets to the API-fetched Sofia times
+                for (const key of allPrayerKeys) { // Iterate through allPrayerKeys for consistent order
                     if (sofiaBaseTimings.hasOwnProperty(key)) {
                         let [hour, minute] = sofiaBaseTimings[key].split(':').map(Number);
                         let tempDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour, minute, 0);
 
-                        // Прилагане на обща корекция, специфична за намаз
+                        // Apply general prayer-specific adjustment
                         if (adjustments[key] !== undefined) { 
                             tempDate.setMinutes(tempDate.getMinutes() + adjustments[key]);
                         }
-                        // Прилагане на персонализирано отместване, специфично за града
+                        // Apply city-specific custom offset
                         tempDate.setMinutes(tempDate.getMinutes() + currentCityCustomOffset);
 
-                        // Прилагане на персонализирана корекция от потребителя (от локалното хранилище)
+                        // Apply custom user adjustment (from local storage)
                         if (customPrayerAdjustments[key] !== undefined) {
                             tempDate.setMinutes(tempDate.getMinutes() + customPrayerAdjustments[key]);
                         }
@@ -766,9 +662,9 @@
                     }
                 }
                 
-                prayerTimes = adjustedPrayerTimes; // Съхраняване на напълно коригираните времена
+                prayerTimes = adjustedPrayerTimes; // Store the fully adjusted times
 
-                // Обработка на хиджра датата отделно със собствени проверки за устойчивост
+                // Handle Hijri date separately with its own checks for robustness
                 if (diyanetData.data.date && diyanetData.data.date.hijri) {
                     const hijri = diyanetData.data.date.hijri;
                     if (hijri.day && hijri.month && hijri.month.en && hijri.year) {
@@ -779,17 +675,17 @@
                         currentHijriDate = `${hijriDay} ${hijriMonthBg} ${hijriYear} г.`; 
                         hijriDateEl.textContent = currentHijriDate;
                     } else {
-                        console.warn("Данните за хиджра дата са непълни от отговора на API.");
+                        console.warn("Hijri date data incomplete from API response.");
                         currentHijriDate = 'Няма хиджри дата';
                         hijriDateEl.textContent = currentHijriDate;
                     }
                 } else {
-                    console.warn("Обектът за хиджра дата липсва от отговора на API.");
+                    console.warn("Hijri date object missing from API response.");
                     currentHijriDate = 'Няма хиджри дата';
                     hijriDateEl.textContent = currentHijriDate;
                 }
 
-                // Проверка и показване на свещения ден/нощ
+                // Check and display sacred day/night
                 const sacredDayKey = formatDateForInputAndLookup(selectedDate);
                 if (sacredDays[sacredDayKey]) {
                     sacredDayInfoEl.textContent = sacredDays[sacredDayKey]; 
@@ -799,10 +695,10 @@
                     sacredDayInfoEl.classList.add('hidden');
                 }
 
-                displayPrayerTimes(); // Извикване на показване за рендиране и управление на обратното броене
+                displayPrayerTimes(); // Call display to render and manage countdowns
                 
             } catch (error) {
-                console.error('Грешка при извличане на времената за намаз:', error);
+                console.error('Error fetching prayer times:', error);
                 errorMessageEl.classList.remove('hidden');
                 errorMessageEl.textContent = `Възникна грешка при зареждане на времената за намаз: ${error.message}. Моля, проверете връзката си и опитайте отново.`;
                 prayerTimes = {};
@@ -811,19 +707,19 @@
                 sacredDayInfoEl.textContent = '';
                 sacredDayInfoEl.classList.add('hidden');
             } finally {
-                // Скриване на индикатора за зареждане
+                // Hide loading indicator
                 loadingIndicatorEl.classList.add('hidden');
             }
         }
 
-        // Функция за показване на времената за намаз в списъка
+        // Function to display prayer times in the list
         function displayPrayerTimes() {
-            prayerTimesListEl.innerHTML = ''; // Изчиства предишните времена
+            prayerTimesListEl.innerHTML = ''; // Clear previous times
 
-            const now = new Date(); // Текущо време за първоначално сравнение
+            const now = new Date(); // Current time for initial comparison
             const targetDate = selectedDate; 
             
-            prayersDataForDisplay = []; // Изчистване и повторно попълване на глобалния масив
+            prayersDataForDisplay = []; // Clear and repopulate global array
 
             const currentPrayerNames = getCurrentPrayerNames();
 
@@ -840,44 +736,45 @@
                     prayersDataForDisplay.push({
                         name: key,
                         displayName: displayName,
-                        staticTime: formatTime(prayerDate), // Съхраняване на статично форматирано време
-                        date: prayerDate // Съхраняване на действителния обект Date за обратно броене
+                        staticTime: formatTime(prayerDate), // Store static formatted time
+                        date: prayerDate // Store the actual Date object for countdowns
                     });
                 }
             }
 
-            // Сортиране на намазите по време за осигуряване на правилен ред
+            // Sort prayers by time to ensure correct order
             prayersDataForDisplay.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-            // Използвайте отделна променлива за подчертаване
-            let highlightIndex = -1; 
+            // --- START FIX: Separate highlighting logic from main countdown nextPrayerIndex ---
+            let highlightIndex = -1; // Use a separate variable for highlighting
 
             if (selectedDate.toDateString() === new Date().toDateString()) {
-                // Подчертавайте само ако е днешната дата
+                // Only highlight if it's today's date
                 for (let i = 0; i < prayersDataForDisplay.length; i++) {
                     if (prayersDataForDisplay[i].date > now) { 
-                        highlightIndex = i; // Намерен е бъдещ намаз за текущия ден, който да бъде подчертан
+                        highlightIndex = i; // Found a future prayer on current day to highlight
                         break;
                     }
                 }
-                // Ако всички намази за днес са минали, highlightIndex ще остане -1,
-                // което означава, че няма да бъде подчертан намаз, което е желаното поведение.
+                // If all prayers for today have passed, highlightIndex will remain -1,
+                // meaning no prayer will be highlighted, which is the desired behavior.
             } else {
-                // За минали или бъдещи избрани дати не трябва да има подчертаване.
+                // For past or future selected dates, no highlighting should occur.
                 highlightIndex = -1; 
             }
+            // --- END FIX ---
 
-            // Рендиране на времената за намаз първоначално със статични времена
+            // Render prayer times initially with static times
             prayersDataForDisplay.forEach((prayer, index) => {
                 const prayerRow = document.createElement('div');
                 prayerRow.className = 'prayer-row';
 
-                // Прилагане на подчертаване въз основа на отделния highlightIndex
+                // Apply highlighting based on the separate highlightIndex
                 if (index === highlightIndex) {
                     prayerRow.classList.add('highlighted-prayer');
                 }
 
-                // Рендиране със статично време. Динамичните актуализации ще го презапишат, ако режимът на обратно броене е активен.
+                // Render with static time. Dynamic updates will override this if countdown mode is active.
                 prayerRow.innerHTML = `
                     <span class="prayer-name">${prayer.displayName}</span>
                     <div class="flex items-center">
@@ -887,34 +784,34 @@
                 prayerTimesListEl.appendChild(prayerRow);
             });
 
-            startStopIndividualCountdowns(); // Управление на интервала за обратно броене на отделните намази
-            updateCountdown(); // Актуализиране на основното обратно броене (до следващия намаз)
+            startStopIndividualCountdowns(); // Manage the individual countdown interval
+            updateCountdown(); // Update the main countdown (to next prayer)
         }
 
-        // Функция за стартиране или спиране на обратно броене на отделни намази в списъка
+        // Function to start or stop individual prayer countdowns in the list
         function startStopIndividualCountdowns() {
-            clearInterval(individualCountdownIntervalId); // Винаги изчиствайте всеки съществуващ интервал първо
+            clearInterval(individualCountdownIntervalId); // Always clear any existing interval first
             individualCountdownIntervalId = null;
 
             if (isCountdownMode && selectedDate.toDateString() === new Date().toDateString()) {
-                // Ако е в режим на обратно броене И е днешна дата, стартирайте динамичните актуализации
-                updateIndividualCountdowns(); // Извикайте веднъж незабавно, за да зададете първоначалното обратно броене
+                // If in countdown mode AND it's today's date, start the dynamic updates
+                updateIndividualCountdowns(); // Call once immediately to set initial countdowns
                 individualCountdownIntervalId = setInterval(updateIndividualCountdowns, 1000);
             } else {
-                // Ако не е в режим на обратно броене или не е днешна дата, уверете се, че се показват статични времена.
-                // Този цикъл гарантира, че ако изключим режима на обратно броене, времената ще се върнат към статичните.
+                // If not in countdown mode or not today's date, ensure static times are displayed.
+                // This loop ensures that if we switch OFF countdown mode, the times revert to static.
                 prayersDataForDisplay.forEach(prayer => {
                     const span = document.getElementById(`prayer-time-${prayer.name}`);
                     if (span) {
-                        span.textContent = prayer.staticTime; // Връщане към статично време
+                        span.textContent = prayer.staticTime; // Revert to static time
                     }
                 });
             }
         }
 
-        // Функция за динамично актуализиране на обратно броене на отделни намази в списъка
+        // Function to dynamically update individual prayer countdowns in the list
         function updateIndividualCountdowns() {
-            // Тази функция се извиква само ако isCountdownMode е true и selectedDate е днешна дата
+            // This function is only called if isCountdownMode is true and selectedDate is today's date
             const now = new Date();
             prayersDataForDisplay.forEach(prayer => {
                 const span = document.getElementById(`prayer-time-${prayer.name}`);
@@ -925,21 +822,21 @@
             });
         }
 
-        // Помощна функция за изчисляване на разликата в години, месеци и дни между две дати
-        function getYearsMonthsDaysDifference(d1, d2) { // d1 = начална дата (сега), d2 = крайна дата (selectedDate)
+        // Helper function to calculate year, month, and day difference between two dates
+        function getYearsMonthsDaysDifference(d1, d2) { // d1 = start date (now), d2 = end date (selectedDate)
             let years = d2.getFullYear() - d1.getFullYear();
             let months = d2.getMonth() - d1.getMonth();
             let days = d2.getDate() - d1.getDate();
 
-            // Корекция за отрицателни дни (d2.getDate() < d1.getDate())
+            // Adjust for negative days (d2.getDate() < d1.getDate())
             if (days < 0) {
                 months--;
-                // Вземете броя дни в месеца *преди* месеца на d2 в годината на d2
+                // Get the number of days in the month *before* d2's month in d2's year
                 let daysInPrevMonthOfD2 = new Date(d2.getFullYear(), d2.getMonth(), 0).getDate();
                 days += daysInPrevMonthOfD2;
             }
 
-            // Корекция за отрицателни месеци (d2.getMonth() < d1.getMonth())
+            // Adjust for negative months (d2.getMonth() < d1.getMonth())
             if (months < 0) {
                 years--;
                 months += 12;
@@ -948,17 +845,17 @@
             return { years, months, days };
         }
 
-        // Функция за актуализиране на обратното броене до следващия намаз (основно обратно броене)
+        // Function to update the countdown to the next prayer (main countdown)
         function updateCountdown() {
             const now = new Date();
 
             if (selectedDate.toDateString() !== now.toDateString()) {
-                // Обработка на бъдещи/минали избрани дати
+                // Handle future/past selected dates
                 const diff = getYearsMonthsDaysDifference(now, selectedDate);
                 let displayMessage = '';
-                returnTodayBtn.classList.remove('hidden'); // Показване на бутона "Връщане към днес"
+                returnTodayBtn.classList.remove('hidden'); // Show return to today button
 
-                if (selectedDate > now) { // Бъдеща дата
+                if (selectedDate > now) { // Future date
                     if (diff.years > 0) {
                         displayMessage += `след ${diff.years} г.`;
                         if (diff.months > 0) {
@@ -971,25 +868,25 @@
                         }
                     } else if (diff.days > 0) {
                         displayMessage += `след ${diff.days} дни`;
-                    } else { // Много близко бъдеще, в рамките на същите дневни часове
-                        // Този случай би трябвало да се обработи от логиката за "днешна дата", ако `selectedDate` е буквално днес.
-                        // Ако е бъдеща дата, която е само на няколко часа/минути, но все още на *тази* конкретна дата,
-                        // можем да покажем заместител или да преминем към логиката за "днес".
-                        countdownEl.textContent = '--:--:--'; // Без обратно броене за концептуални бъдещи дати
+                    } else { // Very close future, within the same day's times
+                        // This case should ideally be handled by the "today's date" logic if `selectedDate` is literally today.
+                        // If it's a future date that's just a few hours/minutes away but still on *this* specific date,
+                        // we can show a placeholder or transition to the "today" logic.
+                        countdownEl.textContent = '--:--:--'; // No ticking countdown for conceptual future dates
                         countdownTextEl.textContent = 'Избрана е бъдеща дата.'; 
-                        return; // Изход, тъй като това не е днешното обратно броене
+                        return; // Exit as this is not today's ticking countdown
                     }
-                    countdownEl.textContent = '--:--:--'; // Без обратно броене за концептуални бъдещи дати
+                    countdownEl.textContent = '--:--:--'; // No ticking countdown for conceptual future dates
                     countdownTextEl.textContent = displayMessage || 'Изберете дата.'; // Fallback
-                } else { // Минала дата
+                } else { // Past date
                     countdownEl.textContent = '--:--:--';
                     countdownTextEl.textContent = 'Избрана е минала дата.';
                 }
-                return; // Изход, тъй като това не е днешното обратно броене
+                return; // Exit as this is not today's countdown
             }
 
-            // Ако selectedDate Е днешна дата, продължете с нормалната логика за обратно броене
-            returnTodayBtn.classList.add('hidden'); // Скриване на бутона "Връщане към днес"
+            // If selectedDate IS today's date, proceed with normal countdown logic
+            returnTodayBtn.classList.add('hidden'); // Hide return to today button
 
             if (Object.keys(prayerTimes).length === 0) {
                 countdownEl.textContent = '--:--:--';
@@ -1000,10 +897,10 @@
             let nextPrayerTimeDate;
             let nextPrayerDisplayName;
 
-            // Използвайте вече подготвените prayersDataForDisplay, за да намерите следващия намаз
-            // Няма нужда да извличате отново API данни тук
+            // Use the already prepared prayersDataForDisplay to find the next prayer
+            // No need to re-fetch API data here
             
-            let prayersArrayForCountdown = prayersDataForDisplay; // Използвайте глобално достъпните данни
+            let prayersArrayForCountdown = prayersDataForDisplay; // Use the globally available data
 
             nextPrayerIndex = -1; 
             for (let i = 0; i < prayersArrayForCountdown.length; i++) {
@@ -1014,7 +911,7 @@
                 }
             
             if (nextPrayerIndex === -1 && prayersArrayForCountdown.length > 0) {
-                // Всички намази за днес са минали. Задайте nextPrayerIndex на 0 за обратно броене на Фаджр за утре.
+                // All prayers for today have passed. Set nextPrayerIndex to 0 for tomorrow's Fajr countdown.
                 nextPrayerIndex = 0; 
                 const nextDayFajr = new Date(prayersArrayForCountdown[0].date);
                 nextDayFajr.setDate(nextDayFajr.getDate() + 1);
@@ -1048,24 +945,24 @@
             countdownEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         }
 
-        // Функция за връщане към днешна дата
+        // Function to return to today's date
         function returnToToday() {
             selectedDate = new Date();
             hiddenDateInput.value = formatDateForInputAndLookup(selectedDate);
-            fetchPrayerTimes(); // Извличане отново за показване на времената за днес
+            fetchPrayerTimes(); // Re-fetch to display times for today
         }
 
-        // --- Логика за модални прозорци ---
+        // --- Modals Logic ---
 
-        // Глобален модален прозорец за корекции на намази
+        // Global Prayer Adjustment Modal
         function openAdjustmentModal() {
-            prayerAdjustmentInputsContainer.innerHTML = ''; // Изчиства предишни входове
+            prayerAdjustmentInputsContainer.innerHTML = ''; // Clear previous inputs
             const currentPrayerNames = getCurrentPrayerNames();
 
             allPrayerKeys.forEach(key => {
                 const adjustmentValue = customPrayerAdjustments[key] !== undefined ? customPrayerAdjustments[key] : 0;
-                const displayName = currentPrayerNames[key] || key; // Използвайте текущия език
-                const dhuhrDisplayName = key === 'Dhuhr' ? getDhuhrName(new Date()) : displayName; // Специална обработка за Dhuhr
+                const displayName = currentPrayerNames[key] || key; // Use current language
+                const dhuhrDisplayName = key === 'Dhuhr' ? getDhuhrName(new Date()) : displayName; // Special handling for Dhuhr
 
                 const inputRow = document.createElement('div');
                 inputRow.className = 'adjustment-input-row';
@@ -1081,8 +978,7 @@
 
         function closeAdjustmentModal() {
             adjustmentModal.classList.add('hidden');
-            errorMessageEl.classList.add('hidden'); // Изчистване на съобщението за грешка при затваряне на модала
-            closeSideMenu(); // Затваряне на страничното меню след взаимодействие с модала
+            errorMessageEl.classList.add('hidden'); // Clear error message when closing modal
         }
 
         function saveAllAdjustments() {
@@ -1094,7 +990,7 @@
                     if (isNaN(newOffset)) {
                         errorMessageEl.textContent = `Невалидно число за корекция на ${getCurrentPrayerNames()[key] || key}. Моля, въведете валидно число (напр. 5 или -3).`;
                         errorMessageEl.classList.remove('hidden');
-                        return; // Изход, ако някой вход е невалиден
+                        return; // Exit if any input is invalid
                     }
 
                     if (customPrayerAdjustments[key] !== newOffset) {
@@ -1105,16 +1001,16 @@
             });
 
             if (changesMade) {
-                saveSettings(); // Автоматично запазване на всички актуализирани корекции
-                fetchPrayerTimes(); // Извличане и показване отново с нови персонализирани корекции
+                saveSettings(); // Automatically save all updated adjustments
+                fetchPrayerTimes(); // Re-fetch and display with new custom adjustments
             }
             closeAdjustmentModal();
         }
 
 
-        // Функции за модален прозорец за избор на град
+        // Functions for City Selection Modal
         function openCitySelectionModal() {
-            populateCityList(); // Попълване на списъка преди отваряне
+            populateCityList(); // Populate list before opening
             citySelectionModal.classList.remove('hidden');
         }
 
@@ -1122,112 +1018,17 @@
             citySelectionModal.classList.add('hidden');
         }
 
-        // --- Функции за странично меню ---
-        function openSideMenu() {
-            sideMenu.classList.add('open');
-            mainContentWrapper.style.transform = `translateX(${sideMenu.offsetWidth}px)`; // Избутване на основното съдържание
-            document.body.style.overflow = 'hidden'; // Предотвратява превъртане на body
-        }
-
-        function closeSideMenu() {
-            sideMenu.classList.remove('open');
-            mainContentWrapper.style.transform = `translateX(0)`; // Връщане на основното съдържание
-            document.body.style.overflow = ''; // Възстановява превъртането на body
-        }
-
-        // --- Swipe Logic Variables ---
-        let startX = 0;
-        let currentX = 0;
-        let diffX = 0;
-        let isSwiping = false;
-        const swipeThreshold = 50; // pixels to swipe to trigger action
-
-        // --- Event Listeners for Swipe ---
-        // For opening the menu (swipe right on main content)
-        mainContentWrapper.addEventListener('touchstart', (e) => {
-            if (sideMenu.classList.contains('open')) return; // Only process if menu is closed
-            startX = e.touches[0].clientX;
-            isSwiping = true;
-            mainContentWrapper.style.transition = 'none'; // Disable transition for smooth drag
-            sideMenu.style.transition = 'none';
-        });
-
-        mainContentWrapper.addEventListener('touchmove', (e) => {
-            if (!isSwiping || sideMenu.classList.contains('open')) return;
-            currentX = e.touches[0].clientX;
-            diffX = currentX - startX;
-
-            if (diffX > 0) { // Swiping right
-                e.preventDefault(); // Prevent page scrolling
-                const transformX = Math.min(diffX, sideMenu.offsetWidth);
-                mainContentWrapper.style.transform = `translateX(${transformX}px)`;
-                sideMenu.style.transform = `translateX(${transformX - sideMenu.offsetWidth}px)`;
-            }
-        });
-
-        mainContentWrapper.addEventListener('touchend', (e) => {
-            if (!isSwiping || sideMenu.classList.contains('open')) return;
-            isSwiping = false;
-            mainContentWrapper.style.transition = ''; // Re-enable transition
-            sideMenu.style.transition = '';
-
-            if (diffX > swipeThreshold) { // If swiped enough to the right
-                openSideMenu();
-            } else { // Snap back to closed
-                mainContentWrapper.style.transform = `translateX(0)`;
-                sideMenu.style.transform = `translateX(-${sideMenu.offsetWidth}px)`;
-            }
-            diffX = 0; // Reset diffX
-        });
-
-        // For closing the menu (swipe left on side menu)
-        sideMenu.addEventListener('touchstart', (e) => {
-            if (!sideMenu.classList.contains('open')) return; // Only process if menu is open
-            startX = e.touches[0].clientX;
-            isSwiping = true;
-            mainContentWrapper.style.transition = 'none'; // Disable transition for smooth drag
-            sideMenu.style.transition = 'none';
-        });
-
-        sideMenu.addEventListener('touchmove', (e) => {
-            if (!isSwiping || !sideMenu.classList.contains('open')) return;
-            currentX = e.touches[0].clientX;
-            diffX = currentX - startX;
-
-            if (diffX < 0) { // Swiping left
-                e.preventDefault(); // Prevent page scrolling
-                const transformX = Math.max(diffX, -sideMenu.offsetWidth);
-                mainContentWrapper.style.transform = `translateX(${sideMenu.offsetWidth + transformX}px)`;
-                sideMenu.style.transform = `translateX(${transformX}px)`;
-            }
-        });
-
-        sideMenu.addEventListener('touchend', (e) => {
-            if (!isSwiping || !sideMenu.classList.contains('open')) return;
-            isSwiping = false;
-            mainContentWrapper.style.transition = ''; // Re-enable transition
-            sideMenu.style.transition = '';
-
-            if (diffX < -swipeThreshold) { // If swiped enough to the left
-                closeSideMenu();
-            } else { // Snap back to open
-                mainContentWrapper.style.transform = `translateX(${sideMenu.offsetWidth}px)`;
-                sideMenu.style.transform = `translateX(0)`;
-            }
-            diffX = 0; // Reset diffX
-        });
-
-        // --- Функции за локално хранилище ---
+        // --- Local Storage Functions ---
         function saveSettings() {
             const settingsToSave = {
                 selectedCity: selectedCity,
                 customPrayerAdjustments: customPrayerAdjustments,
                 isClassicalNamesActive: isClassicalNamesActive
-                // isCountdownMode умишлено НЕ се запазва в localStorage тук
+                // isCountdownMode is intentionally NOT saved to localStorage here
             };
             try {
                 localStorage.setItem('prayerApp_settings', JSON.stringify(settingsToSave));
-                // По избор предоставяне на обратна връзка на потребителя:
+                // Optionally provide user feedback:
                 // console.log("Настройките запазени успешно!");
             } catch (e) {
                 console.error("Неуспешно запазване на настройките в localStorage:", e);
@@ -1243,89 +1044,81 @@
                     selectedCity = savedSettings.selectedCity || "София";
                     customPrayerAdjustments = savedSettings.customPrayerAdjustments || {};
                     isClassicalNamesActive = savedSettings.isClassicalNamesActive || false;
-                    // isCountdownMode умишлено НЕ се зарежда от localStorage тук
+                    // isCountdownMode is intentionally NOT loaded from localStorage here
                     
-                    // Актуализиране на елемента за показване на града
+                    // Update city display element
                     selectedCityDisplay.textContent = selectedCity;
                 }
-                // Винаги задавайте selectedDate на днес при зареждане
+                // Always set selectedDate to today on load
                 selectedDate = new Date(); 
-                // Актуализиране на скрития input елемент, така че date picker да отразява днешната дата
+                // Update the hidden input element so the date picker reflects today's date
                 hiddenDateInput.value = formatDateForInputAndLookup(selectedDate);
             }
             catch (e) {
                 console.error("Неуспешно зареждане на настройките от localStorage:", e);
                 errorMessageEl.textContent = 'Възникна проблем при зареждане на настройките. Използват се настройки по подразбиране.';
                 errorMessageEl.classList.remove('hidden');
-                // По избор изчистване на повредени настройки, ако е необходимо: localStorage.removeItem('prayerApp_settings');
+                // Optionally clear corrupted settings if needed: localStorage.removeItem('prayerApp_settings');
             }
         }
 
-        // Първоначална настройка и периодични актуализации
+        // Initial setup and periodic updates
         window.onload = function() {
-            loadSettings(); // Първо заредете настройките
+            loadSettings(); // Load settings first
             
-            updateClock(); // Стартирайте показването на текущото време
-            fetchPrayerTimes(); // Първоначално извличане на времената за намаз с помощта на заредените настройки
+            updateClock(); // Start current time display
+            fetchPrayerTimes(); // Initial fetch of prayer times using loaded settings
 
-            // Слушател на събитие за бутона Хамбургер за отваряне на страничното меню
-            hamburgerMenuBtn.addEventListener('click', openSideMenu);
-            // Слушател на събитие за бутона Затвори вътре в страничното меню
-            closeSideMenuBtn.addEventListener('click', closeSideMenu);
-            
-            // Слушател на събитие за бутона за местоположение за отваряне на модалния прозорец за избор на град (вече вътре в страничното меню)
+            // Event listener for Location button to open city selection modal
             locationSelectBtn.addEventListener('click', openCitySelectionModal);
             
-            // Фиксиран слушател на събитие за затваряне на модала за град с помощта на бутона за затваряне
+            // Fixed event listener for closing city modal using the close button
             closeCityModalBtn.addEventListener('click', closeCitySelectionModal);
 
-            // Слушател на събитие за затваряне на модала за град чрез щракване върху overlay
+            // Event listener for closing city modal by clicking on the overlay
             citySelectionModal.addEventListener('click', (event) => {
-                // Проверете дали щракването е станало директно върху modal-overlay (не върху съдържанието му)
+                // Check if the click occurred directly on the modal-overlay (not its content)
                 if (event.target === citySelectionModal) {
                     closeCitySelectionModal();
                 }
             });
 
-            // Слушател на събитие за НОВИЯ бутон за превключване на обратно броене (вече вътре в страничното меню)
+            // Event listener for the NEW countdown toggle button
             countdownToggleButton.addEventListener('click', () => {
                 isCountdownMode = !isCountdownMode;
-                saveSettings(); // Запазване на новия режим (въпреки че не е постоянен за isCountdownMode)
-                displayPrayerTimes(); // Показване отново на времената за намаз с новия режим
-                closeSideMenu(); // Затваряне на страничното меню след изпълнение на действието
+                saveSettings(); // Save the new mode (though not persistent for isCountdownMode)
+                displayPrayerTimes(); // Re-display prayer times with the new mode
             });
 
-            // Слушател на събитие за новия бутон за избор на дата, за да задейства скрития вход (вече вътре в страничното меню)
-            datePickerBtn.addEventListener('click', (event) => { // Добавен параметър event
-                hiddenDateInput.showPicker(); // Отваряне на нативния избор на дата
+            // Event listener for the new date picker button to trigger the hidden input
+            datePickerBtn.addEventListener('click', () => {
+                hiddenDateInput.showPicker(); // Opens the native date picker
             });
 
-            // Слушател на събитие за промяна на скрития вход за дата
+            // Event listener for hidden date input change
             hiddenDateInput.addEventListener('change', (event) => {
                 selectedDate = new Date(event.target.value);
-                fetchPrayerTimes(); // Извличане отново на времената за новоизбраната дата
-                closeSideMenu(); // Затваряне на страничното меню след избор на дата
+                fetchPrayerTimes(); // Re-fetch times for the newly selected date
             });
 
-            // Слушател на събитие за бутона за превключване на езика (вече вътре в страничното меню)
-            languageToggleBtn.addEventListener('click', (event) => { // Добавен параметър event
+            // Event listener for the language toggle button
+            languageToggleBtn.addEventListener('click', () => {
                 isClassicalNamesActive = !isClassicalNamesActive;
-                saveSettings(); // Автоматично запазване на предпочитанията за език
-                fetchPrayerTimes(); // Извличане/показване отново за прилагане на новите имена
-                closeSideMenu(); // Затваряне на страничното меню след изпълнение на действието
+                saveSettings(); // Automatically save language preference
+                fetchPrayerTimes(); // Re-fetch/re-display to apply new names
             });
             
-            // Слушатели на събития за глобалния модален прозорец за корекции (вече вътре в страничното меню)
+            // Event listeners for the global adjustment modal
             openAdjustmentModalBtn.addEventListener('click', openAdjustmentModal);
             cancelAdjustmentBtn.addEventListener('click', closeAdjustmentModal);
             saveAllAdjustmentsBtn.addEventListener('click', saveAllAdjustments); 
 
-            // Слушател на събитие за новия бутон "Връщане към днес"
+            // Event listener for the new "Return to Today" button
             returnTodayBtn.addEventListener('click', returnToToday);
 
-            // Актуализиране на часовника всяка секунда
+            // Update clock every second
             setInterval(updateClock, 1000);
-            // Актуализиране на основното обратно броене всяка секунда (активно само за днешна дата или специфична логика за бъдеще/минало)
+            // Update main countdown every second (only active for today's date or specific logic for future/past)
             setInterval(updateCountdown, 1000);
         };
     </script>
