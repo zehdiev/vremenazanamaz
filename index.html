@@ -259,18 +259,18 @@
                     <div id="sacred-countdown-text" class="countdown-text">зареждане...</div>
                 </div>
 
-                <div class="flex justify-center items-center w-full max-w-xs mx-auto mb-4">
+                <div class="flex justify-center items-center w-full max-w-xs mx-auto mb-4 gap-3">
+                    <button id="back-to-prayer-times-btn" class="action-button !w-10 !h-10 !text-xl">↩️</button>
                     <button id="toggle-sacred-events-countdown-btn" class="action-button">⏳</button>
                 </div>
             </div>
             <div id="sacred-events-loading-indicator" class="flex justify-center items-center py-4 hidden">
                 <div class="loading-spinner"></div>
             </div>
-            <div id="sacred-events-list" class="flex flex-col gap-1 mb-4">
-                <!-- Sacred events will be populated here -->
-            </div>
-            <div class="flex justify-center">
-                <button id="back-to-prayer-times-btn" class="action-button !w-auto px-4 py-2 text-base">↩️ Към Времена за Намаз</button>
+            <div id="sacred-events-list-container" class="max-h-96 overflow-y-auto mb-4">
+                <div id="sacred-events-list" class="flex flex-col gap-1">
+                    <!-- Sacred events will be populated here -->
+                </div>
             </div>
         </div>
 
@@ -404,6 +404,7 @@
         // NEW: Sacred Events Main Countdown Elements
         const sacredCountdownDisplay = document.getElementById('sacred-countdown-display');
         const sacredCountdownText = document.getElementById('sacred-countdown-text');
+        const sacredEventsListContainer = document.getElementById('sacred-events-list-container');
 
 
         // Prayer names in Bulgarian (Dhuhr will be handled conditionally)
@@ -1152,16 +1153,22 @@
             clearInterval(sacredEventsCountdownIntervalId);
             sacredEventsCountdownIntervalId = null;
 
+            let nextUpcomingEventElement = null; // To store the element to scroll to
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
             eventsToToogleDisplay.forEach(event => {
                 const eventRow = document.createElement('div');
                 eventRow.className = 'prayer-row';
 
-                const now = new Date();
-                // Use the new formatSacredEventDisplay for countdown mode
                 const displayValue = isSacredEventsCountdownMode ? formatSacredEventDisplay(event.date) : formatDate(event.date);
 
-                if (isSacredEventsCountdownMode && event.date.toDateString() === now.toDateString()) {
-                     eventRow.classList.add('highlighted-prayer');
+                // Determine if this event is the "next upcoming" one
+                const startOfEventDay = new Date(event.date.getFullYear(), event.date.getMonth(), event.date.getDate());
+                if (!nextUpcomingEventElement && startOfEventDay >= startOfToday) {
+                    // This is the first event that is today or in the future
+                    eventRow.classList.add('highlighted-prayer'); // Highlight it
+                    nextUpcomingEventElement = eventRow; // Mark this element for scrolling
                 } else if (!isSacredEventsCountdownMode && event.date < now) {
                     eventRow.classList.add('opacity-50');
                 }
@@ -1173,6 +1180,15 @@
                 `;
                 sacredEventsListEl.appendChild(eventRow);
             });
+
+            // After all elements are rendered, scroll to the next upcoming one
+            if (nextUpcomingEventElement) {
+                // Use a timeout to ensure the DOM is fully rendered and the scrollIntoView works reliably
+                setTimeout(() => {
+                    nextUpcomingEventElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100); // Small delay
+            }
+
 
             if (isSacredEventsCountdownMode) {
                 // Update interval to use the new formatting function
