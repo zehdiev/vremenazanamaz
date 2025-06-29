@@ -52,7 +52,7 @@
         }
 
         /* Responsive text sizes for countdown */
-        #countdown {
+        #countdown, #sacred-countdown-display { /* Added sacred countdown */
             font-weight: 800; /* По-дълбок шрифт */
             color: #ffffff; /* По-бял цвят */
             text-shadow: 0 0 10px rgba(255,255,255,0.7), 0 0 20px rgba(104, 211, 145, 0.5); /* Мека сияйна сянка */
@@ -253,15 +253,59 @@
             background-color: rgba(74, 85, 104, 0.9);
             box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.7), 0 0 0 3px rgba(104, 211, 145, 0.5);
         }
-        .modal-content button {
-            padding: 0.75rem 1.5rem; /* По-голям padding за бутоните в модала */
-            border-radius: 0.75rem; /* По-заоблени ъгли */
-            font-weight: 600;
-            transition: all 0.2s ease-in-out;
+        
+        /* Styling for modal buttons - consistent with Frutiger Aero but distinct from main action buttons */
+        .modal-action-button {
+            background: linear-gradient(145deg, #4a5568, #2d3748); /* Same gradient as action-button */
+            color: #e2e8f0;
+            border: 1px solid rgba(104, 211, 145, 0.5); /* Same border as action-button */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.2); /* Same shadow */
+            transition: all 0.2s ease-in-out; /* Same transition */
+
+            /* Specific overrides for modal buttons */
+            padding: 0.75rem 1.5rem; /* Adjusted padding */
+            border-radius: 0.75rem; /* Specific rounded corners for modal buttons */
+            font-weight: 600; /* Bolder font */
+            cursor: pointer;
+            display: inline-flex; /* Use flex for centering text if needed, inline-flex to respect content width */
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
-        .modal-content button:hover {
-            transform: translateY(-1px);
+
+        .modal-action-button:hover {
+            background: linear-gradient(145deg, #5a677d, #3e4c61); /* Darker gradient on hover */
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px); /* Slight lift on hover */
         }
+
+        .modal-action-button:active {
+            transform: translateY(0); /* Return on click */
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5); /* Click effect */
+        }
+        .modal-action-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(104, 211, 145, 0.6); /* Green glow on focus */
+        }
+
+        /* Primary modal button variant (e.g., Save) */
+        .modal-action-button.modal-action-button-primary {
+            background: linear-gradient(145deg, #68d391, #38b2ac); /* Green gradient */
+            color: #1a202c; /* Dark text for contrast */
+            border-color: rgba(255, 255, 255, 0.4);
+            text-shadow: none; /* No text shadow for light background */
+        }
+
+        .modal-action-button.modal-action-button-primary:hover {
+            background: linear-gradient(145deg, #7be0a3, #48c6b7); /* Lighter green on hover */
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-action-button.modal-action-button-primary:focus {
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.6); /* White glow on focus for green button */
+        }
+
+
         /* Styling for the new button group in sacred events view */
         .sacred-events-controls {
             display: flex;
@@ -413,7 +457,7 @@
                 <!-- City options will be populated here by JavaScript -->
             </div>
             <div class="flex justify-end">
-                <button id="close-city-modal-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-xl focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Затвори</button>
+                <button id="close-city-modal-btn" class="modal-action-button">Затвори</button>
             </div>
         </div>
     </div>
@@ -427,8 +471,8 @@
                 <!-- Adjustment inputs will be dynamically generated here -->
             </div>
             <div class="flex justify-end space-x-3">
-                <button id="cancel-adjustment-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-xl focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Отказ</button>
-                <button id="save-all-adjustments-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Запази</button>
+                <button id="cancel-adjustment-btn" class="modal-action-button">Отказ</button>
+                <button id="save-all-adjustments-btn" class="modal-action-button modal-action-button-primary">Запази</button>
             </div>
         </div>
     </div>
@@ -994,29 +1038,29 @@
             clearInterval(individualCountdownIntervalId); // Always clear any existing interval first
             individualCountdownIntervalId = null;
 
-            // In this design, individual prayer times in the list should always be static, matching the screenshot.
-            // The isCountdownMode toggle applies only to the *main* countdown for next prayer/sacred event.
-            prayersDataForDisplay.forEach(prayer => {
-                const span = document.getElementById(`prayer-time-${prayer.name}`);
-                if (span) {
-                    span.textContent = prayer.staticTime; // Always display static time
-                }
-            });
-            // Therefore, we do NOT start setInterval for individual countdowns here.
-            // The isCountdownMode variable will now primarily control the main countdown display.
+            // If in countdown mode AND it's today's date, start the dynamic updates for individual prayers
+            if (isCountdownMode && selectedDate.toDateString() === new Date().toDateString()) {
+                updateIndividualCountdowns(); // Call once immediately to set initial countdowns
+                individualCountdownIntervalId = setInterval(updateIndividualCountdowns, 1000);
+            } else {
+                // If not in countdown mode or not today's date, ensure static times are displayed.
+                prayersDataForDisplay.forEach(prayer => {
+                    const span = document.getElementById(`prayer-time-${prayer.name}`);
+                    if (span) {
+                        span.textContent = prayer.staticTime; // Revert to static time
+                    }
+                });
+            }
         }
 
         // Function to dynamically update individual prayer countdowns in the list
-        // This function is effectively no longer used for the list display itself,
-        // but it's kept here if the logic were to be re-introduced for list items.
         function updateIndividualCountdowns() {
             const now = new Date();
             prayersDataForDisplay.forEach(prayer => {
                 const span = document.getElementById(`prayer-time-${prayer.name}`);
                 if (span) {
                     const diffMs = prayer.date.getTime() - now.getTime();
-                    // This part would be active if we wanted countdowns in the list
-                    // span.textContent = formatDuration(diffMs);
+                    span.textContent = formatDuration(diffMs); // Display countdown duration
                 }
             });
         }
@@ -1410,7 +1454,8 @@
 
             countdownToggleButton.addEventListener('click', () => {
                 isCountdownMode = !isCountdownMode;
-                displayPrayerTimes();
+                saveSettings(); // Save the new countdown mode setting
+                displayPrayerTimes(); // Re-render to apply the countdown mode change
             });
 
             datePickerBtn.addEventListener('click', () => {
