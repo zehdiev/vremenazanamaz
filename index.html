@@ -155,6 +155,12 @@
             text-shadow: 0 0 5px rgba(104, 211, 145, 0.7); /* Subtle glow for text */
             font-weight: 700; /* Make text bolder for emphasis */
         }
+        /* Style for the main countdown text when it's highlighted */
+        .countdown-text.highlight-text-green {
+            color: #68d391; /* Bright green text color */
+            text-shadow: 0 0 5px rgba(104, 211, 145, 0.7); /* Subtle glow for text */
+            font-weight: 700; /* Make text bolder for emphasis */
+        }
 
 
         .loading-spinner {
@@ -400,7 +406,11 @@
         /* Custom styles for the scrollable list container */
         #sacred-events-list-container {
             /* Adjusted for exactly 4 items + some padding */
-            max-height: 12rem; /* Approximately 4 rows of items */
+            /* Height calculation based on current prayer-row styling: */
+            /* Approx. height of one prayer-row: (font-size 0.95rem * line-height 1.5) + (2 * padding-top/bottom 0.6rem) = 1.425rem + 1.2rem = 2.625rem */
+            /* Gap between rows: 0.5rem (from gap-1 class which is 2px, converted to rem here) */
+            /* Total height for 4 rows = (4 * 2.625rem) + (3 * 0.5rem) = 10.5rem + 1.5rem = 12rem */
+            max-height: 12rem;
             overflow-y: auto;
             border-radius: 1rem; /* Rounded corners for the scrollable area */
             background-color: rgba(0, 0, 0, 0.1); /* Very subtle background for the scroll area */
@@ -438,7 +448,7 @@
         #gregorian-date-info #current-day,
         #gregorian-date-info #current-time,
         #hijri-and-sacred-info #selected-city-display,
-        #hijri-and-sacred-info #hijri-date {
+        #hijri-and-and-sacred-info #hijri-date {
             color: #ffffff; /* White color for Gregorian date, day, time, and location */
             font-weight: 600; /* Make them a bit bolder */
             text-shadow: 0 0 5px rgba(255,255,255,0.4); /* Subtle glow */
@@ -752,7 +762,7 @@
         let nextPrayerIndex = -1;
         let selectedCity = "София";
         let currentHijriDate = '';
-        let selectedDate = new Date();
+        let selectedDate = new Date(); // This date represents the data currently being displayed
         let customPrayerAdjustments = {};
         let isClassicalNamesActive = false;
         let isCountdownMode = false;
@@ -1183,20 +1193,12 @@
         function updateCountdown() {
             const now = new Date();
 
-            // Auto-advance selectedDate to the next day if all prayers for the current selectedDate have passed
-            // and the current time is past the last prayer of the day.
-            if (selectedDate.toDateString() === now.toDateString() && prayersDataForDisplay.length > 0) {
-                const lastPrayerTimeDate = prayersDataForDisplay[prayersDataForDisplay.length - 1].date;
-                // Check if now is AFTER the last prayer of the current selectedDate
-                if (now.getTime() > lastPrayerTimeDate.getTime()) {
-                    selectedDate.setDate(selectedDate.getDate() + 1); // Advance date by one day
-                    hiddenDateInput.value = formatDateForInputAndLookup(selectedDate); // Update date picker input
-                    fetchPrayerTimes(); // Re-fetch and re-display for the new day
-                    return; // Exit to re-run countdown and list display for the new date
-                }
-            }
+            let nextPrayerTimeDate;
+            let nextPrayerDisplayName;
+            let shouldHighlightCountdownText = false; // Flag to control countdown text highlight
 
-
+            // If selectedDate is not today (the actual current date), just display difference to selectedDate.
+            // The date rollover logic is handled by a separate interval.
             if (selectedDate.toDateString() !== now.toDateString()) {
                 const diff = getYearsMonthsDaysDifference(now, selectedDate);
                 let displayMessage = '';
@@ -1216,76 +1218,84 @@
                     } else if (diff.days > 0) {
                         displayMessage += `след ${diff.days} дни`;
                     } else {
+                        // This case means selectedDate is slightly in the future but less than a day
                         countdownEl.textContent = '--:--:--';
                         countdownTextEl.textContent = 'Избрана е бъдеща дата.'; 
+                        countdownTextEl.classList.remove('highlight-text-green'); // Ensure no highlight
                         return;
                     }
                     countdownEl.textContent = '--:--:--'; 
                     countdownTextEl.textContent = displayMessage || 'Изберете дата.';
+                    countdownTextEl.classList.remove('highlight-text-green'); // Ensure no highlight
                 } else {
                     countdownEl.textContent = '--:--:--';
                     countdownTextEl.textContent = 'Избрана е минала дата.';
+                    countdownTextEl.classList.remove('highlight-text-green'); // Ensure no highlight
                 }
                 return;
             }
 
+            // --- Logic for when selectedDate IS today's date (selectedDate.toDateString() === now.toDateString()) ---
             returnTodayBtn.classList.add('hidden');
 
             if (Object.keys(prayerTimes).length === 0) {
                 countdownEl.textContent = '--:--:--';
                 countdownTextEl.textContent = 'Няма отброяване за избраната дата.';
+                countdownTextEl.classList.remove('highlight-text-green'); // Ensure no highlight
                 return;
             }
 
-            let nextPrayerTimeDate;
-            let nextPrayerDisplayName;
-            
             let prayersArrayForCountdown = prayersDataForDisplay;
+            let nextPrayerCandidateIndex = -1; 
 
-            nextPrayerIndex = -1; 
+            // Find the next prayer on the *current* selectedDate that is in the future
             for (let i = 0; i < prayersArrayForCountdown.length; i++) {
                 if (prayersArrayForCountdown[i].date > now) {
-                    nextPrayerIndex = i;
+                    nextPrayerCandidateIndex = i;
                     break;
-                    }
                 }
+            }
             
-            if (nextPrayerIndex === -1 && prayersArrayForCountdown.length > 0) {
-                // All prayers for today have passed.
-                // The date should have already advanced by the initial check at the top of the function.
-                // If we reach here, it means it's still the *old* date and we need to display "tomorrow's Fajr"
-                // but only on the main countdown, not attempt to highlight in the list of past prayers.
-                nextPrayerIndex = 0;
-                const nextDayFajr = new Date(prayersArrayForCountdown[0].date);
-                nextDayFajr.setDate(nextDayFajr.getDate() + 1);
-                nextPrayerTimeDate = nextDayFajr;
-                nextPrayerDisplayName = prayersArrayForCountdown[0].displayName;
-                countdownTextEl.textContent = `до ${nextPrayerDisplayName} утре`;
-            } else if (nextPrayerIndex !== -1) {
-                const nextPrayer = prayersArrayForCountdown[nextPrayerIndex];
+            if (nextPrayerCandidateIndex !== -1) {
+                // There is a future prayer on selectedDate
+                const nextPrayer = prayersArrayForCountdown[nextPrayerCandidateIndex];
                 nextPrayerTimeDate = nextPrayer.date;
                 nextPrayerDisplayName = nextPrayer.displayName;
                 countdownTextEl.textContent = `до ${nextPrayerDisplayName}`;
+                shouldHighlightCountdownText = true; // Highlight if it's an actual prayer for today
             } else {
-                countdownEl.textContent = '00:00:00';
-                countdownTextEl.textContent = 'Всички намази за днес са минали.';
-                return;
+                // All prayers for selectedDate have passed. Count down to Fajr of the next day.
+                // We need Fajr time for tomorrow. Take today's Fajr and add 24 hours.
+                const tomorrowFajr = new Date(prayersArrayForCountdown[0].date); // Get today's Fajr time
+                tomorrowFajr.setDate(tomorrowFajr.getDate() + 1); // Advance it to tomorrow
+
+                nextPrayerTimeDate = tomorrowFajr;
+                nextPrayerDisplayName = getCurrentPrayerNames().Fajr; // "Зора" or "Заговеване"
+                countdownTextEl.textContent = `до ${nextPrayerDisplayName} утре`;
+                shouldHighlightCountdownText = false; // Do NOT highlight when counting to tomorrow's Fajr
             }
 
             const diff = nextPrayerTimeDate.getTime() - now.getTime();
 
             if (diff <= 0) {
+                // This condition means either the next prayer just passed or tomorrow's Fajr just started.
+                // This will be caught by the general date rollover check or re-run of this function.
                 countdownEl.textContent = '00:00:00';
-                countdownTextEl.textContent = 'Намазът е сега!';
-                fetchPrayerTimes(); 
-                return;
+                countdownTextEl.textContent = 'Намазът е сега!'; 
+                shouldHighlightCountdownText = true; // Keep highlighted if it's the current prayer
+            } else {
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                countdownEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
             }
-
-            const hours = Math.floor(diff / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-            countdownEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            // Apply/remove highlight based on flag for the main countdown text
+            if (shouldHighlightCountdownText) {
+                countdownTextEl.classList.add('highlight-text-green');
+            } else {
+                countdownTextEl.classList.remove('highlight-text-green');
+            }
         }
 
         // Function to return to today's date
@@ -1546,7 +1556,7 @@
                     
                     selectedCityDisplay.textContent = selectedCity;
                 }
-                selectedDate = new Date(); 
+                selectedDate = new Date(); // Always start with today's date on load
                 hiddenDateInput.value = formatDateForInputAndLookup(selectedDate);
             }
             catch (e) {
@@ -1562,6 +1572,22 @@
             
             updateClock();
             fetchPrayerTimes();
+
+            // Interval to update main countdown and check for date rollover
+            setInterval(() => {
+                updateCountdown(); // Update the main countdown display
+                const now = new Date();
+                // Check if the actual current date has changed from the displayed selectedDate
+                if (selectedDate.toDateString() !== now.toDateString()) {
+                    selectedDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Set selectedDate to current actual date, normalized to start of day
+                    hiddenDateInput.value = formatDateForInputAndLookup(selectedDate); // Update date picker input
+                    fetchPrayerTimes(); // Re-fetch times for the new date
+                }
+            }, 1000); // Run every second
+
+            // Interval to update current time display
+            setInterval(updateClock, 1000);
+
 
             locationSelectBtn.addEventListener('click', openCitySelectionModal);
             closeCityModalBtn.addEventListener('click', closeCitySelectionModal);
@@ -1582,6 +1608,7 @@
             });
 
             hiddenDateInput.addEventListener('change', (event) => {
+                // When user manually picks a date, update selectedDate and fetch times
                 selectedDate = new Date(event.target.value);
                 fetchPrayerTimes();
             });
@@ -1607,9 +1634,6 @@
                 saveSettings();
                 renderSacredEventsListDisplay();
             });
-
-            setInterval(updateClock, 1000);
-            setInterval(updateCountdown, 1000);
         };
     </script>
 </body>
