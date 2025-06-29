@@ -759,11 +759,13 @@
                         currentHijriDate = `${hijriDay} ${hijriMonthBg} ${hijriYear} г.`; 
                         hijriDateEl.textContent = currentHijriDate;
 
-                        // Check and display sacred day/night for TODAY from the hardcoded list
+                        // --- UPDATED LOGIC FOR SACRED DAY INFO ---
                         let foundSacredDay = '';
-                        const today = new Date();
+                        // Use selectedDate instead of new Date() (today)
+                        const dateForSacredCheck = selectedDate; 
                         for (const event of HARDCODED_SACRED_EVENTS_2025) {
-                            if (event.date.toDateString() === today.toDateString()) {
+                            // Compare with selectedDate
+                            if (event.date.toDateString() === dateForSacredCheck.toDateString()) { 
                                 foundSacredDay = event.nameBg;
                                 break;
                             }
@@ -776,6 +778,7 @@
                             sacredDayInfoEl.textContent = '';
                             sacredDayInfoEl.classList.add('hidden');
                         }
+                        // --- END UPDATED LOGIC ---
 
                     } else {
                         console.warn("Hijri date data incomplete from API response.");
