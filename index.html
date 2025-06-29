@@ -156,11 +156,7 @@
             font-weight: 700; /* Make text bolder for emphasis */
         }
         /* Style for the main countdown text when it's highlighted */
-        .countdown-text.highlight-text-green {
-            color: #68d391; /* Bright green text color */
-            text-shadow: 0 0 5px rgba(104, 211, 145, 0.7); /* Subtle glow for text */
-            font-weight: 700; /* Make text bolder for emphasis */
-        }
+        /* REMOVED: .countdown-text.highlight-text-green { ... } */
 
 
         .loading-spinner {
@@ -1195,7 +1191,7 @@
 
             let nextPrayerTimeDate;
             let nextPrayerDisplayName;
-            let shouldHighlightCountdownText = false; // Flag to control countdown text highlight
+            // Removed: let shouldHighlightCountdownText = false; // Flag to control countdown text highlight
 
             // If selectedDate is not today (the actual current date), just display difference to selectedDate.
             // The date rollover logic is handled by a separate interval.
@@ -1262,7 +1258,7 @@
                 nextPrayerTimeDate = nextPrayer.date;
                 nextPrayerDisplayName = nextPrayer.displayName;
                 countdownTextEl.textContent = `до ${nextPrayerDisplayName}`;
-                shouldHighlightCountdownText = true; // Highlight if it's an actual prayer for today
+                // Removed: shouldHighlightCountdownText = true; // Highlight if it's an actual prayer for today
             } else {
                 // All prayers for selectedDate have passed. Count down to Fajr of the next day.
                 // We need Fajr time for tomorrow. Take today's Fajr and add 24 hours.
@@ -1272,7 +1268,7 @@
                 nextPrayerTimeDate = tomorrowFajr;
                 nextPrayerDisplayName = getCurrentPrayerNames().Fajr; // "Зора" or "Заговеване"
                 countdownTextEl.textContent = `до ${nextPrayerDisplayName} утре`;
-                shouldHighlightCountdownText = false; // Do NOT highlight when counting to tomorrow's Fajr
+                // Removed: shouldHighlightCountdownText = false; // Do NOT highlight when counting to tomorrow's Fajr
             }
 
             const diff = nextPrayerTimeDate.getTime() - now.getTime();
@@ -1282,7 +1278,7 @@
                 // This will be caught by the general date rollover check or re-run of this function.
                 countdownEl.textContent = '00:00:00';
                 countdownTextEl.textContent = 'Намазът е сега!'; 
-                shouldHighlightCountdownText = true; // Keep highlighted if it's the current prayer
+                // Removed: shouldHighlightCountdownText = true; // Keep highlighted if it's the current prayer
             } else {
                 const hours = Math.floor(diff / (1000 * 60 * 60));
                 const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -1291,11 +1287,14 @@
             }
             
             // Apply/remove highlight based on flag for the main countdown text
-            if (shouldHighlightCountdownText) {
-                countdownTextEl.classList.add('highlight-text-green');
-            } else {
-                countdownTextEl.classList.remove('highlight-text-green');
-            }
+            // Removed:
+            // if (shouldHighlightCountdownText) {
+            //     countdownTextEl.classList.add('highlight-text-green');
+            // } else {
+            //     countdownTextEl.classList.remove('highlight-text-green');
+            // }
+            // Ensure the class is always removed for the main countdown text
+            countdownTextEl.classList.remove('highlight-text-green');
         }
 
         // Function to return to today's date
