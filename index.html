@@ -390,12 +390,22 @@
         }
         /* Custom styles for the scrollable list container */
         #sacred-events-list-container {
-            max-height: 400px; /* Adjust as needed for desired height, e.g., 96 Tailwind units */
+            max-height: 400px; /* Default height */
             overflow-y: auto;
             border-radius: 1rem; /* Rounded corners for the scrollable area */
             background-color: rgba(0, 0, 0, 0.1); /* Very subtle background for the scroll area */
             padding: 0.5rem; /* Padding inside scroll area */
             border: 1px solid rgba(255, 255, 255, 0.05); /* Very subtle inner border */
+            /* Added for better mobile fit */
+            flex-grow: 1; /* Allows it to take available space */
+            min-height: 150px; /* Minimum height on small screens */
+            /* Removed negative margins as they might conflict with container padding */
+        }
+        @media (max-width: 639px) { /* Adjust for mobile specific screen sizes */
+            #sacred-events-list-container {
+                max-height: 60vh; /* Use viewport height for better mobile fit */
+                padding: 0.25rem; /* Reduced padding on very small screens */
+            }
         }
         /* Style for the scrollbar to make it less intrusive */
         #sacred-events-list-container::-webkit-scrollbar {
@@ -1163,6 +1173,20 @@
         function updateCountdown() {
             const now = new Date();
 
+            // Auto-advance selectedDate to the next day if all prayers for the current selectedDate have passed
+            // and the current time is past the last prayer of the day.
+            if (selectedDate.toDateString() === now.toDateString() && prayersDataForDisplay.length > 0) {
+                const lastPrayerTimeDate = prayersDataForDisplay[prayersDataForDisplay.length - 1].date;
+                // Check if now is AFTER the last prayer of the current selectedDate
+                if (now.getTime() > lastPrayerTimeDate.getTime()) {
+                    selectedDate.setDate(selectedDate.getDate() + 1); // Advance date by one day
+                    hiddenDateInput.value = formatDateForInputAndLookup(selectedDate); // Update date picker input
+                    fetchPrayerTimes(); // Re-fetch and re-display for the new day
+                    return; // Exit to re-run countdown and list display for the new date
+                }
+            }
+
+
             if (selectedDate.toDateString() !== now.toDateString()) {
                 const diff = getYearsMonthsDaysDifference(now, selectedDate);
                 let displayMessage = '';
@@ -1217,7 +1241,11 @@
                 }
             
             if (nextPrayerIndex === -1 && prayersArrayForCountdown.length > 0) {
-                nextPrayerIndex = 0; 
+                // All prayers for today have passed.
+                // The date should have already advanced by the initial check at the top of the function.
+                // If we reach here, it means it's still the *old* date and we need to display "tomorrow's Fajr"
+                // but only on the main countdown, not attempt to highlight in the list of past prayers.
+                nextPrayerIndex = 0;
                 const nextDayFajr = new Date(prayersArrayForCountdown[0].date);
                 nextDayFajr.setDate(nextDayFajr.getDate() + 1);
                 nextPrayerTimeDate = nextDayFajr;
@@ -1396,7 +1424,7 @@
                     eventRow.classList.add('highlighted-prayer'); // Highlight it
                     nextUpcomingEventElement = eventRow; // Mark this element for scrolling
                 } else if (!isSacredEventsCountdownMode && event.date < now) {
-                    eventRow.classList.add('opacity-50');
+                    eventRow.classList.add('opacity-50'); // Dim past events if not in countdown mode
                 }
 
                 const uniqueId = `sacred-event-time-${event.key}`;
@@ -1411,7 +1439,7 @@
             if (nextUpcomingEventElement) {
                 // Use a timeout to ensure the DOM is fully rendered and the scrollIntoView works reliably
                 setTimeout(() => {
-                    nextUpcomingEventElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    nextUpcomingEventElement.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Changed to 'start'
                 }, 100); // Small delay
             }
 
