@@ -251,6 +251,9 @@
             <!-- Location Button (emoji only, opens modal) -->
             <button id="location-select-btn" class="action-button">📍</button>
 
+            <!-- New Sacred Events Button -->
+            <button id="open-sacred-events-modal-btn" class="action-button">✨</button>
+
             <!-- NEW Countdown Toggle Button -->
             <button id="countdown-toggle-btn" class="action-button">⌛</button>
 
@@ -296,49 +299,75 @@
         </div>
     </div>
 
-    <script>
-        // --- SACRED DAYS DATA (EXAMPLE) ---
-        // This is a hardcoded example list of sacred days for demonstration.
-        // For a comprehensive solution, this data would need to be pre-generated for many years.
-        // Data derived from Diyanet religious days calendar (subject to official verification).
-        const sacredDays = {
-            // 2024 (Keep as is, they are likely correct or close enough for 2024)
-            "2024-01-11": "Нощта на Регаиб",
-            "2024-02-06": "Нощта на Мирадж",
-            "2024-02-24": "Нощта на Берат",
-            "2024-03-11": "Начало на Рамазан",
-            "2024-04-05": "Нощта Кадир",
-            "2024-04-10": "Рамазан Байрам - Ден 1",
-            "2024-04-11": "Рамазан Байрам - Ден 2",
-            "2024-04-12": "Рамазан Байрам - Ден 3",
-            "2024-06-15": "Денят Арафа",
-            "2024-06-16": "Курбан Байрам - Ден 1",
-            "2024-06-17": "Курбан Байрам - Ден 2",
-            "2024-06-18": "Курбан Байрам - Ден 3",
-            "2024-06-19": "Курбан Байрам - Ден 4",
-            "2024-07-07": "Нова Хиджri година (1446 г. по Хиджра)",
-            "2024-07-16": "Ашура",
-            "2024-09-14": "Мевлид Кандилли",
+    <!-- Sacred Events Modal -->
+    <div id="sacred-events-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-semibold text-white mb-4">Свещени дни и нощи за <span id="sacred-events-modal-year-display"></span></h3>
+            <div class="flex justify-between items-center mb-4">
+                <button id="prev-sacred-year-btn" class="action-button !w-10 !h-10 !text-lg">⬅️</button>
+                <button id="toggle-sacred-events-countdown-btn" class="action-button">⏳</button>
+                <button id="open-sacred-event-adjustment-modal-btn" class="action-button">⚙️</button> <!-- New Adjustment button -->
+                <button id="next-sacred-year-btn" class="action-button !w-10 !h-10 !text-lg">➡️</button>
+            </div>
+            <div id="sacred-events-loading-indicator" class="flex justify-center items-center py-4 hidden">
+                <div class="loading-spinner"></div>
+            </div>
+            <div id="sacred-events-list" class="flex flex-col gap-1 mb-4">
+                <!-- Sacred events will be populated here -->
+            </div>
+            <div class="flex justify-end">
+                <button id="close-sacred-events-modal-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-xl focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Затвори</button>
+            </div>
+        </div>
+    </div>
 
-            // 2025 (Updated based on Diyanet 2025 calendar and user's specific request for Kurban Bayram)
-            "2025-01-30": "Нощта на Регаиб",
-            "2025-02-26": "Нощта на Мирадж",
-            "2025-03-15": "Нощта на Берат",
-            "2025-03-01": "Начало на Рамазан", 
-            "2025-03-26": "Нощта Кадир",      
-            "2025-03-31": "Рамазан Байрам - Ден 1", 
-            "2025-04-01": "Рамазан Байрам - Ден 2", 
-            "2025-04-02": "Рамазан Байрам - Ден 3", 
-            "2025-06-05": "Денят Арафа",        
-            "2025-06-06": "Курбан Байрам - Ден 1", 
-            "2025-06-07": "Курбан Байрам - Ден 2", 
-            "2025-06-08": "Курбан Байрам - Ден 3", 
-            "2025-06-09": "Курбан Байрам - Ден 4", 
-            "2025-06-26": "Нова Хиджri година (1447 г. по Хиджра)", 
-            "2025-07-05": "Ашура",              
-            "2025-08-26": "Мевлид Кандилли"     
-        };
-        // --- END OF SACRED DAYS DATA ---
+    <!-- Sacred Event Adjustment Modal (NEW) -->
+    <div id="sacred-event-adjustment-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-semibold text-white mb-4">Корекции на дати за свещени събития</h3>
+            <p class="text-gray-300 text-sm mb-3">Въведете корекция в минути (+ за напред, - за назад). Това ще промени Грегорианската дата, получена от API, за дадено Хиджри събитие:</p>
+            <div id="sacred-event-adjustment-inputs" class="mb-2">
+                <!-- Adjustment inputs will be dynamically generated here -->
+            </div>
+            <p id="sacred-event-adjustment-error-message" class="hidden text-center text-red-400 text-sm mb-3"></p> <!-- NEW: Error message for this modal -->
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-sacred-event-adjustment-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-xl focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Отказ</button>
+                <button id="save-sacred-event-adjustments-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Запази</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- HIJRI SACRED EVENTS DEFINITIONS ---
+        // This array defines sacred Islamic events by their Hijri month and day.
+        // The display names are in Bulgarian.
+        const HIJRI_SACRED_EVENTS = [
+            // Regaib Night (often observed on the first Thursday night of Rajab)
+            // Aladhan API might provide specific Gregorian dates for this, but standard is 1st Rajab for calendar purposes.
+            // For Regaib, it's typically the night leading to the first Friday of Rajab,
+            // which can be either the 1st or 2nd of Rajab depending on moon sighting.
+            // The sacredDays in the original code pointed to specific Gregorian dates for these.
+            // For dynamic determination, we rely on the Hijri date from the API.
+            // Based on Diyanet calendars, the dates provided previously were specific.
+            // Let's stick to the numerical Hijri dates for the core events.
+            { hijriMonthEn: "Rajab", hijriDay: 1, nameBg: "Нощта на Регаиб (1 Реджеб)", key: "Regaib" }, // Added unique key for adjustments
+            { hijriMonthEn: "Rajab", hijriDay: 27, nameBg: "Нощта на Мирадж (27 Реджеб)", key: "Miraj" },
+            { hijriMonthEn: "Sha'ban", hijriDay: 15, nameBg: "Нощта на Берат (15 Шабан)", key: "Berat" },
+            { hijriMonthEn: "Ramadan", hijriDay: 1, nameBg: "Начало на Рамазан (1 Рамазан)", key: "RamadanStart" },
+            { hijriMonthEn: "Ramadan", hijriDay: 27, nameBg: "Нощта Кадир (27 Рамазан)", key: "Kadir" }, // Exact date may vary, 27th is common.
+            { hijriMonthEn: "Shawwal", hijriDay: 1, nameBg: "Рамазан Байрам - Ден 1 (1 Шеввал)", key: "RamazanBayram1" },
+            { hijriMonthEn: "Shawwal", hijriDay: 2, nameBg: "Рамазан Байрам - Ден 2 (2 Шеввал)", key: "RamazanBayram2" },
+            { hijriMonthEn: "Shawwal", hijriDay: 3, nameBg: "Рамазан Байрам - Ден 3 (3 Шеввал)", key: "RamazanBayram3" },
+            { hijriMonthEn: "Dhul-Hijjah", hijriDay: 9, nameBg: "Денят Арафа (9 Зилхидже)", key: "Arafa" },
+            { hijriMonthEn: "Dhul-Hijjah", hijriDay: 10, nameBg: "Курбан Байрам - Ден 1 (10 Зилхидже)", key: "KurbanBayram1" },
+            { hijriMonthEn: "Dhul-Hijjah", hijriDay: 11, nameBg: "Курбан Байрам - Ден 2 (11 Зилхидже)", key: "KurbanBayram2" },
+            { hijriMonthEn: "Dhul-Hijjah", hijriDay: 12, nameBg: "Курбан Байрам - Ден 3 (12 Зилхидже)", key: "KurbanBayram3" },
+            { hijriMonthEn: "Dhul-Hijjah", hijriDay: 13, nameBg: "Курбан Байрам - Ден 4 (13 Зилхидже)", key: "KurbanBayram4" },
+            { hijriMonthEn: "Muharram", hijriDay: 1, nameBg: "Нова Хиджri година (1 Мухаррем)", key: "NewHijriYear" },
+            { hijriMonthEn: "Muharram", hijriDay: 10, nameBg: "Ашура (10 Мухаррем)", key: "Ashura" },
+            { hijriMonthEn: "Rabi' al-Awwal", hijriDay: 12, nameBg: "Мевлид Кандилли (12 Рабиюлеввел)", key: "Mawlid" }
+        ];
+        // --- END OF HIJRI SACRED EVENTS DEFINITIONS ---
 
 
         // DOM Elements
@@ -370,6 +399,26 @@
         const prayerAdjustmentInputsContainer = document.getElementById('prayer-adjustment-inputs'); 
         const cancelAdjustmentBtn = document.getElementById('cancel-adjustment-btn');
         const saveAllAdjustmentsBtn = document.getElementById('save-all-adjustments-btn'); 
+
+        // New Sacred Events Modal Elements
+        const openSacredEventsModalBtn = document.getElementById('open-sacred-events-modal-btn');
+        const sacredEventsModal = document.getElementById('sacred-events-modal');
+        const closeSacredEventsModalBtn = document.getElementById('close-sacred-events-modal-btn');
+        const sacredEventsModalYearDisplay = document.getElementById('sacred-events-modal-year-display');
+        const prevSacredYearBtn = document.getElementById('prev-sacred-year-btn');
+        const nextSacredYearBtn = document.getElementById('next-sacred-year-btn');
+        const toggleSacredEventsCountdownBtn = document.getElementById('toggle-sacred-events-countdown-btn');
+        const sacredEventsListEl = document.getElementById('sacred-events-list');
+        const sacredEventsLoadingIndicator = document.getElementById('sacred-events-loading-indicator');
+
+        // Sacred Event Adjustment Modal Elements (NEW)
+        const openSacredEventAdjustmentModalBtn = document.getElementById('open-sacred-event-adjustment-modal-btn');
+        const sacredEventAdjustmentModal = document.getElementById('sacred-event-adjustment-modal');
+        const sacredEventAdjustmentInputsContainer = document.getElementById('sacred-event-adjustment-inputs');
+        const cancelSacredEventAdjustmentBtn = document.getElementById('cancel-sacred-event-adjustment-btn');
+        const saveSacredEventAdjustmentsBtn = document.getElementById('save-sacred-event-adjustments-btn');
+        const sacredEventAdjustmentErrorMessageEl = document.getElementById('sacred-event-adjustment-error-message'); // NEW: Error message for this modal
+
 
         // Prayer names in Bulgarian (Dhuhr will be handled conditionally)
         const prayerNamesStandard = {
@@ -478,10 +527,21 @@
         let isClassicalNamesActive = false; // State for naming convention
         let isCountdownMode = false; // State for countdown mode in prayer list
 
+        // New state for Sacred Events Modal
+        let sacredEventsModalYear = new Date().getFullYear(); // Default to current Gregorian year for the modal
+        let isSacredEventsCountdownMode = false; // Toggle for countdown/date display in sacred events modal
+        const hijriGregorianCache = {}; // Cache for Hijri to Gregorian conversions
+        let customSacredEventAdjustments = {}; // Stores user-defined adjustments for sacred event dates {key: 5}
+
+
         // Global variable for the individual prayer countdown interval
         let individualCountdownIntervalId = null;
         // Global array to store prayer data with Date objects for dynamic updates
         let prayersDataForDisplay = []; 
+        // Global array to store sacred events data with Date objects for dynamic display
+        let eventsToToogleDisplay = [];
+        let sacredEventsCountdownIntervalId = null; // Interval for sacred events countdown
+
 
         // Get current prayer names based on state
         function getCurrentPrayerNames() {
@@ -557,7 +617,7 @@
             return `${day}.${month}.${year}`;
         }
 
-        // Function to format date to紝-MM-DD for input type="date" and API calls
+        // Function to format date to WHICH-MM-DD for input type="date" and API calls
         function formatDateForInputAndLookup(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -584,6 +644,85 @@
             const now = new Date();
             currentTimeEl.textContent = formatTime(now);
         }
+
+        // Function to fetch Hijri date for a given Gregorian date using Aladhan API
+        // This is primarily used by findGregorianDateOfHijri to get Hijri equivalent for a Gregorian day.
+        async function getHijriDateForGregorian(year, month, day) {
+            const gregorianDate = `${String(day).padStart(2, '0')}-${String(month).padStart(2, '0')}-${year}`;
+            const apiUrl = `https://api.aladhan.com/v1/timingsByCity/${gregorianDate}?city=Sofia&country=Bulgaria&method=10`; // Using Sofia for conversion base
+
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                if (data.data && data.data.date && data.data.date.hijri) {
+                    return data.data.date.hijri; // Returns an object like { day: "1", month: { en: "Ramadan" }, year: "1446" }
+                } else {
+                    console.warn("Could not retrieve Hijri date from API for", gregorianDate);
+                    return null;
+                }
+            } catch (error) {
+                console.error("Error fetching Hijri date:", error);
+                return null;
+            }
+        }
+
+        // Function to find the Gregorian date of a specific Hijri date,
+        // optionally within a specific Gregorian year hint.
+        // This function is computationally intensive as it iterates through Gregorian dates
+        // and makes API calls for conversion. Caching is crucial to prevent excessive API calls.
+        async function findGregorianDateOfHijri(targetHijriMonthEnglish, targetHijriDay, targetHijriYear, gregorianYearHint) {
+            const cacheKey = `${targetHijriMonthEnglish}-${targetHijriDay}-${targetHijriYear}-${gregorianYearHint}`;
+            if (hijriGregorianCache[cacheKey]) {
+                return new Date(hijriGregorianCache[cacheKey]); // Return cached date object
+            }
+
+            let foundDate = null;
+            const maxAttemptsPerYear = 366; // Max days in a year to prevent infinite loop
+
+            // Adjust the search range based on a rough estimate for the Hijri year (Gregorian year - 621 or -622)
+            // This makes the search more targeted.
+            let potentialGregorianYears = new Set();
+            potentialGregorianYears.add(gregorianYearHint);
+            potentialGregorianYears.add(gregorianYearHint -1); // Check previous Gregorian year as Hijri year can span across
+            potentialGregorianYears.add(gregorianYearHint + 1); // Check next Gregorian year
+
+            for (const searchGregorianYear of [...potentialGregorianYears].sort()) { // Sort to be consistent
+                let attempts = 0;
+                // Start from a reasonable Gregorian month (e.g., January)
+                for (let month = 1; month <= 12 && attempts < maxAttemptsPerYear; month++) {
+                    for (let day = 1; day <= 31 && attempts < maxAttemptsPerYear; day++) {
+                        attempts++;
+                        const testDate = new Date(searchGregorianYear, month - 1, day);
+                        // Ensure the date is valid and doesn't overflow to another month/year
+                        if (isNaN(testDate.getTime()) || testDate.getFullYear() !== searchGregorianYear || testDate.getMonth() !== (month - 1)) {
+                            continue;
+                        }
+
+                        const hijriDateInfo = await getHijriDateForGregorian(testDate.getFullYear(), testDate.getMonth() + 1, testDate.getDate());
+
+                        if (hijriDateInfo) {
+                            if (parseInt(hijriDateInfo.day) === targetHijriDay && 
+                                hijriDateInfo.month.en === targetHijriMonthEnglish &&
+                                parseInt(hijriDateInfo.year) === targetHijriYear) {
+                                foundDate = testDate;
+                                break; // Found it
+                            }
+                        }
+                    }
+                    if (foundDate) break;
+                }
+                if (foundDate) break;
+            }
+
+            if (foundDate) {
+                hijriGregorianCache[cacheKey] = foundDate.toISOString(); // Cache as ISO string
+            }
+            return foundDate;
+        }
+
 
         // Function to fetch prayer times from API
         async function fetchPrayerTimes() {
@@ -674,24 +813,47 @@
                         const hijriMonthBg = hijriMonthsBg[hijriMonthEnglish] || hijriMonthEnglish; 
                         currentHijriDate = `${hijriDay} ${hijriMonthBg} ${hijriYear} г.`; 
                         hijriDateEl.textContent = currentHijriDate;
+
+                        // --- NEW: Check and display sacred day/night using HIJRI_SACRED_EVENTS ---
+                        let foundSacredDay = '';
+                        // Iterate over HIJRI_SACRED_EVENTS to find a match for the current Hijri date
+                        for (const event of HIJRI_SACRED_EVENTS) {
+                            // Convert hijri.day to number for comparison
+                            const currentHijriDayNum = parseInt(hijri.day);
+
+                            if (event.hijriMonthEn === hijri.month.en) {
+                                // Specific day match
+                                if (event.hijriDay === currentHijriDayNum) {
+                                    foundSacredDay = event.nameBg;
+                                    break;
+                                }
+                                // Handle ranges if needed (e.g., Ramazan Bayram 1-3 Shawwal, Kurban Bayram 10-13 Dhul-Hijjah)
+                                // This requires explicit range checks if a single event definition covers multiple days.
+                                // For now, the HIJRI_SACRED_EVENTS are defined per day, making direct matching simpler.
+                            }
+                        }
+
+                        if (foundSacredDay) {
+                            sacredDayInfoEl.textContent = foundSacredDay; 
+                            sacredDayInfoEl.classList.remove('hidden');
+                        } else {
+                            sacredDayInfoEl.textContent = '';
+                            sacredDayInfoEl.classList.add('hidden');
+                        }
+                        // --- END NEW SACRED DAY CHECK ---
+
                     } else {
                         console.warn("Hijri date data incomplete from API response.");
                         currentHijriDate = 'Няма хиджри дата';
                         hijriDateEl.textContent = currentHijriDate;
+                        sacredDayInfoEl.textContent = ''; // Clear sacred day info
+                        sacredDayInfoEl.classList.add('hidden');
                     }
                 } else {
                     console.warn("Hijri date object missing from API response.");
                     currentHijriDate = 'Няма хиджри дата';
                     hijriDateEl.textContent = currentHijriDate;
-                }
-
-                // Check and display sacred day/night
-                const sacredDayKey = formatDateForInputAndLookup(selectedDate);
-                if (sacredDays[sacredDayKey]) {
-                    sacredDayInfoEl.textContent = sacredDays[sacredDayKey]; 
-                    sacredDayInfoEl.classList.remove('hidden');
-                } else {
-                    sacredDayInfoEl.textContent = '';
+                    sacredDayInfoEl.textContent = ''; // Clear sacred day info
                     sacredDayInfoEl.classList.add('hidden');
                 }
 
@@ -983,6 +1145,7 @@
 
         function saveAllAdjustments() {
             let changesMade = false;
+            let hasInvalidInput = false; // Flag to track if any input is invalid
             allPrayerKeys.forEach(key => {
                 const inputElement = document.getElementById(`adj-${key}`);
                 if (inputElement) {
@@ -990,7 +1153,8 @@
                     if (isNaN(newOffset)) {
                         errorMessageEl.textContent = `Невалидно число за корекция на ${getCurrentPrayerNames()[key] || key}. Моля, въведете валидно число (напр. 5 или -3).`;
                         errorMessageEl.classList.remove('hidden');
-                        return; // Exit if any input is invalid
+                        hasInvalidInput = true; // Set flag
+                        return; // Do not process further for this invalid input, but continue checking others
                     }
 
                     if (customPrayerAdjustments[key] !== newOffset) {
@@ -1000,11 +1164,15 @@
                 }
             });
 
-            if (changesMade) {
-                saveSettings(); // Automatically save all updated adjustments
-                fetchPrayerTimes(); // Re-fetch and display with new custom adjustments
+            // Only close modal and save if no invalid inputs were found
+            if (!hasInvalidInput) {
+                if (changesMade) {
+                    saveSettings(); // Automatically save all updated adjustments
+                    fetchPrayerTimes(); // Re-fetch and display with new custom adjustments
+                }
+                closeAdjustmentModal();
             }
-            closeAdjustmentModal();
+            // If there's an invalid input, the modal stays open with the error message displayed.
         }
 
 
@@ -1018,13 +1186,183 @@
             citySelectionModal.classList.add('hidden');
         }
 
+        // --- Sacred Events Modal Logic ---
+        async function openSacredEventsModal() {
+            sacredEventsModalYear = new Date().getFullYear(); // Reset to current Gregorian year each time it opens
+            await populateSacredEventsList(sacredEventsModalYear);
+            sacredEventsModal.classList.remove('hidden');
+        }
+
+        function closeSacredEventsModal() {
+            sacredEventsModal.classList.add('hidden');
+            clearInterval(sacredEventsCountdownIntervalId); // Stop countdown when modal closes
+            sacredEventsCountdownIntervalId = null;
+        }
+
+        // Function to populate the list of sacred events in the modal
+        async function populateSacredEventsList(year) {
+            sacredEventsListEl.innerHTML = ''; // Clear previous list
+            sacredEventsLoadingIndicator.classList.remove('hidden'); // Show loading spinner
+            sacredEventsModalYearDisplay.textContent = year; // Update year display
+
+            const eventsToDisplay = [];
+
+            // Iterate over HIJRI_SACRED_EVENTS and find their Gregorian dates for the target year
+            // This relies on the inefficient findGregorianDateOfHijri, but caching is used.
+            for (const event of HIJRI_SACRED_EVENTS) {
+                // Estimate the Hijri year that likely falls within the Gregorian 'year'
+                // A Gregorian year typically overlaps with two Hijri years.
+                const estimatedHijriYear1 = year - 621; // Common approximation
+                const estimatedHijriYear2 = year - 622; // Another common approximation for the previous Hijri year
+
+                let gregorianDate = null;
+
+                // Try finding the Gregorian date for both estimated Hijri years
+                // and pick the one that falls within the `year`
+                let foundInYear1 = await findGregorianDateOfHijri(event.hijriMonthEn, event.hijriDay, estimatedHijriYear1, year);
+                if (foundInYear1 && foundInYear1.getFullYear() === year) {
+                    gregorianDate = foundInYear1;
+                } else {
+                    let foundInYear2 = await findGregorianDateOfHijri(event.hijriMonthEn, event.hijriDay, estimatedHijriYear2, year);
+                    if (foundInYear2 && foundInYear2.getFullYear() === year) {
+                        gregorianDate = foundInYear2;
+                    }
+                }
+                
+                if (gregorianDate) {
+                    // Apply custom sacred event adjustment
+                    const adjustmentForEvent = customSacredEventAdjustments[event.key] || 0;
+                    gregorianDate.setMinutes(gregorianDate.getMinutes() + adjustmentForEvent);
+
+                    eventsToDisplay.push({
+                        name: event.nameBg,
+                        date: gregorianDate,
+                        key: event.key // Keep the key for adjustments
+                    });
+                }
+            }
+
+            eventsToDisplay.sort((a, b) => a.date.getTime() - b.date.getTime()); // Sort by Gregorian date
+
+            if (eventsToDisplay.length === 0) {
+                sacredEventsListEl.innerHTML = '<div class="text-center text-gray-400 py-4">Няма намерени свещени събития за тази година.</div>';
+            } else {
+                eventsToToogleDisplay = eventsToDisplay; // Store for toggling countdown/date
+                renderSacredEventsListDisplay(); // Initial render
+            }
+            sacredEventsLoadingIndicator.classList.add('hidden'); // Hide loading spinner
+        }
+
+        // Function to render or update the sacred events list display (date or countdown)
+        function renderSacredEventsListDisplay() {
+            sacredEventsListEl.innerHTML = ''; // Clear previous list
+
+            // Stop any existing countdown for sacred events before re-rendering
+            clearInterval(sacredEventsCountdownIntervalId);
+            sacredEventsCountdownIntervalId = null;
+
+            eventsToToogleDisplay.forEach(event => {
+                const eventRow = document.createElement('div');
+                eventRow.className = 'prayer-row'; // Reuse prayer-row style
+
+                const now = new Date();
+                const displayValue = isSacredEventsCountdownMode ? formatDuration(event.date.getTime() - now.getTime()) : formatDate(event.date);
+
+                // Highlight if the event is today and in countdown mode
+                if (isSacredEventsCountdownMode && event.date.toDateString() === now.toDateString()) {
+                     eventRow.classList.add('highlighted-prayer'); // Reuse highlight style
+                } else if (!isSacredEventsCountdownMode && event.date < now) {
+                    // Optional: Dim past dates when showing static dates
+                    eventRow.classList.add('opacity-50');
+                }
+
+                // Add a unique ID to the span for individual updates in countdown mode
+                const uniqueId = `sacred-event-time-${event.key}`; // Use event.key for ID, it's simpler and unique
+                eventRow.innerHTML = `
+                    <span class="prayer-name">${event.name}</span>
+                    <span class="prayer-time" id="${uniqueId}">${displayValue}</span>
+                `;
+                sacredEventsListEl.appendChild(eventRow);
+            });
+
+            if (isSacredEventsCountdownMode) {
+                // Start interval for countdown mode if active
+                sacredEventsCountdownIntervalId = setInterval(() => {
+                    eventsToToogleDisplay.forEach(event => {
+                        const uniqueId = `sacred-event-time-${event.key}`;
+                        const span = document.getElementById(uniqueId);
+                        if (span) {
+                            const now = new Date();
+                            const diffMs = event.date.getTime() - now.getTime();
+                            span.textContent = formatDuration(diffMs);
+                        }
+                    });
+                }, 1000);
+            }
+        }
+
+        // --- Sacred Event Adjustment Modal Logic (NEW) ---
+        function openSacredEventAdjustmentModal() {
+            sacredEventAdjustmentInputsContainer.innerHTML = ''; // Clear previous inputs
+            sacredEventAdjustmentErrorMessageEl.classList.add('hidden'); // Hide any previous error messages
+            HIJRI_SACRED_EVENTS.forEach(event => {
+                const adjustmentValue = customSacredEventAdjustments[event.key] !== undefined ? customSacredEventAdjustments[event.key] : 0;
+                const inputRow = document.createElement('div');
+                inputRow.className = 'adjustment-input-row';
+                inputRow.innerHTML = `
+                    <label for="sacred-adj-${event.key}">${event.nameBg}:</label>
+                    <input type="number" id="sacred-adj-${event.key}" data-event-key="${event.key}" value="${adjustmentValue}" class="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-600 border-gray-500 text-white" placeholder="Напр. 5 или -3">
+                `;
+                sacredEventAdjustmentInputsContainer.appendChild(inputRow);
+            });
+            sacredEventAdjustmentModal.classList.remove('hidden');
+        }
+
+        function closeSacredEventAdjustmentModal() {
+            sacredEventAdjustmentModal.classList.add('hidden');
+            sacredEventAdjustmentErrorMessageEl.classList.add('hidden'); // Clear error message when closing modal
+        }
+
+        async function saveSacredEventAdjustments() {
+            let changesMade = false;
+            let hasInvalidInput = false;
+            sacredEventAdjustmentErrorMessageEl.classList.add('hidden'); // Clear previous errors
+            HIJRI_SACRED_EVENTS.forEach(event => {
+                const inputElement = document.getElementById(`sacred-adj-${event.key}`);
+                if (inputElement) {
+                    const newOffset = parseInt(inputElement.value, 10);
+                    if (isNaN(newOffset)) {
+                        sacredEventAdjustmentErrorMessageEl.textContent = `Невалидно число за корекция на ${event.nameBg}. Моля, въведете валидно число (напр. 5 или -3).`;
+                        sacredEventAdjustmentErrorMessageEl.classList.remove('hidden');
+                        hasInvalidInput = true;
+                        return; 
+                    }
+                    if (customSacredEventAdjustments[event.key] !== newOffset) {
+                        customSacredEventAdjustments[event.key] = newOffset;
+                        changesMade = true;
+                    }
+                }
+            });
+
+            if (!hasInvalidInput) {
+                if (changesMade) {
+                    saveSettings(); // Save the new sacred event adjustments
+                    // Re-populate the sacred events list to apply the new adjustments
+                    await populateSacredEventsList(sacredEventsModalYear);
+                }
+                closeSacredEventAdjustmentModal();
+            }
+        }
+
+
         // --- Local Storage Functions ---
         function saveSettings() {
             const settingsToSave = {
                 selectedCity: selectedCity,
                 customPrayerAdjustments: customPrayerAdjustments,
-                isClassicalNamesActive: isClassicalNamesActive
-                // isCountdownMode is intentionally NOT saved to localStorage here
+                isClassicalNamesActive: isClassicalNamesActive,
+                isSacredEventsCountdownMode: isSacredEventsCountdownMode, // Save this setting
+                customSacredEventAdjustments: customSacredEventAdjustments // Save new sacred event adjustments
             };
             try {
                 localStorage.setItem('prayerApp_settings', JSON.stringify(settingsToSave));
@@ -1044,7 +1382,8 @@
                     selectedCity = savedSettings.selectedCity || "София";
                     customPrayerAdjustments = savedSettings.customPrayerAdjustments || {};
                     isClassicalNamesActive = savedSettings.isClassicalNamesActive || false;
-                    // isCountdownMode is intentionally NOT loaded from localStorage here
+                    isSacredEventsCountdownMode = savedSettings.isSacredEventsCountdownMode || false; // Load this setting
+                    customSacredEventAdjustments = savedSettings.customSacredEventAdjustments || {}; // Load new sacred event adjustments
                     
                     // Update city display element
                     selectedCityDisplay.textContent = selectedCity;
@@ -1086,7 +1425,9 @@
             // Event listener for the NEW countdown toggle button
             countdownToggleButton.addEventListener('click', () => {
                 isCountdownMode = !isCountdownMode;
-                saveSettings(); // Save the new mode (though not persistent for isCountdownMode)
+                // No need to save isCountdownMode to localStorage if it's meant to reset on page load.
+                // If persistence is desired, uncomment the line below:
+                // saveSettings(); 
                 displayPrayerTimes(); // Re-display prayer times with the new mode
             });
 
@@ -1115,6 +1456,37 @@
 
             // Event listener for the new "Return to Today" button
             returnTodayBtn.addEventListener('click', returnToToday);
+
+            // --- New Sacred Events Modal Event Listeners ---
+            openSacredEventsModalBtn.addEventListener('click', openSacredEventsModal);
+            closeSacredEventsModalBtn.addEventListener('click', closeSacredEventsModal);
+            sacredEventsModal.addEventListener('click', (event) => {
+                if (event.target === sacredEventsModal) {
+                    closeSacredEventsModal();
+                }
+            });
+
+            prevSacredYearBtn.addEventListener('click', async () => {
+                sacredEventsModalYear--;
+                await populateSacredEventsList(sacredEventsModalYear);
+            });
+
+            nextSacredYearBtn.addEventListener('click', async () => {
+                sacredEventsModalYear++;
+                await populateSacredEventsList(sacredEventsModalYear);
+            });
+
+            toggleSacredEventsCountdownBtn.addEventListener('click', () => {
+                isSacredEventsCountdownMode = !isSacredEventsCountdownMode;
+                saveSettings(); // Save this preference
+                renderSacredEventsListDisplay(); // Re-render the list with the new mode
+            });
+
+            // --- New Sacred Event Adjustment Modal Event Listeners ---
+            openSacredEventAdjustmentModalBtn.addEventListener('click', openSacredEventAdjustmentModal);
+            cancelSacredEventAdjustmentBtn.addEventListener('click', closeSacredEventAdjustmentModal);
+            saveSacredEventAdjustmentsBtn.addEventListener('click', saveSacredEventAdjustments);
+
 
             // Update clock every second
             setInterval(updateClock, 1000);
