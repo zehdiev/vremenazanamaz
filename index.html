@@ -1419,47 +1419,32 @@
             const now = new Date();
             const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-            // Find the index of the next upcoming event in the FULL list
-            let nextUpcomingEventIndex = -1;
+            // Find the index of the very first upcoming event in the FULL list
+            let firstUpcomingEventIndex = -1;
             for (let i = 0; i < eventsToToogleDisplay.length; i++) {
                 const eventDate = eventsToToogleDisplay[i].date;
                 const startOfEventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
                 if (startOfEventDay >= startOfToday) {
-                    nextUpcomingEventIndex = i;
+                    firstUpcomingEventIndex = i;
                     break;
                 }
             }
 
-            let eventsToRenderLimited = [];
-            if (nextUpcomingEventIndex !== -1) {
-                // Show the next upcoming event and the next two (total 3)
-                eventsToRenderLimited = eventsToToogleDisplay.slice(nextUpcomingEventIndex, nextUpcomingEventIndex + 3);
-            } else if (eventsToToogleDisplay.length > 0) {
-                // If no upcoming events (all are past), show the last 3 events
-                eventsToRenderLimited = eventsToToogleDisplay.slice(Math.max(0, eventsToToogleDisplay.length - 3));
-            }
-            // If eventsToToogleDisplay.length is 0, eventsToRenderLimited will be empty, which is correct.
-            
-            if (eventsToRenderLimited.length === 0 && eventsToToogleDisplay.length > 0) {
-                // This case handles if there are events, but none are upcoming based on the current filtering,
-                // and we didn't explicitly handle showing past events in the 'else if' above.
-                // For safety, if there are events but none shown, show the last 3.
-                eventsToRenderLimited = eventsToToogleDisplay.slice(Math.max(0, eventsToToogleDisplay.length - 3));
-            }
+            let elementToScrollTo = null; // Variable to store the first upcoming element for scrolling
 
-
-            eventsToRenderLimited.forEach((event, indexInRenderedList) => {
+            eventsToToogleDisplay.forEach((event, index) => {
                 const eventRow = document.createElement('div');
                 eventRow.className = 'prayer-row';
 
                 const displayValue = isSacredEventsCountdownMode ? formatSacredEventDisplay(event.date) : formatDate(event.date);
 
-                // Highlight only if it's the actual next upcoming event from the *full* list
-                // and it's the first element *in the limited rendered list*
-                const isActualNextUpcoming = (nextUpcomingEventIndex !== -1 && event === eventsToToogleDisplay[nextUpcomingEventIndex]);
-
-                if (isActualNextUpcoming) {
+                // Highlight logic for the first three upcoming events (text color only)
+                if (firstUpcomingEventIndex !== -1 && index >= firstUpcomingEventIndex && index < firstUpcomingEventIndex + 3) {
                     eventRow.classList.add('highlighted-prayer');
+                    // Set the element to scroll to if this is the very first one
+                    if (index === firstUpcomingEventIndex) {
+                        elementToScrollTo = eventRow;
+                    }
                 } else if (!isSacredEventsCountdownMode && event.date < now) {
                     eventRow.classList.add('opacity-50'); // Dim past events if not in countdown mode
                 }
@@ -1474,8 +1459,7 @@
 
             if (isSacredEventsCountdownMode) {
                 sacredEventsCountdownIntervalId = setInterval(() => {
-                    // Update only currently rendered elements
-                    eventsToRenderLimited.forEach(event => {
+                    eventsToToogleDisplay.forEach(event => { // Update all elements, as the list is now full
                         const uniqueId = `sacred-event-time-${event.key}`;
                         const span = document.getElementById(uniqueId);
                         if (span) {
@@ -1485,10 +1469,10 @@
                 }, 1000);
             }
 
-            // Scroll to the first element in the displayed list if it's genuinely upcoming
-            if (nextUpcomingEventIndex !== -1 && sacredEventsListEl.children.length > 0 && eventsToRenderLimited[0] === eventsToToogleDisplay[nextUpcomingEventIndex]) {
+            // Scroll to the first upcoming event
+            if (elementToScrollTo) {
                 setTimeout(() => {
-                    sacredEventsListEl.children[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    elementToScrollTo.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 100);
             }
         }
