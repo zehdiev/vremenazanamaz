@@ -399,7 +399,8 @@
         }
         /* Custom styles for the scrollable list container */
         #sacred-events-list-container {
-            max-height: 400px; /* Default height */
+            /* Adjusted for exactly 4 items + some padding */
+            max-height: 12rem; /* Approximately 4 rows of items */
             overflow-y: auto;
             border-radius: 1rem; /* Rounded corners for the scrollable area */
             background-color: rgba(0, 0, 0, 0.1); /* Very subtle background for the scroll area */
@@ -407,12 +408,12 @@
             border: 1px solid rgba(255, 255, 255, 0.05); /* Very subtle inner border */
             /* Added for better mobile fit */
             flex-grow: 1; /* Allows it to take available space */
-            min-height: 150px; /* Minimum height on small screens */
+            min-height: 10rem; /* Minimum height on small screens, ensuring it doesn't collapse too much */
             /* Removed negative margins as they might conflict with container padding */
         }
         @media (max-width: 639px) { /* Adjust for mobile specific screen sizes */
             #sacred-events-list-container {
-                max-height: 60vh; /* Use viewport height for better mobile fit */
+                max-height: 12rem; /* Keep consistent for mobile as well */
                 padding: 0.25rem; /* Reduced padding on very small screens */
             }
         }
@@ -1432,19 +1433,16 @@
 
             let elementToScrollTo = null; // Variable to store the first upcoming element for scrolling
 
-            eventsToToogleDisplay.forEach((event, index) => {
+            eventsToToogleDisplay.forEach((event, index) => { // Iterate through the FULL list
                 const eventRow = document.createElement('div');
                 eventRow.className = 'prayer-row';
 
                 const displayValue = isSacredEventsCountdownMode ? formatSacredEventDisplay(event.date) : formatDate(event.date);
 
-                // Highlight logic for the first three upcoming events (text color only)
-                if (firstUpcomingEventIndex !== -1 && index >= firstUpcomingEventIndex && index < firstUpcomingEventIndex + 3) {
+                // Highlight logic: Only highlight if it's the *exact* first upcoming event
+                if (index === firstUpcomingEventIndex) {
                     eventRow.classList.add('highlighted-prayer');
-                    // Set the element to scroll to if this is the very first one
-                    if (index === firstUpcomingEventIndex) {
-                        elementToScrollTo = eventRow;
-                    }
+                    elementToScrollTo = eventRow; // This is the element we want to scroll to
                 } else if (!isSacredEventsCountdownMode && event.date < now) {
                     eventRow.classList.add('opacity-50'); // Dim past events if not in countdown mode
                 }
