@@ -148,6 +148,15 @@
             }
         }
 
+        /* Highlight style for the next prayer/sacred event */
+        .prayer-row.highlighted-prayer .prayer-name,
+        .prayer-row.highlighted-prayer .prayer-time {
+            color: #68d391; /* Bright green text color */
+            text-shadow: 0 0 5px rgba(104, 211, 145, 0.7); /* Subtle glow for text */
+            font-weight: 700; /* Make text bolder for emphasis */
+        }
+
+
         .loading-spinner {
             border: 4px solid rgba(255, 255, 255, 0.3);
             border-top: 4px solid #68d391;
@@ -1407,22 +1416,50 @@
             clearInterval(sacredEventsCountdownIntervalId);
             sacredEventsCountdownIntervalId = null;
 
-            let nextUpcomingEventElement = null; // To store the element to scroll to
             const now = new Date();
             const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-            eventsToToogleDisplay.forEach(event => {
+            // Find the index of the next upcoming event in the FULL list
+            let nextUpcomingEventIndex = -1;
+            for (let i = 0; i < eventsToToogleDisplay.length; i++) {
+                const eventDate = eventsToToogleDisplay[i].date;
+                const startOfEventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+                if (startOfEventDay >= startOfToday) {
+                    nextUpcomingEventIndex = i;
+                    break;
+                }
+            }
+
+            let eventsToRenderLimited = [];
+            if (nextUpcomingEventIndex !== -1) {
+                // Show the next upcoming event and the next two (total 3)
+                eventsToRenderLimited = eventsToToogleDisplay.slice(nextUpcomingEventIndex, nextUpcomingEventIndex + 3);
+            } else if (eventsToToogleDisplay.length > 0) {
+                // If no upcoming events (all are past), show the last 3 events
+                eventsToRenderLimited = eventsToToogleDisplay.slice(Math.max(0, eventsToToogleDisplay.length - 3));
+            }
+            // If eventsToToogleDisplay.length is 0, eventsToRenderLimited will be empty, which is correct.
+            
+            if (eventsToRenderLimited.length === 0 && eventsToToogleDisplay.length > 0) {
+                // This case handles if there are events, but none are upcoming based on the current filtering,
+                // and we didn't explicitly handle showing past events in the 'else if' above.
+                // For safety, if there are events but none shown, show the last 3.
+                eventsToRenderLimited = eventsToToogleDisplay.slice(Math.max(0, eventsToToogleDisplay.length - 3));
+            }
+
+
+            eventsToRenderLimited.forEach((event, indexInRenderedList) => {
                 const eventRow = document.createElement('div');
                 eventRow.className = 'prayer-row';
 
                 const displayValue = isSacredEventsCountdownMode ? formatSacredEventDisplay(event.date) : formatDate(event.date);
 
-                // Determine if this event is the "next upcoming" one
-                const startOfEventDay = new Date(event.date.getFullYear(), event.date.getMonth(), event.date.getDate());
-                if (!nextUpcomingEventElement && startOfEventDay >= startOfToday) {
-                    // This is the first event that is today or in the future
-                    eventRow.classList.add('highlighted-prayer'); // Highlight it
-                    nextUpcomingEventElement = eventRow; // Mark this element for scrolling
+                // Highlight only if it's the actual next upcoming event from the *full* list
+                // and it's the first element *in the limited rendered list*
+                const isActualNextUpcoming = (nextUpcomingEventIndex !== -1 && event === eventsToToogleDisplay[nextUpcomingEventIndex]);
+
+                if (isActualNextUpcoming) {
+                    eventRow.classList.add('highlighted-prayer');
                 } else if (!isSacredEventsCountdownMode && event.date < now) {
                     eventRow.classList.add('opacity-50'); // Dim past events if not in countdown mode
                 }
@@ -1435,26 +1472,24 @@
                 sacredEventsListEl.appendChild(eventRow);
             });
 
-            // After all elements are rendered, scroll to the next upcoming one
-            if (nextUpcomingEventElement) {
-                // Use a timeout to ensure the DOM is fully rendered and the scrollIntoView works reliably
-                setTimeout(() => {
-                    nextUpcomingEventElement.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Changed to 'start'
-                }, 100); // Small delay
-            }
-
-
             if (isSacredEventsCountdownMode) {
-                // Update interval to use the new formatting function
                 sacredEventsCountdownIntervalId = setInterval(() => {
-                    eventsToToogleDisplay.forEach(event => {
+                    // Update only currently rendered elements
+                    eventsToRenderLimited.forEach(event => {
                         const uniqueId = `sacred-event-time-${event.key}`;
                         const span = document.getElementById(uniqueId);
                         if (span) {
-                            span.textContent = formatSacredEventDisplay(event.date); // Update with new format
+                            span.textContent = formatSacredEventDisplay(event.date);
                         }
                     });
                 }, 1000);
+            }
+
+            // Scroll to the first element in the displayed list if it's genuinely upcoming
+            if (nextUpcomingEventIndex !== -1 && sacredEventsListEl.children.length > 0 && eventsToRenderLimited[0] === eventsToToogleDisplay[nextUpcomingEventIndex]) {
+                setTimeout(() => {
+                    sacredEventsListEl.children[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
             }
         }
 
