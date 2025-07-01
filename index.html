@@ -456,6 +456,27 @@
             font-size: 0.95rem; /* Slightly larger for emphasis */
         }
 
+        /* Temporary Message Box Styles */
+        #message-box {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-size: 0.9rem;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        #message-box.show {
+            opacity: 1;
+        }
+
     </style>
 </head>
 <body class="antialiased">
@@ -544,6 +565,9 @@
             <!-- Language Toggle Button -->
             <button id="language-toggle-btn" class="action-button">💬</button>
 
+            <!-- Screen Wake Lock Toggle Button -->
+            <button id="wake-lock-toggle-btn" class="action-button">💡</button>
+
             <!-- Adjustment Button -->
             <button id="open-adjustment-modal-btn" class="action-button">⚙️</button>
         </div>
@@ -577,7 +601,9 @@
         </div>
     </div>
 
-    <!-- Sacred Event Adjustment Modal (removed from HTML as per request) -->
+    <!-- Temporary Message Box -->
+    <div id="message-box" class="hidden"></div>
+
     <script>
         // --- HARDCODED SACRED EVENTS DEFINITIONS FOR 2025 (КОРИГИРАНО И ДОПЪЛНЕНО СПОРЕД ДАННИТЕ НА ДИЯНЕТА) ---
         // These are Gregorian dates for sacred Islamic events as per Diyanet calendar for 2025.
@@ -627,6 +653,8 @@
         const openAdjustmentModalBtn = document.getElementById('open-adjustment-modal-btn'); 
         const countdownToggleButton = document.getElementById('countdown-toggle-btn'); 
         const returnTodayBtn = document.getElementById('return-today-btn');
+        const wakeLockToggleButton = document.getElementById('wake-lock-toggle-btn'); // NEW: Wake Lock Button
+        const messageBox = document.getElementById('message-box'); // NEW: Message Box
 
         // Modals and their elements
         const citySelectionModal = document.getElementById('city-selection-modal'); 
@@ -762,6 +790,9 @@
         let customPrayerAdjustments = {};
         let isClassicalNamesActive = false;
         let isCountdownMode = false;
+        let isWakeLockActive = false; // State for wake lock
+        let wakeLockSentinel = null; // To hold the wake lock sentinel object
+        let isCustomDateSelected = false; // NEW: Flag to track if a custom date is explicitly selected
 
         let isSacredEventsCountdownMode = false; // Toggle for countdown/date display in sacred events view
 
@@ -769,7 +800,7 @@
         let prayersDataForDisplay = []; 
         let eventsToToogleDisplay = []; // Now populated directly from HARDCODED_SACRED_EVENTS_2025
         let sacredEventsCountdownIntervalId = null; // for individual sacred event list countdown
-        let sacredEventsMainCountdownIntervalId = null; // NEW: for main sacred events countdown
+        let sacredEventsMainCountdownIntervalId = null; // for main sacred events countdown
 
 
         // Get current prayer names based on state
@@ -1191,7 +1222,8 @@
 
             let nextPrayerTimeDate;
             let nextPrayerDisplayName;
-            // Removed: let shouldHighlightCountdownText = false; // Flag to control countdown text highlight
+            // The main countdown text (countdownTextEl) should always be in white/light grey,
+            // so we don't need a `shouldHighlightCountdownText` flag here.
 
             // If selectedDate is not today (the actual current date), just display difference to selectedDate.
             // The date rollover logic is handled by a separate interval.
@@ -1258,7 +1290,6 @@
                 nextPrayerTimeDate = nextPrayer.date;
                 nextPrayerDisplayName = nextPrayer.displayName;
                 countdownTextEl.textContent = `до ${nextPrayerDisplayName}`;
-                // Removed: shouldHighlightCountdownText = true; // Highlight if it's an actual prayer for today
             } else {
                 // All prayers for selectedDate have passed. Count down to Fajr of the next day.
                 // We need Fajr time for tomorrow. Take today's Fajr and add 24 hours.
@@ -1268,7 +1299,6 @@
                 nextPrayerTimeDate = tomorrowFajr;
                 nextPrayerDisplayName = getCurrentPrayerNames().Fajr; // "Зора" or "Заговеване"
                 countdownTextEl.textContent = `до ${nextPrayerDisplayName} утре`;
-                // Removed: shouldHighlightCountdownText = false; // Do NOT highlight when counting to tomorrow's Fajr
             }
 
             const diff = nextPrayerTimeDate.getTime() - now.getTime();
@@ -1278,7 +1308,6 @@
                 // This will be caught by the general date rollover check or re-run of this function.
                 countdownEl.textContent = '00:00:00';
                 countdownTextEl.textContent = 'Намазът е сега!'; 
-                // Removed: shouldHighlightCountdownText = true; // Keep highlighted if it's the current prayer
             } else {
                 const hours = Math.floor(diff / (1000 * 60 * 60));
                 const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -1286,13 +1315,6 @@
                 countdownEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
             }
             
-            // Apply/remove highlight based on flag for the main countdown text
-            // Removed:
-            // if (shouldHighlightCountdownText) {
-            //     countdownTextEl.classList.add('highlight-text-green');
-            // } else {
-            //     countdownTextEl.classList.remove('highlight-text-green');
-            // }
             // Ensure the class is always removed for the main countdown text
             countdownTextEl.classList.remove('highlight-text-green');
         }
@@ -1301,6 +1323,7 @@
         function returnToToday() {
             selectedDate = new Date();
             hiddenDateInput.value = formatDateForInputAndLookup(selectedDate);
+            isCustomDateSelected = false; // Reset flag when returning to today
             fetchPrayerTimes(); 
         }
 
@@ -1526,6 +1549,72 @@
             }
         }
 
+        // --- NEW: Wake Lock API Functions ---
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLockSentinel = await navigator.wakeLock.request('screen');
+                    wakeLockSentinel.addEventListener('release', () => {
+                        console.log('Wake Lock was released');
+                        isWakeLockActive = false;
+                        updateWakeLockButton();
+                        showMessage('Екранът вече няма да остава активен.');
+                        saveSettings();
+                    });
+                    console.log('Wake Lock is active!');
+                    isWakeLockActive = true;
+                    updateWakeLockButton();
+                    showMessage('Екранът ще остане активен.');
+                    saveSettings();
+                } catch (err) {
+                    console.error(`${err.name}, ${err.message}`);
+                    isWakeLockActive = false;
+                    updateWakeLockButton();
+                    showMessage('Неуспешно активиране на функцията за активен екран.');
+                    saveSettings();
+                }
+            } else {
+                showMessage('Вашият браузър не поддържа функцията за активен екран.');
+                console.warn('Wake Lock API not supported.');
+            }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLockSentinel) {
+                wakeLockSentinel.release();
+                wakeLockSentinel = null;
+                isWakeLockActive = false; // Ensure state is updated
+                updateWakeLockButton();
+                showMessage('Екранът вече няма да остава активен.');
+                saveSettings();
+            }
+        }
+
+        function updateWakeLockButton() {
+            if (isWakeLockActive) {
+                wakeLockToggleButton.textContent = '🔆'; // Brighter icon when active
+                wakeLockToggleButton.classList.add('bg-green-600'); // Example: Add a class for active state styling
+            } else {
+                wakeLockToggleButton.textContent = '💡'; // Standard icon when inactive
+                wakeLockToggleButton.classList.remove('bg-green-600'); // Remove active state styling
+            }
+        }
+
+        // Function to show temporary messages
+        let messageTimeoutId;
+        function showMessage(message) {
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden');
+            messageBox.classList.add('show');
+
+            clearTimeout(messageTimeoutId);
+            messageTimeoutId = setTimeout(() => {
+                messageBox.classList.remove('show');
+                messageBox.addEventListener('transitionend', () => {
+                    messageBox.classList.add('hidden');
+                }, { once: true });
+            }, 3000); // Message disappears after 3 seconds
+        }
 
         // --- Local Storage Functions ---
         function saveSettings() {
@@ -1534,6 +1623,8 @@
                 customPrayerAdjustments: customPrayerAdjustments,
                 isClassicalNamesActive: isClassicalNamesActive,
                 isSacredEventsCountdownMode: isSacredEventsCountdownMode,
+                isWakeLockActive: isWakeLockActive, // Save wake lock state
+                isCustomDateSelected: isCustomDateSelected, // NEW: Save custom date selection state
             };
             try {
                 localStorage.setItem('prayerApp_settings', JSON.stringify(settingsToSave));
@@ -1552,10 +1643,19 @@
                     customPrayerAdjustments = savedSettings.customPrayerAdjustments || {};
                     isClassicalNamesActive = savedSettings.isClassicalNamesActive || false;
                     isSacredEventsCountdownMode = savedSettings.isSacredEventsCountdownMode || false;
+                    isWakeLockActive = savedSettings.isWakeLockActive || false; // Load wake lock state
+                    isCustomDateSelected = savedSettings.isCustomDateSelected || false; // NEW: Load custom date selection state
                     
                     selectedCityDisplay.textContent = selectedCity;
                 }
-                selectedDate = new Date(); // Always start with today's date on load
+                // When loading, if a custom date was selected, try to restore it.
+                // Otherwise, always start with today's date.
+                if (isCustomDateSelected && savedSettings && savedSettings.selectedDate) {
+                    selectedDate = new Date(savedSettings.selectedDate);
+                } else {
+                    selectedDate = new Date(); 
+                    isCustomDateSelected = false; // Ensure it's false if not explicitly loaded as custom
+                }
                 hiddenDateInput.value = formatDateForInputAndLookup(selectedDate);
             }
             catch (e) {
@@ -1576,11 +1676,16 @@
             setInterval(() => {
                 updateCountdown(); // Update the main countdown display
                 const now = new Date();
-                // Check if the actual current date has changed from the displayed selectedDate
-                if (selectedDate.toDateString() !== now.toDateString()) {
-                    selectedDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Set selectedDate to current actual date, normalized to start of day
-                    hiddenDateInput.value = formatDateForInputAndLookup(selectedDate); // Update date picker input
-                    fetchPrayerTimes(); // Re-fetch times for the new date
+
+                // Check for date rollover ONLY if a custom date is NOT selected
+                if (!isCustomDateSelected) {
+                    // If the displayed date is different from the actual current date
+                    if (selectedDate.toDateString() !== now.toDateString()) {
+                        // It means the actual date has rolled over, so update selectedDate to the new "today"
+                        selectedDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        hiddenDateInput.value = formatDateForInputAndLookup(selectedDate);
+                        fetchPrayerTimes(); // Re-fetch times for the new date
+                    }
                 }
             }, 1000); // Run every second
 
@@ -1609,7 +1714,9 @@
             hiddenDateInput.addEventListener('change', (event) => {
                 // When user manually picks a date, update selectedDate and fetch times
                 selectedDate = new Date(event.target.value);
+                isCustomDateSelected = true; // Set flag to true when a custom date is selected
                 fetchPrayerTimes();
+                saveSettings(); // Save the new custom date selection state
             });
 
             languageToggleBtn.addEventListener('click', () => {
@@ -1623,6 +1730,23 @@
             saveAllAdjustmentsBtn.addEventListener('click', saveAllAdjustments); 
 
             returnTodayBtn.addEventListener('click', returnToToday);
+
+            // NEW: Wake Lock Toggle Button Listener
+            wakeLockToggleButton.addEventListener('click', () => {
+                if (isWakeLockActive) {
+                    releaseWakeLock();
+                } else {
+                    requestWakeLock();
+                }
+            });
+
+            // NEW: Re-request wake lock if page becomes visible and it was previously active
+            document.addEventListener('visibilitychange', () => {
+                if (wakeLockSentinel !== null && document.visibilityState === 'visible') {
+                    requestWakeLock();
+                }
+            });
+
 
             // --- Sacred Events View Event Listeners ---
             openSacredEventsToggleBtn.addEventListener('click', showSacredEventsView);
