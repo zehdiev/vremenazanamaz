@@ -402,21 +402,14 @@
         }
         /* Custom styles for the scrollable list container */
         #sacred-events-list-container {
-            /* Adjusted for exactly 4 items + some padding */
-            /* Height calculation based on current prayer-row styling: */
-            /* Approx. height of one prayer-row: (font-size 0.95rem * line-height 1.5) + (2 * padding-top/bottom 0.6rem) = 1.425rem + 1.2rem = 2.625rem */
-            /* Gap between rows: 0.5rem (from gap-1 class which is 2px, converted to rem here) */
-            /* Total height for 4 rows = (4 * 2.625rem) + (3 * 0.5rem) = 10.5rem + 1.5rem = 12rem */
             max-height: 12rem;
             overflow-y: auto;
             border-radius: 1rem; /* Rounded corners for the scrollable area */
             background-color: rgba(0, 0, 0, 0.1); /* Very subtle background for the scroll area */
             padding: 0.5rem; /* Padding inside scroll area */
             border: 1px solid rgba(255, 255, 255, 0.05); /* Very subtle inner border */
-            /* Added for better mobile fit */
             flex-grow: 1; /* Allows it to take available space */
             min-height: 10rem; /* Minimum height on small screens, ensuring it doesn't collapse too much */
-            /* Removed negative margins as they might conflict with container padding */
         }
         @media (max-width: 639px) { /* Adjust for mobile specific screen sizes */
             #sacred-events-list-container {
@@ -445,7 +438,7 @@
         #gregorian-date-info #current-day,
         #gregorian-date-info #current-time,
         #hijri-and-sacred-info #selected-city-display,
-        #hijri-and-and-sacred-info #hijri-date {
+        #hijri-and-sacred-info #hijri-date {
             color: #ffffff; /* White color for Gregorian date, day, time, and location */
             font-weight: 600; /* Make them a bit bolder */
             text-shadow: 0 0 5px rgba(255,255,255,0.4); /* Subtle glow */
@@ -523,7 +516,7 @@
         <!-- Sacred Events View (Initially Hidden) -->
         <div id="sacred-events-view" class="hidden">
             <div class="text-center flex flex-col items-center">
-                <h3 class="text-xl font-semibold text-white mb-4">Свещени дни и нощи за 2025 г.</h3>
+                <h3 class="text-xl font-semibold text-white mb-4">Предстоящи свещени дни и нощи</h3>
                 <!-- NEW: Main countdown for Sacred Events -->
                 <div class="flex flex-col items-center justify-center gap-1 mb-4">
                     <div id="sacred-countdown-display" class="text-5xl md:text-6xl lg:text-7xl">-- дни --</div>
@@ -606,9 +599,9 @@
     <div id="message-box" class="hidden"></div>
 
     <script>
-      // --- ДЕФИНИЦИИ НА СВЕЩЕНИ ДНИ ПО ХИДЖРИ КАЛЕНДАР (автоматично изчисление) ---
+        // --- ДЕФИНИЦИИ НА СВЕЩЕНИ ДНИ ПО ХИДЖРИ КАЛЕНДАР (автоматично изчисление) ---
         // Всяко събитие е фиксирана дата (ден + месец) в хиджри календара.
-        // Хиджри месеци: 1=Мухаррем, 7=Реджеб, 8=Шабан, 9=Рамазан, 10=Шеввал, 12=Зилхидже, 3=Рабиюлеввел
+        // Хиджри месеци: 1=Мухаррем, 3=Рабиюлеввел, 7=Реджеб, 8=Шабан, 9=Рамазан, 10=Шеввал, 12=Зилхидже
         // type "fixed" = фиксиран ден от месеца; type "firstFriday" = първи петък на месеца (за Регаиб)
         const SACRED_EVENT_DEFINITIONS = [
             { nameBg: "Начало на Трите Месеца (1 Реджеб)", hMonth: 7,  hDay: 1,  type: "fixed",       key: "UcAylar" },
@@ -634,6 +627,7 @@
         // Кеш за изчислените събития, за да не викаме API при всяко превключване
         let computedSacredEvents = [];
         let sacredEventsComputedForYear = null; // хиджри годината, за която сме смятали
+        let sacredEventsComputing = null; // promise, докато тече изчислението (за да не пускаме две паралелно)
 
         // Преобразува хиджри дата (ден-месец-година) към григорианска чрез Aladhan API
         async function hijriToGregorian(hDay, hMonth, hYear) {
@@ -643,10 +637,9 @@
                 const response = await fetch(url);
                 if (!response.ok) return null;
                 const data = await response.json();
-                if (data.data && data.data.gregorian) {
-                    const g = data.data.gregorian;
-                    // g.date е във формат DD-MM-YYYY
-                    const [d, m, y] = g.date.split('-').map(Number);
+                if (data.data && data.data.gregorian && data.data.gregorian.date) {
+                    // gregorian.date е във формат DD-MM-YYYY
+                    const [d, m, y] = data.data.gregorian.date.split('-').map(Number);
                     return new Date(y, m - 1, d);
                 }
                 return null;
@@ -675,68 +668,83 @@
             }
         }
 
-        // Изчислява всички свещени събития за дадена хиджри година (+ следващите две)
-        // и връща само бъдещите (или днешните), сортирани по дата.
+        // Изчислява всички свещени събития за текущата + следващите 2 хиджри години
+        // и връща само бъдещите (или днешните), сортирани по дата. Резултатът се кешира.
         async function computeSacredEvents() {
-            const currentHYear = await getCurrentHijriYear();
-            if (!currentHYear) return [];
-
-            // Ако вече сме смятали за тази хиджри година, ползвай кеша
-            if (sacredEventsComputedForYear === currentHYear && computedSacredEvents.length > 0) {
-                return computedSacredEvents;
+            // Ако вече тече изчисление, изчакай същото (без да пускаш ново)
+            if (sacredEventsComputing) {
+                return sacredEventsComputing;
             }
 
-            const now = new Date();
-            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const results = [];
+            sacredEventsComputing = (async () => {
+                const currentHYear = await getCurrentHijriYear();
+                if (!currentHYear) {
+                    sacredEventsComputing = null;
+                    return computedSacredEvents; // връща каквото има (евентуално празно)
+                }
 
-            // Обхождаме текущата + следващите 2 хиджри години, за да има винаги събития напред
-            for (let yearOffset = 0; yearOffset <= 2; yearOffset++) {
-                const hYear = currentHYear + yearOffset;
+                // Ако вече сме смятали за тази хиджри година, ползвай кеша
+                if (sacredEventsComputedForYear === currentHYear && computedSacredEvents.length > 0) {
+                    sacredEventsComputing = null;
+                    return computedSacredEvents;
+                }
 
-                for (const def of SACRED_EVENT_DEFINITIONS) {
-                    let gregDate = null;
+                const now = new Date();
+                const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const results = [];
 
-                    if (def.type === "fixed") {
-                        gregDate = await hijriToGregorian(def.hDay, def.hMonth, hYear);
-                    } else if (def.type === "firstFriday") {
-                        // Намираме 1-ви на месеца, после първия петък (вкл. ако 1-ви е петък)
-                        const firstOfMonth = await hijriToGregorian(1, def.hMonth, hYear);
-                        if (firstOfMonth) {
-                            const dayOfWeek = firstOfMonth.getDay(); // 0=неделя ... 5=петък
-                            const daysUntilFriday = (5 - dayOfWeek + 7) % 7;
-                            gregDate = new Date(firstOfMonth);
-                            gregDate.setDate(gregDate.getDate() + daysUntilFriday);
+                // Обхождаме текущата + следващите 2 хиджри години, за да има винаги събития напред
+                for (let yearOffset = 0; yearOffset <= 2; yearOffset++) {
+                    const hYear = currentHYear + yearOffset;
+
+                    for (const def of SACRED_EVENT_DEFINITIONS) {
+                        let gregDate = null;
+
+                        if (def.type === "fixed") {
+                            gregDate = await hijriToGregorian(def.hDay, def.hMonth, hYear);
+                        } else if (def.type === "firstFriday") {
+                            // Намираме 1-ви на месеца, после първия петък (вкл. ако 1-ви е петък)
+                            const firstOfMonth = await hijriToGregorian(1, def.hMonth, hYear);
+                            if (firstOfMonth) {
+                                const dayOfWeek = firstOfMonth.getDay(); // 0=неделя ... 5=петък
+                                const daysUntilFriday = (5 - dayOfWeek + 7) % 7;
+                                gregDate = new Date(firstOfMonth);
+                                gregDate.setDate(gregDate.getDate() + daysUntilFriday);
+                            }
+                        }
+
+                        if (gregDate) {
+                            results.push({
+                                nameBg: def.nameBg,
+                                date: gregDate,
+                                key: `${def.key}_${hYear}` // уникален ключ по година
+                            });
                         }
                     }
-
-                    if (gregDate) {
-                        // Уникален ключ по година, за да не се дублират при няколко години
-                        results.push({
-                            nameBg: def.nameBg,
-                            date: gregDate,
-                            key: `${def.key}_${hYear}`
-                        });
-                    }
                 }
-            }
 
-            // Махаме дубликати по дата+ключ и пазим само бъдещи/днешни събития
-            const seen = new Set();
-            const futureEvents = results.filter(ev => {
-                const startOfEventDay = new Date(ev.date.getFullYear(), ev.date.getMonth(), ev.date.getDate());
-                const id = startOfEventDay.getTime() + '_' + ev.nameBg;
-                if (seen.has(id)) return false;
-                seen.add(id);
-                return startOfEventDay >= startOfToday;
-            });
+                // Махаме дубликати по дата+име и пазим само бъдещи/днешни събития
+                const seen = new Set();
+                const futureEvents = results.filter(ev => {
+                    const startOfEventDay = new Date(ev.date.getFullYear(), ev.date.getMonth(), ev.date.getDate());
+                    const id = startOfEventDay.getTime() + '_' + ev.nameBg;
+                    if (seen.has(id)) return false;
+                    seen.add(id);
+                    return startOfEventDay >= startOfToday;
+                });
 
-            futureEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
+                futureEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-            computedSacredEvents = futureEvents;
-            sacredEventsComputedForYear = currentHYear;
-            return futureEvents;
+                computedSacredEvents = futureEvents;
+                sacredEventsComputedForYear = currentHYear;
+                sacredEventsComputing = null;
+                return futureEvents;
+            })();
+
+            return sacredEventsComputing;
         }
+        // --- КРАЙ НА ДЕФИНИЦИИТЕ ЗА СВЕЩЕНИ ДНИ ---
+
 
         // DOM Elements
         const currentTimeEl = document.getElementById('current-time');
@@ -756,8 +764,8 @@
         const openAdjustmentModalBtn = document.getElementById('open-adjustment-modal-btn'); 
         const countdownToggleButton = document.getElementById('countdown-toggle-btn'); 
         const returnTodayBtn = document.getElementById('return-today-btn');
-        const wakeLockToggleButton = document.getElementById('wake-lock-toggle-btn'); // NEW: Wake Lock Button
-        const messageBox = document.getElementById('message-box'); // NEW: Message Box
+        const wakeLockToggleButton = document.getElementById('wake-lock-toggle-btn');
+        const messageBox = document.getElementById('message-box');
 
         // Modals and their elements
         const citySelectionModal = document.getElementById('city-selection-modal'); 
@@ -773,7 +781,7 @@
         const prayerTimesView = document.getElementById('prayer-times-view');
         const prayerTimesListEl = document.getElementById('prayer-times-list');
         const sacredEventsView = document.getElementById('sacred-events-view');
-        const mainActionButtons = document.getElementById('main-action-buttons'); // Get the container for action buttons
+        const mainActionButtons = document.getElementById('main-action-buttons');
 
         // Sacred Events View Elements
         const openSacredEventsToggleBtn = document.getElementById('open-sacred-events-toggle-btn');
@@ -782,7 +790,7 @@
         const sacredEventsLoadingIndicator = document.getElementById('sacred-events-loading-indicator');
         const backToPrayerTimesBtn = document.getElementById('back-to-prayer-times-btn');
 
-        // NEW: Sacred Events Main Countdown Elements
+        // Sacred Events Main Countdown Elements
         const sacredCountdownDisplay = document.getElementById('sacred-countdown-display');
         const sacredCountdownText = document.getElementById('sacred-countdown-text');
         const sacredEventsListContainer = document.getElementById('sacred-events-list-container');
@@ -895,13 +903,13 @@
         let isCountdownMode = false;
         let isWakeLockActive = false; // State for wake lock
         let wakeLockSentinel = null; // To hold the wake lock sentinel object
-        let isCustomDateSelected = false; // NEW: Flag to track if a custom date is explicitly selected
+        let isCustomDateSelected = false; // Flag to track if a custom date is explicitly selected
 
         let isSacredEventsCountdownMode = false; // Toggle for countdown/date display in sacred events view
 
         let individualCountdownIntervalId = null;
         let prayersDataForDisplay = []; 
-        let eventsToToogleDisplay = []; // Now populated directly from HARDCODED_SACRED_EVENTS_2025
+        let eventsToToogleDisplay = []; // Populated from computeSacredEvents()
         let sacredEventsCountdownIntervalId = null; // for individual sacred event list countdown
         let sacredEventsMainCountdownIntervalId = null; // for main sacred events countdown
 
@@ -969,25 +977,24 @@
             return prefix + timeDisplay.trim(); 
         }
 
-        // UPDATED: Function to format duration for sacred events in days (or "преди X дни")
+        // Function to format duration for sacred events in days (or "преди X дни")
         function formatSacredEventDisplay(eventDate) {
             const now = new Date();
-            // Normalize 'now' and 'eventDate' to start of their respective days for accurate day difference
             const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const startOfEventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
             
             const diffMs = startOfEventDay.getTime() - startOfToday.getTime();
-            const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24)); // Round for closest day, not ceil
+            const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
             if (diffDays === 0) {
-                return "днес"; // Event is today
+                return "днес";
             } else if (diffDays === 1) {
-                return "утре"; // Event is tomorrow
+                return "утре";
             } else if (diffDays > 1) {
-                return `след ${diffDays} дни`; // Event is in X days
-            } else { // diffDays < 0 (event is in the past)
+                return `след ${diffDays} дни`;
+            } else {
                 const daysAgo = Math.abs(diffDays);
-                return `преди ${daysAgo} дни`; // Event was X days ago
+                return `преди ${daysAgo} дни`;
             }
         }
 
@@ -995,12 +1002,12 @@
         // Function to format date to DD.MM.YYYY
         function formatDate(date) {
             const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+            const month = String(date.getMonth() + 1).padStart(2, '0');
             const year = date.getFullYear();
             return `${day}.${month}.${year}`;
         }
 
-        // Function to format date to WHICH-MM-DD for input type="date" and API calls
+        // Function to format date to YYYY-MM-DD for input type="date" and API calls
         function formatDateForInputAndLookup(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -1029,10 +1036,9 @@
         }
 
         // Function to fetch Hijri date for a given Gregorian date using Aladhan API
-        // This is primarily used for the top display of current Hijri date.
         async function getHijriDateForGregorian(year, month, day) {
             const gregorianDate = `${String(day).padStart(2, '0')}-${String(month).padStart(2, '0')}-${year}`;
-            const apiUrl = `https://api.aladhan.com/v1/timingsByCity/${gregorianDate}?city=Sofia&country=Bulgaria&method=10`; // Using Sofia for conversion base
+            const apiUrl = `https://api.aladhan.com/v1/timingsByCity/${gregorianDate}?city=Sofia&country=Bulgaria&method=10`;
 
             try {
                 const response = await fetch(apiUrl);
@@ -1042,7 +1048,7 @@
                 }
                 const data = await response.json();
                 if (data.data && data.data.date && data.data.date.hijri) {
-                    return data.data.date.hijri; // Returns an object like { day: "1", month: { en: "Ramadan" }, year: "1446" }
+                    return data.data.date.hijri;
                 } else {
                     console.warn("Could not retrieve Hijri date data from API for", gregorianDate, ". Response:", data);
                     return null;
@@ -1055,26 +1061,20 @@
         
         // Function to fetch prayer times from API
         async function fetchPrayerTimes() {
-            // Show loading indicator
             loadingIndicatorEl.classList.remove('hidden');
             errorMessageEl.classList.add('hidden'); 
-            prayerTimesListEl.innerHTML = ''; // Clear previous times
+            prayerTimesListEl.innerHTML = '';
 
-            // Clear any running individual countdowns before fetching new data
             clearInterval(individualCountdownIntervalId);
             individualCountdownIntervalId = null;
 
             const currentDateStringForAPI = `${String(selectedDate.getDate()).padStart(2, '0')}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${selectedDate.getFullYear()}`;
 
-            // Update Gregorian date and day display
             currentDateEl.textContent = formatDate(selectedDate);
             currentDayEl.textContent = getDayNameBg(selectedDate);
-            selectedCityDisplay.textContent = selectedCity; // Update the selected city display
+            selectedCityDisplay.textContent = selectedCity;
 
-            // Fetch base times for Sofia using Diyanet method (method=10)
             const diyanetApiUrl = `https://api.aladhan.com/v1/timingsByCity/${currentDateStringForAPI}?city=Sofia&country=Bulgaria&method=10`;
-            
-            // Fetch Isha time specifically using Muslim World League method (method=3)
             const mwlIshaApiUrl = `https://api.aladhan.com/v1/timingsByCity/${currentDateStringForAPI}?city=Sofia&country=Bulgaria&method=3`;
 
             try {
@@ -1090,38 +1090,32 @@
                 const diyanetData = await diyanetResponse.json();
                 const mwlIshaData = await mwlIshaResponse.json();
 
-                // Check for essential data for prayer times calculation
                 if (!diyanetData.data || !diyanetData.data.timings || !mwlIshaData.data || !mwlIshaData.data.timings) {
                     throw new Error('Невалиден отговор от API или липсващи основни данни за времена за намаз.');
                 }
 
-                // Now proceed with prayer time calculation
                 const sofiaBaseTimings = {
                     Fajr: diyanetData.data.timings.Fajr,
                     Sunrise: diyanetData.data.timings.Sunrise,
                     Dhuhr: diyanetData.data.timings.Dhuhr,
                     Asr: diyanetData.data.timings.Asr,
                     Maghrib: diyanetData.data.timings.Maghrib,
-                    Isha: mwlIshaData.data.timings.Isha // Override Isha with MWL time
+                    Isha: mwlIshaData.data.timings.Isha
                 };
 
                 const currentCityCustomOffset = cityOffsets[selectedCity] || 0;
                 const adjustedPrayerTimes = {};
 
-                // Apply general and city-specific offsets to the API-fetched Sofia times
-                for (const key of allPrayerKeys) { // Iterate through allPrayerKeys for consistent order
+                for (const key of allPrayerKeys) {
                     if (sofiaBaseTimings.hasOwnProperty(key)) {
                         let [hour, minute] = sofiaBaseTimings[key].split(':').map(Number);
                         let tempDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour, minute, 0);
 
-                        // Apply general prayer-specific adjustment
                         if (adjustments[key] !== undefined) { 
                             tempDate.setMinutes(tempDate.getMinutes() + adjustments[key]);
                         }
-                        // Apply city-specific custom offset
                         tempDate.setMinutes(tempDate.getMinutes() + currentCityCustomOffset);
 
-                        // Apply custom user adjustment (from local storage)
                         if (customPrayerAdjustments[key] !== undefined) {
                             tempDate.setMinutes(tempDate.getMinutes() + customPrayerAdjustments[key]);
                         }
@@ -1130,9 +1124,8 @@
                     }
                 }
                 
-                prayerTimes = adjustedPrayerTimes; // Store the fully adjusted times
+                prayerTimes = adjustedPrayerTimes;
 
-                // Handle Hijri date separately with its own checks for robustness for the top bar display
                 if (diyanetData.data.date && diyanetData.data.date.hijri) {
                     const hijri = diyanetData.data.date.hijri;
                     if (hijri.day && hijri.month && hijri.month.en && hijri.year) {
@@ -1143,16 +1136,19 @@
                         currentHijriDate = `${hijriDay} ${hijriMonthBg} ${hijriYear} г.`; 
                         hijriDateEl.textContent = currentHijriDate;
 
-                       // --- UPDATED LOGIC FOR SACRED DAY INFO ---
+                        // --- ПРОВЕРКА ЗА СВЕЩЕН ДЕН (вече от автоматично изчислените събития) ---
                         let foundSacredDay = '';
                         const dateForSacredCheck = selectedDate;
-                        // Уверяваме се, че събитията са изчислени (ползва кеша, ако вече са)
-                        const sacredEventsForCheck = await computeSacredEvents();
-                        for (const event of sacredEventsForCheck) {
-                            if (event.date.toDateString() === dateForSacredCheck.toDateString()) {
-                                foundSacredDay = event.nameBg;
-                                break;
+                        try {
+                            const sacredEventsForCheck = await computeSacredEvents();
+                            for (const event of sacredEventsForCheck) {
+                                if (event.date.toDateString() === dateForSacredCheck.toDateString()) {
+                                    foundSacredDay = event.nameBg;
+                                    break;
+                                }
                             }
+                        } catch (e) {
+                            console.error("Грешка при проверка за свещен ден:", e);
                         }
 
                         if (foundSacredDay) {
@@ -1162,7 +1158,7 @@
                             sacredDayInfoEl.textContent = '';
                             sacredDayInfoEl.classList.add('hidden');
                         }
-                        // --- END UPDATED LOGIC ---
+                        // --- КРАЙ НА ПРОВЕРКАТА ---
 
                     } else {
                         console.warn("Hijri date data incomplete from API response.");
@@ -1179,7 +1175,7 @@
                     sacredDayInfoEl.classList.add('hidden');
                 }
 
-                displayPrayerTimes(); // Call display to render and manage countdowns
+                displayPrayerTimes();
                 
             } catch (error) {
                 console.error('Error fetching prayer times:', error);
@@ -1191,19 +1187,18 @@
                 sacredDayInfoEl.textContent = '';
                 sacredDayInfoEl.classList.add('hidden');
             } finally {
-                // Hide loading indicator
                 loadingIndicatorEl.classList.add('hidden');
             }
         }
 
         // Function to display prayer times in the list
         function displayPrayerTimes() {
-            prayerTimesListEl.innerHTML = ''; // Clear previous times
+            prayerTimesListEl.innerHTML = '';
 
-            const now = new Date(); // Current time for initial comparison
+            const now = new Date();
             const targetDate = selectedDate; 
             
-            prayersDataForDisplay = []; // Clear and repopulate global array
+            prayersDataForDisplay = [];
 
             const currentPrayerNames = getCurrentPrayerNames();
 
@@ -1220,22 +1215,20 @@
                     prayersDataForDisplay.push({
                         name: key,
                         displayName: displayName,
-                        staticTime: formatTime(prayerDate), // Store static formatted time
-                        date: prayerDate // Store the actual Date object for countdowns
+                        staticTime: formatTime(prayerDate),
+                        date: prayerDate
                     });
                 }
             }
 
-            // Sort prayers by time to ensure correct order
             prayersDataForDisplay.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-            let highlightIndex = -1; // Use a separate variable for highlighting
+            let highlightIndex = -1;
 
             if (selectedDate.toDateString() === new Date().toDateString()) {
-                // Only highlight if it's today's date
                 for (let i = 0; i < prayersDataForDisplay.length; i++) {
                     if (prayersDataForDisplay[i].date > now) { 
-                        highlightIndex = i; // Found a future prayer on current day to highlight
+                        highlightIndex = i;
                         break;
                     }
                 }
@@ -1243,17 +1236,14 @@
                 highlightIndex = -1; 
             }
 
-            // Render prayer times initially with static times
             prayersDataForDisplay.forEach((prayer, index) => {
                 const prayerRow = document.createElement('div');
                 prayerRow.className = 'prayer-row';
 
-                // Apply highlighting based on the separate highlightIndex
                 if (index === highlightIndex) {
                     prayerRow.classList.add('highlighted-prayer');
                 }
 
-                // Render with static time. Dynamic updates will override this if countdown mode is active.
                 prayerRow.innerHTML = `
                     <span class="prayer-name">${prayer.displayName}</span>
                     <div class="flex items-center">
@@ -1263,25 +1253,23 @@
                 prayerTimesListEl.appendChild(prayerRow);
             });
 
-            startStopIndividualCountdowns(); // Manage the individual countdown interval
-            updateCountdown(); // Update the main countdown (to next prayer)
+            startStopIndividualCountdowns();
+            updateCountdown();
         }
 
         // Function to start or stop individual prayer countdowns in the list
         function startStopIndividualCountdowns() {
-            clearInterval(individualCountdownIntervalId); // Always clear any existing interval first
+            clearInterval(individualCountdownIntervalId);
             individualCountdownIntervalId = null;
 
-            // If in countdown mode AND it's today's date, start the dynamic updates for individual prayers
             if (isCountdownMode && selectedDate.toDateString() === new Date().toDateString()) {
-                updateIndividualCountdowns(); // Call once immediately to set initial countdowns
+                updateIndividualCountdowns();
                 individualCountdownIntervalId = setInterval(updateIndividualCountdowns, 1000);
             } else {
-                // If not in countdown mode or not today's date, ensure static times are displayed.
                 prayersDataForDisplay.forEach(prayer => {
                     const span = document.getElementById(`prayer-time-${prayer.name}`);
                     if (span) {
-                        span.textContent = prayer.staticTime; // Revert to static time
+                        span.textContent = prayer.staticTime;
                     }
                 });
             }
@@ -1294,7 +1282,7 @@
                 const span = document.getElementById(`prayer-time-${prayer.name}`);
                 if (span) {
                     const diffMs = prayer.date.getTime() - now.getTime();
-                    span.textContent = formatDuration(diffMs); // Display countdown duration
+                    span.textContent = formatDuration(diffMs);
                 }
             });
         }
@@ -1325,11 +1313,7 @@
 
             let nextPrayerTimeDate;
             let nextPrayerDisplayName;
-            // The main countdown text (countdownTextEl) should always be in white/light grey,
-            // so we don't need a `shouldHighlightCountdownText` flag here.
 
-            // If selectedDate is not today (the actual current date), just display difference to selectedDate.
-            // The date rollover logic is handled by a separate interval.
             if (selectedDate.toDateString() !== now.toDateString()) {
                 const diff = getYearsMonthsDaysDifference(now, selectedDate);
                 let displayMessage = '';
@@ -1349,37 +1333,34 @@
                     } else if (diff.days > 0) {
                         displayMessage += `след ${diff.days} дни`;
                     } else {
-                        // This case means selectedDate is slightly in the future but less than a day
                         countdownEl.textContent = '--:--:--';
                         countdownTextEl.textContent = 'Избрана е бъдеща дата.'; 
-                        countdownTextEl.classList.remove('highlight-text-green'); // Ensure no highlight
+                        countdownTextEl.classList.remove('highlight-text-green');
                         return;
                     }
                     countdownEl.textContent = '--:--:--'; 
                     countdownTextEl.textContent = displayMessage || 'Изберете дата.';
-                    countdownTextEl.classList.remove('highlight-text-green'); // Ensure no highlight
+                    countdownTextEl.classList.remove('highlight-text-green');
                 } else {
                     countdownEl.textContent = '--:--:--';
                     countdownTextEl.textContent = 'Избрана е минала дата.';
-                    countdownTextEl.classList.remove('highlight-text-green'); // Ensure no highlight
+                    countdownTextEl.classList.remove('highlight-text-green');
                 }
                 return;
             }
 
-            // --- Logic for when selectedDate IS today's date (selectedDate.toDateString() === now.toDateString()) ---
             returnTodayBtn.classList.add('hidden');
 
             if (Object.keys(prayerTimes).length === 0) {
                 countdownEl.textContent = '--:--:--';
                 countdownTextEl.textContent = 'Няма отброяване за избраната дата.';
-                countdownTextEl.classList.remove('highlight-text-green'); // Ensure no highlight
+                countdownTextEl.classList.remove('highlight-text-green');
                 return;
             }
 
             let prayersArrayForCountdown = prayersDataForDisplay;
             let nextPrayerCandidateIndex = -1; 
 
-            // Find the next prayer on the *current* selectedDate that is in the future
             for (let i = 0; i < prayersArrayForCountdown.length; i++) {
                 if (prayersArrayForCountdown[i].date > now) {
                     nextPrayerCandidateIndex = i;
@@ -1388,27 +1369,22 @@
             }
             
             if (nextPrayerCandidateIndex !== -1) {
-                // There is a future prayer on selectedDate
                 const nextPrayer = prayersArrayForCountdown[nextPrayerCandidateIndex];
                 nextPrayerTimeDate = nextPrayer.date;
                 nextPrayerDisplayName = nextPrayer.displayName;
                 countdownTextEl.textContent = `до ${nextPrayerDisplayName}`;
             } else {
-                // All prayers for selectedDate have passed. Count down to Fajr of the next day.
-                // We need Fajr time for tomorrow. Take today's Fajr and add 24 hours.
-                const tomorrowFajr = new Date(prayersArrayForCountdown[0].date); // Get today's Fajr time
-                tomorrowFajr.setDate(tomorrowFajr.getDate() + 1); // Advance it to tomorrow
+                const tomorrowFajr = new Date(prayersArrayForCountdown[0].date);
+                tomorrowFajr.setDate(tomorrowFajr.getDate() + 1);
 
                 nextPrayerTimeDate = tomorrowFajr;
-                nextPrayerDisplayName = getCurrentPrayerNames().Fajr; // "Зора" or "Заговеване"
+                nextPrayerDisplayName = getCurrentPrayerNames().Fajr;
                 countdownTextEl.textContent = `до ${nextPrayerDisplayName} утре`;
             }
 
             const diff = nextPrayerTimeDate.getTime() - now.getTime();
 
             if (diff <= 0) {
-                // This condition means either the next prayer just passed or tomorrow's Fajr just started.
-                // This will be caught by the general date rollover check or re-run of this function.
                 countdownEl.textContent = '00:00:00';
                 countdownTextEl.textContent = 'Намазът е сега!'; 
             } else {
@@ -1418,7 +1394,6 @@
                 countdownEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
             }
             
-            // Ensure the class is always removed for the main countdown text
             countdownTextEl.classList.remove('highlight-text-green');
         }
 
@@ -1426,7 +1401,7 @@
         function returnToToday() {
             selectedDate = new Date();
             hiddenDateInput.value = formatDateForInputAndLookup(selectedDate);
-            isCustomDateSelected = false; // Reset flag when returning to today
+            isCustomDateSelected = false;
             fetchPrayerTimes(); 
         }
 
@@ -1501,9 +1476,9 @@
         function showPrayerTimesView() {
             sacredEventsView.classList.add('hidden');
             prayerTimesView.classList.remove('hidden');
-            mainActionButtons.classList.remove('hidden'); // Show main action buttons
-            clearInterval(sacredEventsCountdownIntervalId); // Stop individual sacred event countdown
-            clearInterval(sacredEventsMainCountdownIntervalId); // NEW: Stop main sacred event countdown
+            mainActionButtons.classList.remove('hidden');
+            clearInterval(sacredEventsCountdownIntervalId);
+            clearInterval(sacredEventsMainCountdownIntervalId);
             sacredEventsCountdownIntervalId = null;
             sacredEventsMainCountdownIntervalId = null;
             fetchPrayerTimes();
@@ -1512,24 +1487,31 @@
         async function showSacredEventsView() {
             prayerTimesView.classList.add('hidden');
             sacredEventsView.classList.remove('hidden');
-            mainActionButtons.classList.add('hidden'); // Hide main action buttons
+            mainActionButtons.classList.add('hidden');
             clearInterval(individualCountdownIntervalId);
             individualCountdownIntervalId = null;
 
-            await populateSacredEventsList(); // Populates eventsToToogleDisplay
-            updateSacredEventsMainCountdown(); // Call once immediately
-            sacredEventsMainCountdownIntervalId = setInterval(updateSacredEventsMainCountdown, 1000); // Update every second
+            await populateSacredEventsList();
+            updateSacredEventsMainCountdown();
+            clearInterval(sacredEventsMainCountdownIntervalId);
+            sacredEventsMainCountdownIntervalId = setInterval(updateSacredEventsMainCountdown, 1000);
         }
 
-      // Function to populate the list of sacred events in the view
+        // Function to populate the list of sacred events in the view (now from computed events)
         async function populateSacredEventsList() {
             sacredEventsListEl.innerHTML = '';
             sacredEventsLoadingIndicator.classList.remove('hidden');
 
-            const eventsToDisplay = await computeSacredEvents();
+            let eventsToDisplay = [];
+            try {
+                eventsToDisplay = await computeSacredEvents();
+            } catch (e) {
+                console.error("Грешка при изчисляване на свещените събития:", e);
+                eventsToDisplay = [];
+            }
 
             if (!eventsToDisplay || eventsToDisplay.length === 0) {
-                sacredEventsListEl.innerHTML = '<div class="text-center text-gray-400 py-4">Няма намерени предстоящи свещени събития.</div>';
+                sacredEventsListEl.innerHTML = '<div class="text-center text-gray-400 py-4">Няма намерени предстоящи свещени събития. Проверете връзката си.</div>';
                 eventsToToogleDisplay = [];
             } else {
                 eventsToToogleDisplay = eventsToDisplay.map(ev => ({
@@ -1538,25 +1520,6 @@
                     key: ev.key
                 }));
                 eventsToToogleDisplay.sort((a, b) => a.date.getTime() - b.date.getTime());
-                renderSacredEventsListDisplay();
-            }
-            sacredEventsLoadingIndicator.classList.add('hidden');
-        }
-
-            const eventsToDisplay = [];
-            HARDCODED_SACRED_EVENTS_2025.forEach(event => {
-                eventsToDisplay.push({
-                    name: event.nameBg,
-                    date: event.date,
-                    key: event.key
-                });
-            });
-
-            if (eventsToDisplay.length === 0) {
-                sacredEventsListEl.innerHTML = '<div class="text-center text-gray-400 py-4">Няма намерени свещени събития за 2025 г.</div>';
-            } else {
-                eventsToToogleDisplay = eventsToDisplay;
-                eventsToToogleDisplay.sort((a, b) => a.date.getTime() - b.date.getTime()); 
                 renderSacredEventsListDisplay();
             }
             sacredEventsLoadingIndicator.classList.add('hidden');
@@ -1572,7 +1535,6 @@
             const now = new Date();
             const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-            // Find the index of the very first upcoming event in the FULL list
             let firstUpcomingEventIndex = -1;
             for (let i = 0; i < eventsToToogleDisplay.length; i++) {
                 const eventDate = eventsToToogleDisplay[i].date;
@@ -1583,20 +1545,19 @@
                 }
             }
 
-            let elementToScrollTo = null; // Variable to store the first upcoming element for scrolling
+            let elementToScrollTo = null;
 
-            eventsToToogleDisplay.forEach((event, index) => { // Iterate through the FULL list
+            eventsToToogleDisplay.forEach((event, index) => {
                 const eventRow = document.createElement('div');
                 eventRow.className = 'prayer-row';
 
                 const displayValue = isSacredEventsCountdownMode ? formatSacredEventDisplay(event.date) : formatDate(event.date);
 
-                // Highlight logic: Only highlight if it's the *exact* first upcoming event
                 if (index === firstUpcomingEventIndex) {
                     eventRow.classList.add('highlighted-prayer');
-                    elementToScrollTo = eventRow; // This is the element we want to scroll to
+                    elementToScrollTo = eventRow;
                 } else if (!isSacredEventsCountdownMode && event.date < now) {
-                    eventRow.classList.add('opacity-50'); // Dim past events if not in countdown mode
+                    eventRow.classList.add('opacity-50');
                 }
 
                 const uniqueId = `sacred-event-time-${event.key}`;
@@ -1609,7 +1570,7 @@
 
             if (isSacredEventsCountdownMode) {
                 sacredEventsCountdownIntervalId = setInterval(() => {
-                    eventsToToogleDisplay.forEach(event => { // Update all elements, as the list is now full
+                    eventsToToogleDisplay.forEach(event => {
                         const uniqueId = `sacred-event-time-${event.key}`;
                         const span = document.getElementById(uniqueId);
                         if (span) {
@@ -1619,7 +1580,6 @@
                 }, 1000);
             }
 
-            // Scroll to the first upcoming event
             if (elementToScrollTo) {
                 setTimeout(() => {
                     elementToScrollTo.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1627,22 +1587,19 @@
             }
         }
 
-        // NEW: Function to update the main sacred events countdown
+        // Function to update the main sacred events countdown
         function updateSacredEventsMainCountdown() {
             const now = new Date();
             const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
             let nextEvent = null;
-            let nextEventIndex = -1;
 
-            // Find the next upcoming event
             for (let i = 0; i < eventsToToogleDisplay.length; i++) {
                 const eventDate = eventsToToogleDisplay[i].date;
                 const startOfEventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
 
-                if (startOfEventDay >= startOfToday) { // Event is today or in the future
+                if (startOfEventDay >= startOfToday) {
                     nextEvent = eventsToToogleDisplay[i];
-                    nextEventIndex = i;
                     break;
                 }
             }
@@ -1650,7 +1607,7 @@
             if (nextEvent) {
                 const startOfNextEventDay = new Date(nextEvent.date.getFullYear(), nextEvent.date.getMonth(), nextEvent.date.getDate());
                 const diffMs = startOfNextEventDay.getTime() - startOfToday.getTime();
-                const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24)); // Round to nearest day
+                const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
                 if (diffDays === 0) {
                     sacredCountdownDisplay.textContent = 'Днес';
@@ -1663,13 +1620,12 @@
                     sacredCountdownText.textContent = `до ${nextEvent.name}`;
                 }
             } else {
-                // All events for the year have passed
                 sacredCountdownDisplay.textContent = '-- дни --';
-                sacredCountdownText.textContent = 'Всички събития за 2025 г. са минали.';
+                sacredCountdownText.textContent = 'Няма предстоящи свещени събития.';
             }
         }
 
-        // --- NEW: Wake Lock API Functions ---
+        // --- Wake Lock API Functions ---
         async function requestWakeLock() {
             if ('wakeLock' in navigator) {
                 try {
@@ -1703,7 +1659,7 @@
             if (wakeLockSentinel) {
                 wakeLockSentinel.release();
                 wakeLockSentinel = null;
-                isWakeLockActive = false; // Ensure state is updated
+                isWakeLockActive = false;
                 updateWakeLockButton();
                 showMessage('Екранът вече няма да остава активен.');
                 saveSettings();
@@ -1712,11 +1668,11 @@
 
         function updateWakeLockButton() {
             if (isWakeLockActive) {
-                wakeLockToggleButton.textContent = '🔆'; // Brighter icon when active
-                wakeLockToggleButton.classList.add('bg-green-600'); // Example: Add a class for active state styling
+                wakeLockToggleButton.textContent = '🔆';
+                wakeLockToggleButton.classList.add('bg-green-600');
             } else {
-                wakeLockToggleButton.textContent = '💡'; // Standard icon when inactive
-                wakeLockToggleButton.classList.remove('bg-green-600'); // Remove active state styling
+                wakeLockToggleButton.textContent = '💡';
+                wakeLockToggleButton.classList.remove('bg-green-600');
             }
         }
 
@@ -1733,7 +1689,7 @@
                 messageBox.addEventListener('transitionend', () => {
                     messageBox.classList.add('hidden');
                 }, { once: true });
-            }, 3000); // Message disappears after 3 seconds
+            }, 3000);
         }
 
         // --- Local Storage Functions ---
@@ -1743,8 +1699,8 @@
                 customPrayerAdjustments: customPrayerAdjustments,
                 isClassicalNamesActive: isClassicalNamesActive,
                 isSacredEventsCountdownMode: isSacredEventsCountdownMode,
-                isWakeLockActive: isWakeLockActive, // Save wake lock state
-                isCustomDateSelected: isCustomDateSelected, // NEW: Save custom date selection state
+                isWakeLockActive: isWakeLockActive,
+                isCustomDateSelected: isCustomDateSelected,
             };
             try {
                 localStorage.setItem('prayerApp_settings', JSON.stringify(settingsToSave));
@@ -1763,18 +1719,16 @@
                     customPrayerAdjustments = savedSettings.customPrayerAdjustments || {};
                     isClassicalNamesActive = savedSettings.isClassicalNamesActive || false;
                     isSacredEventsCountdownMode = savedSettings.isSacredEventsCountdownMode || false;
-                    isWakeLockActive = savedSettings.isWakeLockActive || false; // Load wake lock state
-                    isCustomDateSelected = savedSettings.isCustomDateSelected || false; // NEW: Load custom date selection state
+                    isWakeLockActive = savedSettings.isWakeLockActive || false;
+                    isCustomDateSelected = savedSettings.isCustomDateSelected || false;
                     
                     selectedCityDisplay.textContent = selectedCity;
                 }
-                // When loading, if a custom date was selected, try to restore it.
-                // Otherwise, always start with today's date.
                 if (isCustomDateSelected && savedSettings && savedSettings.selectedDate) {
                     selectedDate = new Date(savedSettings.selectedDate);
                 } else {
                     selectedDate = new Date(); 
-                    isCustomDateSelected = false; // Ensure it's false if not explicitly loaded as custom
+                    isCustomDateSelected = false;
                 }
                 hiddenDateInput.value = formatDateForInputAndLookup(selectedDate);
             }
@@ -1792,24 +1746,19 @@
             updateClock();
             fetchPrayerTimes();
 
-            // Interval to update main countdown and check for date rollover
             setInterval(() => {
-                updateCountdown(); // Update the main countdown display
+                updateCountdown();
                 const now = new Date();
 
-                // Check for date rollover ONLY if a custom date is NOT selected
                 if (!isCustomDateSelected) {
-                    // If the displayed date is different from the actual current date
                     if (selectedDate.toDateString() !== now.toDateString()) {
-                        // It means the actual date has rolled over, so update selectedDate to the new "today"
                         selectedDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                         hiddenDateInput.value = formatDateForInputAndLookup(selectedDate);
-                        fetchPrayerTimes(); // Re-fetch times for the new date
+                        fetchPrayerTimes();
                     }
                 }
-            }, 1000); // Run every second
+            }, 1000);
 
-            // Interval to update current time display
             setInterval(updateClock, 1000);
 
 
@@ -1823,8 +1772,8 @@
 
             countdownToggleButton.addEventListener('click', () => {
                 isCountdownMode = !isCountdownMode;
-                saveSettings(); // Save the new countdown mode setting
-                displayPrayerTimes(); // Re-render to apply the countdown mode change
+                saveSettings();
+                displayPrayerTimes();
             });
 
             datePickerBtn.addEventListener('click', () => {
@@ -1832,11 +1781,10 @@
             });
 
             hiddenDateInput.addEventListener('change', (event) => {
-                // When user manually picks a date, update selectedDate and fetch times
                 selectedDate = new Date(event.target.value);
-                isCustomDateSelected = true; // Set flag to true when a custom date is selected
+                isCustomDateSelected = true;
                 fetchPrayerTimes();
-                saveSettings(); // Save the new custom date selection state
+                saveSettings();
             });
 
             languageToggleBtn.addEventListener('click', () => {
@@ -1851,7 +1799,6 @@
 
             returnTodayBtn.addEventListener('click', returnToToday);
 
-            // NEW: Wake Lock Toggle Button Listener
             wakeLockToggleButton.addEventListener('click', () => {
                 if (isWakeLockActive) {
                     releaseWakeLock();
@@ -1860,7 +1807,6 @@
                 }
             });
 
-            // NEW: Re-request wake lock if page becomes visible and it was previously active
             document.addEventListener('visibilitychange', () => {
                 if (wakeLockSentinel !== null && document.visibilityState === 'visible') {
                     requestWakeLock();
