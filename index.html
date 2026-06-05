@@ -606,35 +606,137 @@
     <div id="message-box" class="hidden"></div>
 
     <script>
-        // --- HARDCODED SACRED EVENTS DEFINITIONS FOR 2025 (КОРИГИРАНО И ДОПЪЛНЕНО СПОРЕД ДАННИТЕ НА ДИЯНЕТА) ---
-        // These are Gregorian dates for sacred Islamic events as per Diyanet calendar for 2025.
-        // The display names are in Bulgarian.
-        const HARDCODED_SACRED_EVENTS_2025 = [
-            // Month is 0-indexed (January is 0, February is 1, etc.)
-            { nameBg: "Начало на Трите Месеца (1 Реджеб)", date: new Date(2025, 0, 1), key: "UcAylarinBaslangici_Jan" }, // 1 Януари 2025
-            { nameBg: "Нощта на Регаиб (2 Реджеб)", date: new Date(2025, 0, 2), key: "Regaib" }, // 2 Януари 2025
-            { nameBg: "Нощта на Мирадж (26 Реджеб)", date: new Date(2025, 0, 26), key: "Miraj" }, // 26 Януари 2025
-            { nameBg: "Нощта на Берат (14 Шабан)", date: new Date(2025, 1, 13), key: "Berat" }, // 13 Февруари 2025
-            { nameBg: "Начало на Рамазан (1 Рамазан)", date: new Date(2025, 2, 1), key: "RamadanStart" }, // 1 Март 2025
-            { nameBg: "Нощта Кадир (26 Рамазан)", date: new Date(2025, 2, 26), key: "Kadir" }, // 26 Март 2025
-            { nameBg: "Арефе (преди Рамазан Байрам)", date: new Date(2025, 2, 29), key: "RamazanArefe" }, // 29 Март 2025
-            { nameBg: "Рамазан Байрам - Ден 1 (1 Шеввал)", date: new Date(2025, 2, 30), key: "RamazanBayram1" }, // 30 Март 2025
-            { nameBg: "Рамазан Байрам - Ден 2 (2 Шеввал)", date: new Date(2025, 2, 31), key: "RamazanBayram2" }, // 31 Март 2025
-            { nameBg: "Рамазан Байрам - Ден 3 (3 Шеввал)", date: new Date(2025, 3, 1), key: "RamazanBayram3" }, // 1 Април 2025
-            { nameBg: "Денят Арафа (9 Зилхидже)", date: new Date(2025, 5, 5), key: "Arafa" }, // 5 Юни 2025
-            { nameBg: "Курбан Байрам - Ден 1 (10 Зилхидже)", date: new Date(2025, 5, 6), key: "KurbanBayram1" }, // 6 Юни 2025
-            { nameBg: "Курбан Байрам - Ден 2 (11 Зилхидже)", date: new Date(2025, 5, 7), key: "KurbanBayram2" }, // 7 Юни 2025
-            { nameBg: "Курбан Байрам - Ден 3 (12 Зилхидже)", date: new Date(2025, 5, 8), key: "KurbanBayram3" }, // 8 Юни 2025
-            { nameBg: "Курбан Байрам - Ден 4 (13 Зилхидже)", date: new Date(2025, 5, 9), key: "KurbanBayram4" }, // 9 Юни 2025
-            { nameBg: "Нова Хиджri година (1 Мухаррем)", date: new Date(2025, 5, 26), key: "NewHijriYear" }, // 26 Юни 2025
-            { nameBg: "Ашура (10 Мухаррем)", date: new Date(2025, 6, 5), key: "Ashura" }, // 5 Юли 2025
-            { nameBg: "Мевлид Кандилли (11 Рабиюлеввел)", date: new Date(2025, 8, 3), key: "Mawlid" }, // 3 Септември 2025
-            { nameBg: "Начало на Трите Месеца (1 Реджеб)", date: new Date(2025, 11, 21), key: "UcAylarinBaslangici_Dec" }, // 21 Декември 2025
-            { nameBg: "Нощта на Регаиб (5 Реджеб)", date: new Date(2025, 11, 25), key: "Regaib_Dec" } // 25 Декември 2025
-        ].sort((a, b) => a.date.getTime() - b.date.getTime()); // Sort by Gregorian date
+      // --- ДЕФИНИЦИИ НА СВЕЩЕНИ ДНИ ПО ХИДЖРИ КАЛЕНДАР (автоматично изчисление) ---
+        // Всяко събитие е фиксирана дата (ден + месец) в хиджри календара.
+        // Хиджри месеци: 1=Мухаррем, 7=Реджеб, 8=Шабан, 9=Рамазан, 10=Шеввал, 12=Зилхидже, 3=Рабиюлеввел
+        // type "fixed" = фиксиран ден от месеца; type "firstFriday" = първи петък на месеца (за Регаиб)
+        const SACRED_EVENT_DEFINITIONS = [
+            { nameBg: "Начало на Трите Месеца (1 Реджеб)", hMonth: 7,  hDay: 1,  type: "fixed",       key: "UcAylar" },
+            { nameBg: "Нощта на Регаиб (първи петък на Реджеб)", hMonth: 7, type: "firstFriday",     key: "Regaib" },
+            { nameBg: "Нощта на Мирадж (27 Реджеб)", hMonth: 7,  hDay: 27, type: "fixed",            key: "Miraj" },
+            { nameBg: "Нощта на Берат (15 Шабан)", hMonth: 8,  hDay: 15, type: "fixed",              key: "Berat" },
+            { nameBg: "Начало на Рамазан (1 Рамазан)", hMonth: 9,  hDay: 1,  type: "fixed",          key: "RamadanStart" },
+            { nameBg: "Нощта Кадир (27 Рамазан)", hMonth: 9,  hDay: 27, type: "fixed",               key: "Kadir" },
+            { nameBg: "Арефе (преди Рамазан Байрам)", hMonth: 9,  hDay: 30, type: "fixed",           key: "RamazanArefe" },
+            { nameBg: "Рамазан Байрам - Ден 1 (1 Шеввал)", hMonth: 10, hDay: 1, type: "fixed",       key: "RamazanBayram1" },
+            { nameBg: "Рамазан Байрам - Ден 2 (2 Шеввал)", hMonth: 10, hDay: 2, type: "fixed",       key: "RamazanBayram2" },
+            { nameBg: "Рамазан Байрам - Ден 3 (3 Шеввал)", hMonth: 10, hDay: 3, type: "fixed",       key: "RamazanBayram3" },
+            { nameBg: "Денят Арафа (9 Зилхидже)", hMonth: 12, hDay: 9,  type: "fixed",               key: "Arafa" },
+            { nameBg: "Курбан Байрам - Ден 1 (10 Зилхидже)", hMonth: 12, hDay: 10, type: "fixed",    key: "KurbanBayram1" },
+            { nameBg: "Курбан Байрам - Ден 2 (11 Зилхидже)", hMonth: 12, hDay: 11, type: "fixed",    key: "KurbanBayram2" },
+            { nameBg: "Курбан Байрам - Ден 3 (12 Зилхидже)", hMonth: 12, hDay: 12, type: "fixed",    key: "KurbanBayram3" },
+            { nameBg: "Курбан Байрам - Ден 4 (13 Зилхидже)", hMonth: 12, hDay: 13, type: "fixed",    key: "KurbanBayram4" },
+            { nameBg: "Нова Хиджри година (1 Мухаррем)", hMonth: 1,  hDay: 1,  type: "fixed",        key: "NewHijriYear" },
+            { nameBg: "Ашура (10 Мухаррем)", hMonth: 1,  hDay: 10, type: "fixed",                    key: "Ashura" },
+            { nameBg: "Мевлид Кандилли (12 Рабиюлеввел)", hMonth: 3,  hDay: 12, type: "fixed",       key: "Mawlid" }
+        ];
 
-        // --- END OF HARDCODED SACRED EVENTS DEFINITIONS ---
+        // Кеш за изчислените събития, за да не викаме API при всяко превключване
+        let computedSacredEvents = [];
+        let sacredEventsComputedForYear = null; // хиджри годината, за която сме смятали
 
+        // Преобразува хиджри дата (ден-месец-година) към григорианска чрез Aladhan API
+        async function hijriToGregorian(hDay, hMonth, hYear) {
+            const dateStr = `${String(hDay).padStart(2, '0')}-${String(hMonth).padStart(2, '0')}-${hYear}`;
+            const url = `https://api.aladhan.com/v1/hToG/${dateStr}?calendarMethod=HJCoSA`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) return null;
+                const data = await response.json();
+                if (data.data && data.data.gregorian) {
+                    const g = data.data.gregorian;
+                    // g.date е във формат DD-MM-YYYY
+                    const [d, m, y] = g.date.split('-').map(Number);
+                    return new Date(y, m - 1, d);
+                }
+                return null;
+            } catch (e) {
+                console.error("Грешка при преобразуване хиджри->григориан:", e);
+                return null;
+            }
+        }
+
+        // Намира текущата хиджри година чрез днешната дата
+        async function getCurrentHijriYear() {
+            const now = new Date();
+            const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
+            const url = `https://api.aladhan.com/v1/gToH/${dateStr}?calendarMethod=HJCoSA`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) return null;
+                const data = await response.json();
+                if (data.data && data.data.hijri && data.data.hijri.year) {
+                    return parseInt(data.data.hijri.year, 10);
+                }
+                return null;
+            } catch (e) {
+                console.error("Грешка при намиране на хиджри година:", e);
+                return null;
+            }
+        }
+
+        // Изчислява всички свещени събития за дадена хиджри година (+ следващите две)
+        // и връща само бъдещите (или днешните), сортирани по дата.
+        async function computeSacredEvents() {
+            const currentHYear = await getCurrentHijriYear();
+            if (!currentHYear) return [];
+
+            // Ако вече сме смятали за тази хиджри година, ползвай кеша
+            if (sacredEventsComputedForYear === currentHYear && computedSacredEvents.length > 0) {
+                return computedSacredEvents;
+            }
+
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const results = [];
+
+            // Обхождаме текущата + следващите 2 хиджри години, за да има винаги събития напред
+            for (let yearOffset = 0; yearOffset <= 2; yearOffset++) {
+                const hYear = currentHYear + yearOffset;
+
+                for (const def of SACRED_EVENT_DEFINITIONS) {
+                    let gregDate = null;
+
+                    if (def.type === "fixed") {
+                        gregDate = await hijriToGregorian(def.hDay, def.hMonth, hYear);
+                    } else if (def.type === "firstFriday") {
+                        // Намираме 1-ви на месеца, после първия петък (вкл. ако 1-ви е петък)
+                        const firstOfMonth = await hijriToGregorian(1, def.hMonth, hYear);
+                        if (firstOfMonth) {
+                            const dayOfWeek = firstOfMonth.getDay(); // 0=неделя ... 5=петък
+                            const daysUntilFriday = (5 - dayOfWeek + 7) % 7;
+                            gregDate = new Date(firstOfMonth);
+                            gregDate.setDate(gregDate.getDate() + daysUntilFriday);
+                        }
+                    }
+
+                    if (gregDate) {
+                        // Уникален ключ по година, за да не се дублират при няколко години
+                        results.push({
+                            nameBg: def.nameBg,
+                            date: gregDate,
+                            key: `${def.key}_${hYear}`
+                        });
+                    }
+                }
+            }
+
+            // Махаме дубликати по дата+ключ и пазим само бъдещи/днешни събития
+            const seen = new Set();
+            const futureEvents = results.filter(ev => {
+                const startOfEventDay = new Date(ev.date.getFullYear(), ev.date.getMonth(), ev.date.getDate());
+                const id = startOfEventDay.getTime() + '_' + ev.nameBg;
+                if (seen.has(id)) return false;
+                seen.add(id);
+                return startOfEventDay >= startOfToday;
+            });
+
+            futureEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+            computedSacredEvents = futureEvents;
+            sacredEventsComputedForYear = currentHYear;
+            return futureEvents;
+        }
 
         // DOM Elements
         const currentTimeEl = document.getElementById('current-time');
@@ -1041,13 +1143,13 @@
                         currentHijriDate = `${hijriDay} ${hijriMonthBg} ${hijriYear} г.`; 
                         hijriDateEl.textContent = currentHijriDate;
 
-                        // --- UPDATED LOGIC FOR SACRED DAY INFO ---
+                       // --- UPDATED LOGIC FOR SACRED DAY INFO ---
                         let foundSacredDay = '';
-                        // Use selectedDate instead of new Date() (today)
-                        const dateForSacredCheck = selectedDate; 
-                        for (const event of HARDCODED_SACRED_EVENTS_2025) {
-                            // Compare with selectedDate
-                            if (event.date.toDateString() === dateForSacredCheck.toDateString()) { 
+                        const dateForSacredCheck = selectedDate;
+                        // Уверяваме се, че събитията са изчислени (ползва кеша, ако вече са)
+                        const sacredEventsForCheck = await computeSacredEvents();
+                        for (const event of sacredEventsForCheck) {
+                            if (event.date.toDateString() === dateForSacredCheck.toDateString()) {
                                 foundSacredDay = event.nameBg;
                                 break;
                             }
@@ -1419,10 +1521,27 @@
             sacredEventsMainCountdownIntervalId = setInterval(updateSacredEventsMainCountdown, 1000); // Update every second
         }
 
-        // Function to populate the list of sacred events in the view
+      // Function to populate the list of sacred events in the view
         async function populateSacredEventsList() {
             sacredEventsListEl.innerHTML = '';
             sacredEventsLoadingIndicator.classList.remove('hidden');
+
+            const eventsToDisplay = await computeSacredEvents();
+
+            if (!eventsToDisplay || eventsToDisplay.length === 0) {
+                sacredEventsListEl.innerHTML = '<div class="text-center text-gray-400 py-4">Няма намерени предстоящи свещени събития.</div>';
+                eventsToToogleDisplay = [];
+            } else {
+                eventsToToogleDisplay = eventsToDisplay.map(ev => ({
+                    name: ev.nameBg,
+                    date: ev.date,
+                    key: ev.key
+                }));
+                eventsToToogleDisplay.sort((a, b) => a.date.getTime() - b.date.getTime());
+                renderSacredEventsListDisplay();
+            }
+            sacredEventsLoadingIndicator.classList.add('hidden');
+        }
 
             const eventsToDisplay = [];
             HARDCODED_SACRED_EVENTS_2025.forEach(event => {
