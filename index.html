@@ -16,12 +16,13 @@
             color: #e2e8f0; /* Светъл цвят на текста */
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start; /* Подравняване отгоре, за да не се отрязва съдържанието */
             min-height: 100vh;
             margin: 0;
             padding: 0.5rem; /* Adjusted for overall small screen fit */
             box-sizing: border-box;
-            overflow: hidden; /* Предотвратява хоризонтално превъртане */
+            overflow-x: hidden; /* Само хоризонталното превъртане е спряно */
+            overflow-y: auto; /* Вертикално превъртане при нужда */
         }
         .container {
             background-color: rgba(45, 55, 72, 0.6); /* Полупрозрачен фон */
