@@ -842,6 +842,54 @@
         .ios-share { display: inline-block; vertical-align: -0.2em; width: 1.1em; height: 1.1em; }
         .install-note { color: var(--ink-soft); font-size: 0.82rem; line-height: 1.4; }
 
+        /* ---------- Къбле ---------- */
+        .bottom-nav { grid-template-columns: repeat(4, 1fr); }
+        .nav-item { font-size: 0.74rem; }
+        .qibla-dial-wrap { width: min(72vw, 270px); aspect-ratio: 1; margin: 0.25rem auto 0.5rem; }
+        .qibla-dial { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 12px 24px rgba(8, 63, 48, 0.3)); }
+        .qd-ring { fill: rgba(8, 63, 48, 0.92); stroke: var(--gold); stroke-width: 2.5; transition: fill 0.3s; }
+        .qd-face { stroke: rgba(184, 149, 74, 0.6); stroke-width: 1; }
+        .qibla-dial.aligned .qd-ring { fill: var(--green); }
+        #qibla-rose { transition: transform 0.12s linear; }
+        .qd-tick { stroke: rgba(8, 63, 48, 0.45); stroke-width: 1; }
+        .qd-tick.major { stroke: var(--emerald); stroke-width: 2; }
+        .qd-n, .qd-l { font: 700 17px 'Oswald', 'Arial Narrow', sans-serif; text-anchor: middle; dominant-baseline: middle; }
+        .qd-n { fill: var(--red); font-size: 20px; }
+        .qd-l { fill: var(--emerald); }
+        .qd-line { stroke: var(--gold); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 2 6; }
+        .qd-kaaba { fill: #1b1b1b; stroke: var(--gold); stroke-width: 1.5; }
+        .qd-kaaba-band { fill: var(--gold); }
+        .qd-pointer { fill: var(--gold); stroke: var(--cream); stroke-width: 1.5; }
+        .qibla-dial.aligned .qd-pointer { fill: #fff; }
+        .qd-hub { fill: var(--emerald); stroke: var(--gold); stroke-width: 2; }
+        .qibla-turn { font-family: 'Playfair Display', 'Noto Serif', 'Times New Roman', serif; font-weight: 700; font-size: 1.5rem; color: var(--emerald); min-height: 2rem; }
+        .qibla-turn.ok { color: var(--green-dark); }
+        .qibla-facts { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; color: var(--ink-soft); font-size: 0.88rem; margin: 0.2rem 0 0.6rem; }
+        .qibla-facts b { color: var(--emerald); }
+        .qibla-controls { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+        .qibla-status { color: var(--ink-soft); font-size: 0.8rem; margin: 0.5rem 0.5rem 0; line-height: 1.35; min-height: 1.1rem; }
+        .qibla-status.warn { color: var(--red); }
+        .qibla-guide { margin-top: 0.9rem; }
+        .qibla-guide.emph .qg-head { background: linear-gradient(180deg, var(--emerald-2), var(--emerald)); color: var(--cream); }
+        .qg-head {
+            text-align: center; font-family: 'Oswald', 'Arial Narrow', sans-serif; text-transform: uppercase; letter-spacing: 0.04em;
+            font-weight: 600; font-size: 0.9rem; color: var(--emerald); padding: 0.4rem; border-radius: 0.75rem; margin-bottom: 0.5rem;
+            background: rgba(255, 255, 255, 0.45); border: 1px solid var(--gold-soft);
+        }
+        .qg-card {
+            display: flex; gap: 0.7rem; align-items: flex-start; padding: 0.7rem 0.8rem; border-radius: 1rem;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.4));
+            border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 3px 10px -5px rgba(8, 63, 48, 0.2), inset 0 1px 0 #fff;
+        }
+        .qg-card.now { background: linear-gradient(180deg, #24bb4e, var(--green-dark)); }
+        .qg-card.now .qg-title, .qg-card.now .qg-text, .qg-card.now .qg-time { color: #fff; }
+        .qg-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; width: 1.8rem; text-align: center; }
+        .qg-body { flex: 1; min-width: 0; text-align: left; }
+        .qg-title { font-weight: 700; color: var(--emerald); font-size: 0.95rem; display: flex; justify-content: space-between; gap: 0.5rem; }
+        .qg-time { color: var(--green-dark); font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .qg-text { color: var(--ink); font-size: 0.86rem; line-height: 1.4; margin-top: 0.15rem; }
+        .qg-text small { color: var(--ink-soft); }
+
         /* без поддръжка на размазване — по-плътен фон, за да се чете */
         @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
             .container { background: rgba(248, 245, 233, 0.94); }
@@ -922,6 +970,59 @@
             </div>
         </div>
 
+        <!-- Къбле -->
+        <div id="qibla-view" class="hidden">
+            <div class="text-center flex flex-col items-center">
+                <h3 class="ribbon text-base mb-3">Посока на къбле</h3>
+
+                <div class="qibla-dial-wrap">
+                    <svg id="qibla-dial" class="qibla-dial" viewBox="-130 -130 260 260" role="img" aria-label="Компас за къбле">
+                        <defs>
+                            <radialGradient id="qd-face" cx="50%" cy="40%" r="65%">
+                                <stop offset="0" stop-color="#fffdf6" stop-opacity=".9"/>
+                                <stop offset="1" stop-color="#ece6cf" stop-opacity=".75"/>
+                            </radialGradient>
+                        </defs>
+                        <circle r="122" class="qd-ring"/>
+                        <circle r="112" fill="url(#qd-face)" class="qd-face"/>
+                        <g id="qibla-rose">
+                            <g id="qibla-ticks"></g>
+                            <text class="qd-n" x="0" y="-84">С</text>
+                            <text class="qd-l" x="86" y="6">И</text>
+                            <text class="qd-l" x="0" y="96">Ю</text>
+                            <text class="qd-l" x="-86" y="6">З</text>
+                            <g id="qibla-marker">
+                                <line x1="0" y1="0" x2="0" y2="-70" class="qd-line"/>
+                                <g transform="translate(0 -88)">
+                                    <rect x="-11" y="-11" width="22" height="22" rx="2" class="qd-kaaba"/>
+                                    <rect x="-11" y="-5" width="22" height="4" class="qd-kaaba-band"/>
+                                </g>
+                            </g>
+                        </g>
+                        <!-- посоката на телефона (горе) -->
+                        <path d="M0 -128 L9 -110 L-9 -110 Z" class="qd-pointer"/>
+                        <circle r="6" class="qd-hub"/>
+                    </svg>
+                </div>
+
+                <div id="qibla-turn" class="qibla-turn">—</div>
+                <div class="qibla-facts">
+                    <span><b id="qibla-bearing">—</b> от север</span>
+                    <span>до Кабе <b id="qibla-distance">—</b></span>
+                </div>
+                <div class="qibla-controls">
+                    <button id="qibla-start-btn" class="chip ib-go">🧭 Включи компаса</button>
+                    <button id="qibla-location-btn" class="chip">📍 <span id="qibla-location-label">София</span></button>
+                </div>
+                <div id="qibla-status" class="qibla-status">Дръжте телефона хоризонтално, далеч от метал и магнити.</div>
+            </div>
+
+            <div class="qibla-guide">
+                <div class="qg-head">Без компас — как да намерите къбле</div>
+                <div id="qibla-guide-list" class="flex flex-col gap-2"></div>
+            </div>
+        </div>
+
         <!-- Покана за инсталиране (показва се само когато е възможно) -->
         <div id="install-banner" class="install-banner hidden" role="region" aria-label="Инсталиране">
             <img src="icon-192.png" alt="" class="ib-icon">
@@ -934,6 +1035,7 @@
         <nav id="bottom-nav" class="bottom-nav" aria-label="Навигация">
             <button id="nav-prayers" class="nav-item active"><span class="nav-icon">🕌</span><span>Намаз</span></button>
             <button id="nav-sacred" class="nav-item"><span class="nav-icon">✨</span><span>Свещени дни</span></button>
+            <button id="nav-qibla" class="nav-item"><span class="nav-icon">🧭</span><span>Къбле</span></button>
             <button id="nav-menu" class="nav-item"><span class="nav-icon">☰</span><span>Меню</span></button>
         </nav>
     </div>
@@ -1318,7 +1420,88 @@
                 return Math.round((monthStartMs(idx + 1) - monthStartMs(idx)) / 86400000);
             }
 
-            return { prayerTimesSofia, gregorianToHijri, hijriToGregorian, monthLength };
+
+            // --- Къбле: посока, разстояние и моменти, когато Слънцето/Луната са в посока къбле ---
+            const KAABA = { lat: 21.422487, lon: 39.826206 };
+            function qiblaBearing(lat, lon) {
+                const f1 = lat * D2R, f2 = KAABA.lat * D2R, dl = (KAABA.lon - lon) * D2R;
+                const b = Math.atan2(Math.sin(dl) * Math.cos(f2), Math.cos(f1) * Math.sin(f2) - Math.sin(f1) * Math.cos(f2) * Math.cos(dl)) * R2D;
+                return (b + 360) % 360;
+            }
+            function distanceToKaabaKm(lat, lon) {
+                const f1 = lat * D2R, f2 = KAABA.lat * D2R, df = f2 - f1, dl = (KAABA.lon - lon) * D2R;
+                const a = Math.sin(df / 2) ** 2 + Math.cos(f1) * Math.cos(f2) * Math.sin(dl / 2) ** 2;
+                return 2 * 6371 * Math.asin(Math.sqrt(a));
+            }
+            // азимут (от север по часовниковата стрелка) и височина
+            function azAlt(ra, dec, jd, lat, lon) {
+                const H = (gmst(jd) + lon - ra) * D2R, f = lat * D2R, d = dec * D2R;
+                const alt = Math.asin(Math.sin(f) * Math.sin(d) + Math.cos(f) * Math.cos(d) * Math.cos(H)) * R2D;
+                const az = (Math.atan2(Math.sin(H), Math.cos(H) * Math.sin(f) - Math.tan(d) * Math.cos(f)) * R2D + 180 + 360) % 360;
+                return { az, alt };
+            }
+            function sunAzAlt(jd, lat, lon) {
+                const s = sun(jd), l = s.lam * D2R, e = s.eps * D2R;
+                const ra = Math.atan2(Math.cos(e) * Math.sin(l), Math.cos(l)) * R2D;
+                return azAlt(ra, s.dec, jd, lat, lon);
+            }
+            function moonAzAlt(jd, lat, lon) {
+                const m = moon(jd + DELTA_T), s = sun(jd + DELTA_T);
+                const l = m.lam * D2R, b = m.bet * D2R, e = s.eps * D2R;
+                const ra = Math.atan2(Math.sin(l) * Math.cos(e) - Math.tan(b) * Math.sin(e), Math.cos(l)) * R2D;
+                const dec = Math.asin(Math.sin(b) * Math.cos(e) + Math.cos(b) * Math.sin(e) * Math.sin(l)) * R2D;
+                const r = azAlt(ra, dec, jd, lat, lon);
+                r.alt -= Math.asin(6378.14 / m.dist) * R2D * Math.cos(r.alt * D2R);   // паралакс
+                return r;
+            }
+            // Моменти (UTC ms) в интервала [fromMs, toMs), когато небесното тяло е в азимут target и над хоризонта
+            function crossings(fn, fromMs, toMs, lat, lon, target, minAlt) {
+                const out = [], step = 10 * 60000;
+                const diff = (ms) => { const a = fn(ms / 86400000 + JD_UNIX, lat, lon); return { d: ((a.az - target + 540) % 360) - 180, alt: a.alt }; };
+                let t0 = fromMs, p0 = diff(t0);
+                for (let t1 = fromMs + step; t1 <= toMs; t1 += step) {
+                    const p1 = diff(t1);
+                    if (p0.d <= 0 && p1.d > 0 && Math.abs(p1.d - p0.d) < 90) {
+                        let a = t0, b = t1;
+                        for (let i = 0; i < 25; i++) { const mid = (a + b) / 2; if (diff(mid).d <= 0) a = mid; else b = mid; }
+                        const t = (a + b) / 2;
+                        if (diff(t).alt >= minAlt) out.push(Math.round(t / 60000) * 60000);
+                    }
+                    t0 = t1; p0 = p1;
+                }
+                return out;
+            }
+            // Начало на деня (00:00 българско време) като UTC ms
+            function sofiaMidnightUtc(y, m1, d) {
+                // отместването в полунощ (смяната на часа е чак в 03:00/04:00 местно време)
+                return Date.UTC(y, m1 - 1, d) - sofiaOffsetHours(Date.UTC(y, m1 - 1, d) - 3 * 3600000) * 3600000;
+            }
+            function qiblaGuide(lat, lon, y, m1, d) {
+                const bearing = qiblaBearing(lat, lon);
+                const start = sofiaMidnightUtc(y, m1, d), end = start + 86400000;
+                const s = sun(Date.UTC(y, m1 - 1, d) / 86400000 + JD_UNIX + 0.5);
+                const noonUtc = Date.UTC(y, m1 - 1, d) + (12 - lon / 15 - s.eqt / 60) * 3600000;
+                return {
+                    bearing,
+                    distanceKm: distanceToKaabaKm(lat, lon),
+                    sunTimes: crossings(sunAzAlt, start, end, lat, lon, bearing, 0),
+                    moonTimes: crossings(moonAzAlt, start, end, lat, lon, bearing, 2),
+                    solarNoon: Math.round(noonUtc / 60000) * 60000
+                };
+            }
+            // Азимут на изгрева и залеза за деня
+            function sunriseSunsetAzimuth(lat, y, m1, d) {
+                const s = sun(Date.UTC(y, m1 - 1, d) / 86400000 + JD_UNIX + 0.5);
+                const A = Math.acos(Math.max(-1, Math.min(1, Math.sin(s.dec * D2R) / Math.cos(lat * D2R)))) * R2D;
+                return { rise: A, set: 360 - A };
+            }
+            // "ЧЧ:ММ" по българско време за момент UTC ms
+            function formatSofiaTime(utcMs) {
+                const local = new Date(utcMs + sofiaOffsetHours(utcMs) * 3600000);
+                return String(local.getUTCHours()).padStart(2, '0') + ':' + String(local.getUTCMinutes()).padStart(2, '0');
+            }
+
+            return { prayerTimesSofia, gregorianToHijri, hijriToGregorian, monthLength, qiblaGuide, qiblaBearing, formatSofiaTime, sunriseSunsetAzimuth };
         })();
 
         // --- СВЕЩЕНИ ДНИ ПО ХИДЖРИ КАЛЕНДАРА (изчисляват се без интернет) ---
@@ -1434,6 +1617,20 @@
         const aboutModal = document.getElementById('about-modal');
         const closeAboutBtn = document.getElementById('close-about-btn');
         const sacredModeLabel = document.getElementById('sacred-mode-label');
+        const qiblaView = document.getElementById('qibla-view');
+        const navQiblaBtn = document.getElementById('nav-qibla');
+        const qiblaDial = document.getElementById('qibla-dial');
+        const qiblaRose = document.getElementById('qibla-rose');
+        const qiblaMarker = document.getElementById('qibla-marker');
+        const qiblaTurnEl = document.getElementById('qibla-turn');
+        const qiblaBearingEl = document.getElementById('qibla-bearing');
+        const qiblaDistanceEl = document.getElementById('qibla-distance');
+        const qiblaStartBtn = document.getElementById('qibla-start-btn');
+        const qiblaLocationBtn = document.getElementById('qibla-location-btn');
+        const qiblaLocationLabel = document.getElementById('qibla-location-label');
+        const qiblaStatusEl = document.getElementById('qibla-status');
+        const qiblaGuideList = document.getElementById('qibla-guide-list');
+        const qiblaGuideBox = document.querySelector('.qibla-guide');
         const installBanner = document.getElementById('install-banner');
         const installBannerGo = document.getElementById('install-banner-go');
         const installBannerClose = document.getElementById('install-banner-close');
@@ -1549,6 +1746,21 @@
             "Каварна": -19
         };
 
+        // Координати на градовете (за посоката на къбле)
+        const cityCoords = {
+            "София": [42.6977, 23.3219], "Гоце Делчев": [41.5667, 23.7333], "Якоруда": [42.0250, 23.6833], "Велинград": [42.0276, 23.9920],
+            "Кнежа": [43.4967, 24.0819], "Ловеч": [43.1370, 24.7142], "Смолян": [41.5774, 24.7011], "Пловдив": [42.1354, 24.7453],
+            "Плевен": [43.4170, 24.6067], "Мадан": [41.4989, 24.9408], "Никопол": [43.7058, 24.8953], "Карлово": [42.6420, 24.8048],
+            "Свищов": [43.6186, 25.3500], "Кърджали": [41.6500, 25.3667], "Крумовград": [41.4711, 25.6539], "Велико Търново": [43.0757, 25.6172],
+            "Стара Загора": [42.4258, 25.6345], "Хасково": [41.9344, 25.5554], "Горна Оряховица": [43.1275, 25.6911], "Русе": [43.8356, 25.9657],
+            "Твърдица": [42.7000, 25.9000], "Харманли": [41.9333, 25.9000], "Нова Загора": [42.4900, 26.0100], "Кубрат": [43.7967, 26.5014],
+            "Разград": [43.5333, 26.5167], "Котел": [42.8833, 26.4500], "Сливен": [42.6817, 26.3229], "Ямбол": [42.4833, 26.5000],
+            "Исперих": [43.7167, 26.8333], "Велики Преслав": [43.1667, 26.8167], "Търговище": [43.2512, 26.5722], "Ситово": [44.0272, 27.0189],
+            "Каолиново": [43.6167, 27.1167], "Карнобат": [42.6500, 26.9833], "Шумен": [43.2706, 26.9361], "Нови Пазар": [43.3500, 27.2000],
+            "Айтос": [42.7000, 27.2500], "Провадия": [43.1833, 27.4333], "Бургас": [42.5048, 27.4626], "Силистра": [44.1171, 27.2606],
+            "Добрич": [43.5726, 27.8273], "Бяла": [42.8742, 27.8869], "Балчик": [43.4167, 28.1667], "Варна": [43.2141, 27.9147], "Каварна": [43.4333, 28.3333]
+        };
+
         // Хиджри месеци по ред (1 = Мухаррем)
         const hijriMonthNamesBg = ["Мухаррем", "Сафер", "Рабиюлеввел", "Рабиюлахир", "Джемазиюлеввел", "Джемазиюлахир", "Реджеб", "Шабан", "Рамазан", "Шеввал", "Зилкаде", "Зилхидже"];
 
@@ -1616,6 +1828,7 @@
                     selectedCityDisplay.textContent = selectedCity;
                     closeCitySelectionModal();
                     fetchPrayerTimes();
+                    if (!qiblaView.classList.contains('hidden')) updateQiblaInfo();
                     saveSettings();
                 });
                 cityListEl.appendChild(cityItem);
@@ -2060,7 +2273,7 @@
 
         // --- Навигация и меню ---
         function setActiveNav(btn) {
-            [navPrayersBtn, navSacredBtn].forEach(b => b.classList.toggle('active', b === btn));
+            [navPrayersBtn, navSacredBtn, navQiblaBtn].forEach(b => b.classList.toggle('active', b === btn));
         }
         function updateSacredModeLabel() {
             sacredModeLabel.textContent = isSacredEventsCountdownMode ? 'Покажи датите' : 'Покажи оставащите дни';
@@ -2128,9 +2341,238 @@
             });
         }
 
+        // --- Къбле: компас и упътване без компас ---
+        let qiblaPosition = null;          // {lat, lon} от GPS; null = избрания град
+        let compassActive = false, compassGotData = false, compassTimer = null;
+        let smoothHeading = null, wasAligned = false, qiblaGuideTimer = null, currentQibla = 0;
+        const compassNeedsPermission = typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function';
+
+        function qiblaCoords() {
+            if (qiblaPosition) return [qiblaPosition.lat, qiblaPosition.lon];
+            return cityCoords[selectedCity] || cityCoords["София"];
+        }
+        // Магнитна деклинация за България (~5–6° на изток, 2026 г.) — компасът на телефона сочи магнитния север
+        const magneticDeclination = (lon) => 5.0 + (lon - 22.5) * 0.2;
+        const directionName = (deg) => ['север', 'североизток', 'изток', 'югоизток', 'юг', 'югозапад', 'запад', 'северозапад'][Math.round(deg / 45) % 8];
+        const angleDiff = (a, b) => ((a - b + 540) % 360) - 180;   // от b към a, в [-180, 180)
+
+        function buildQiblaTicks() {
+            const g = document.getElementById('qibla-ticks');
+            if (g.childNodes.length) return;
+            let html = '';
+            for (let a = 0; a < 360; a += 10) {
+                const major = a % 90 === 0, r1 = major ? 98 : 103;
+                const x1 = Math.sin(a * Math.PI / 180) * r1, y1 = -Math.cos(a * Math.PI / 180) * r1;
+                const x2 = Math.sin(a * Math.PI / 180) * 110, y2 = -Math.cos(a * Math.PI / 180) * 110;
+                html += `<line class="qd-tick${major ? ' major' : ''}" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+            }
+            g.innerHTML = html;
+        }
+
+        function renderQiblaDial(heading) {
+            qiblaMarker.setAttribute('transform', `rotate(${currentQibla.toFixed(1)})`);
+            if (heading === null) {
+                qiblaRose.style.transform = 'rotate(0deg)';
+                qiblaDial.classList.remove('aligned');
+                qiblaTurnEl.classList.remove('ok');
+                qiblaTurnEl.textContent = `${Math.round(currentQibla)}° · ${directionName(currentQibla)}`;
+                return;
+            }
+            qiblaRose.style.transform = `rotate(${(-heading).toFixed(1)}deg)`;
+            const d = angleDiff(currentQibla, heading);
+            const aligned = Math.abs(d) <= 4;
+            qiblaDial.classList.toggle('aligned', aligned);
+            qiblaTurnEl.classList.toggle('ok', aligned);
+            if (aligned) {
+                qiblaTurnEl.textContent = 'Вие сте с лице към къбле';
+                if (!wasAligned && navigator.vibrate) { try { navigator.vibrate(60); } catch (e) { /* няма вибрация */ } }
+            } else {
+                qiblaTurnEl.textContent = d > 0 ? `Завъртете се надясно ${Math.round(d)}°` : `Завъртете се наляво ${Math.round(-d)}°`;
+            }
+            wasAligned = aligned;
+        }
+
+        function onDeviceOrientation(e) {
+            let h = null;
+            if (typeof e.webkitCompassHeading === 'number' && !isNaN(e.webkitCompassHeading)) {
+                h = e.webkitCompassHeading;                                   // iPhone
+                if (typeof e.webkitCompassAccuracy === 'number' && (e.webkitCompassAccuracy < 0 || e.webkitCompassAccuracy > 20)) {
+                    setQiblaStatus('Компасът е неточен. Движете телефона във въздуха като осморка, за да се калибрира.', true);
+                } else if (compassGotData) {
+                    setQiblaStatus('Дръжте телефона хоризонтално, далеч от метал и магнити.');
+                }
+            } else if ((e.absolute === true || e.type === 'deviceorientationabsolute') && e.alpha !== null) {
+                h = 360 - e.alpha;                                             // Android
+            } else {
+                return;
+            }
+            const screenAngle = (screen.orientation && typeof screen.orientation.angle === 'number') ? screen.orientation.angle : (window.orientation || 0);
+            h = (h + screenAngle + magneticDeclination(qiblaCoords()[1]) + 720) % 360;
+            if (!compassGotData) {
+                compassGotData = true;
+                clearTimeout(compassTimer);
+                qiblaGuideBox.classList.remove('emph');
+                setQiblaStatus('Дръжте телефона хоризонтално, далеч от метал и магнити.');
+            }
+            smoothHeading = smoothHeading === null ? h : (smoothHeading + angleDiff(h, smoothHeading) * 0.25 + 360) % 360;
+            renderQiblaDial(smoothHeading);
+        }
+
+        function setQiblaStatus(text, warn) {
+            qiblaStatusEl.textContent = text;
+            qiblaStatusEl.classList.toggle('warn', !!warn);
+        }
+
+        function showNoCompass(reason) {
+            stopCompass(false);
+            renderQiblaDial(null);
+            qiblaGuideBox.classList.add('emph');
+            setQiblaStatus(reason === 'denied'
+                ? 'Нямате разрешение за компаса. Използвайте начините по-долу или разрешете „Движение и ориентация“ в настройките на браузъра.'
+                : 'Това устройство няма компас. Северът на картата е горе — използвайте начините по-долу.', true);
+        }
+
+        async function startCompass() {
+            if (compassNeedsPermission) {
+                try {
+                    const res = await DeviceOrientationEvent.requestPermission();
+                    if (res !== 'granted') { showNoCompass('denied'); return; }
+                } catch (e) { showNoCompass('denied'); return; }
+            }
+            if (!('DeviceOrientationEvent' in window)) { showNoCompass('none'); return; }
+            compassActive = true; compassGotData = false; smoothHeading = null; wasAligned = false;
+            if ('ondeviceorientationabsolute' in window) window.addEventListener('deviceorientationabsolute', onDeviceOrientation);
+            else window.addEventListener('deviceorientation', onDeviceOrientation);
+            qiblaStartBtn.textContent = 'Спри компаса';
+            setQiblaStatus('Търсене на компаса…');
+            clearTimeout(compassTimer);
+            compassTimer = setTimeout(() => { if (!compassGotData) showNoCompass('none'); }, 3000);
+        }
+
+        function stopCompass(resetDial) {
+            window.removeEventListener('deviceorientationabsolute', onDeviceOrientation);
+            window.removeEventListener('deviceorientation', onDeviceOrientation);
+            clearTimeout(compassTimer);
+            compassActive = false;
+            qiblaStartBtn.textContent = '🧭 Включи компаса';
+            if (resetDial) { smoothHeading = null; renderQiblaDial(null); setQiblaStatus('Дръжте телефона хоризонтално, далеч от метал и магнити.'); }
+        }
+
+        function toggleQiblaLocation() {
+            if (qiblaPosition) { qiblaPosition = null; updateQiblaInfo(); return; }
+            if (!navigator.geolocation) { showMessage('Устройството не дава местоположение.'); return; }
+            qiblaLocationLabel.textContent = 'Търсене…';
+            navigator.geolocation.getCurrentPosition((pos) => {
+                qiblaPosition = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+                updateQiblaInfo();
+            }, () => {
+                showMessage('Местоположението не е достъпно. Използва се избраният град.');
+                updateQiblaInfo();
+            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 600000 });
+        }
+
+        function qiblaCard(icon, title, time, text, isNow) {
+            return `<div class="qg-card${isNow ? ' now' : ''}"><div class="qg-icon">${icon}</div><div class="qg-body">` +
+                `<div class="qg-title"><span>${title}</span>${time ? `<span class="qg-time">${time}</span>` : ''}</div>` +
+                `<div class="qg-text">${text}</div></div></div>`;
+        }
+
+        function inMinutesText(ms) {
+            const m = Math.round(ms / 60000);
+            if (m < 60) return `след ${m} мин`;
+            return `след ${Math.floor(m / 60)} ч ${m % 60} мин`;
+        }
+
+        function updateQiblaInfo() {
+            const [lat, lon] = qiblaCoords();
+            const now = new Date();
+            const y = now.getFullYear(), mo = now.getMonth() + 1, d = now.getDate();
+            const tomorrow = new Date(y, mo - 1, d + 1);
+            const g = OfflineCalc.qiblaGuide(lat, lon, y, mo, d);
+            const g2 = OfflineCalc.qiblaGuide(lat, lon, tomorrow.getFullYear(), tomorrow.getMonth() + 1, tomorrow.getDate());
+            currentQibla = g.bearing;
+            qiblaBearingEl.textContent = `${g.bearing.toFixed(0)}°`;
+            qiblaDistanceEl.textContent = `${Math.round(g.distanceKm).toLocaleString('bg-BG')} км`;
+            qiblaLocationLabel.textContent = qiblaPosition ? 'Моето местоположение' : selectedCity;
+            renderQiblaDial(compassGotData && compassActive ? smoothHeading : null);
+
+            const t = (ms) => OfflineCalc.formatSofiaTime(ms);
+            const nowMs = Date.now();
+            const b = Math.round(g.bearing);
+            const fromSouth = Math.round(180 - g.bearing);       // положително = наляво (към изток) от юг
+            let html = '';
+
+            // 1) Часът за къбле (Слънцето е точно в посоката на къбле)
+            const sunToday = g.sunTimes[0], sunTomorrow = g2.sunTimes[0];
+            if (sunToday || sunTomorrow) {
+                const near = sunToday && Math.abs(nowMs - sunToday) <= 5 * 60000;
+                let time, extra;
+                if (sunToday && sunToday > nowMs) { time = `днес ${t(sunToday)}`; extra = ` <small>(${inMinutesText(sunToday - nowMs)})</small>`; }
+                else if (near) { time = 'СЕГА'; extra = ''; }
+                else { time = sunTomorrow ? `утре ${t(sunTomorrow)}` : `днес ${t(sunToday)}`; extra = sunToday ? ` <small>Днес беше в ${t(sunToday)}.</small>` : ''; }
+                html += qiblaCard('☀️', 'Часът за къбле', time,
+                    `В този момент Слънцето е точно в посоката на къбле. Застанете с лице към Слънцето — сянката ви пада точно зад вас.${extra}`, near);
+            }
+
+            // 2) По обед — Слънцето е на юг
+            html += qiblaCard('🕛', 'По обед', `около ${t(g.solarNoon)}`,
+                `Слънцето е точно на юг. Застанете с лице към него и се завъртете <b>${fromSouth >= 0 ? 'наляво' : 'надясно'} на ${Math.abs(fromSouth)}°</b>.`, false);
+
+            // 3) Луната
+            const moonNext = g.moonTimes.concat(g2.moonTimes).find(ms => ms > nowMs - 5 * 60000);
+            if (moonNext) {
+                const near = Math.abs(nowMs - moonNext) <= 5 * 60000;
+                const day = new Date(moonNext + 0).getDate() === d ? 'днес' : 'утре';
+                html += qiblaCard('🌙', 'Луната', near ? 'СЕГА' : `${day} ${t(moonNext)}`,
+                    `Тогава Луната е точно в посоката на къбле — застанете с лице към нея.${near ? '' : ` <small>(${inMinutesText(moonNext - nowMs)})</small>`}`, near);
+            } else {
+                html += qiblaCard('🌙', 'Луната', '',
+                    'През следващото денонощие Луната не минава през посоката на къбле, докато е над хоризонта.', false);
+            }
+
+            // 4) Полярната звезда
+            html += qiblaCard('⭐', 'Нощем — Полярната звезда', '',
+                `Намерете Полярната звезда (на север, на края на „дръжката“ на Малката мечка; продължението на двете крайни звезди на Голямата мечка сочи към нея). Застанете с лице към нея и се завъртете <b>надясно на ${b}°</b>${b > 90 && b < 180 ? ' — Полярната звезда остава зад лявото ви рамо' : ''}.`, false);
+
+            // 5) Изгрев
+            const rs = OfflineCalc.sunriseSunsetAzimuth(lat, y, mo, d);
+            const turn = (from) => { const x = Math.round(angleDiff(g.bearing, from)); return `${x >= 0 ? 'надясно' : 'наляво'} на ${Math.abs(x)}°`; };
+            html += qiblaCard('🌅', 'Изгрев и залез', '',
+                `Сутрин застанете с лице към изгряващото Слънце и се завъртете <b>${turn(rs.rise)}</b>. Вечер застанете с лице към залязващото Слънце и се завъртете <b>${turn(rs.set)}</b>. <small>(Посоките на изгрева и залеза се менят през годината — числата са за днес.)</small>`, false);
+
+            // 6) Джамията
+            html += qiblaCard('🕌', 'Най-сигурно', '',
+                'Михрабът на най-близката джамия е обърнат към къбле. Компасът на телефона може да се отклони с няколко градуса край метал, магнити или ток — при възможност проверете с часа за къбле.', false);
+
+            html += `<div class="qg-text" style="text-align:center"><small>Часовете са по българско време, за ${qiblaPosition ? 'вашето местоположение' : 'град ' + selectedCity}.</small></div>`;
+            qiblaGuideList.innerHTML = html;
+        }
+
+        function showQiblaView() {
+            prayerTimesView.classList.add('hidden');
+            sacredEventsView.classList.add('hidden');
+            qiblaView.classList.remove('hidden');
+            setActiveNav(navQiblaBtn);
+            clearInterval(individualCountdownIntervalId); individualCountdownIntervalId = null;
+            clearInterval(sacredEventsCountdownIntervalId); clearInterval(sacredEventsMainCountdownIntervalId);
+            buildQiblaTicks();
+            updateQiblaInfo();
+            clearInterval(qiblaGuideTimer);
+            qiblaGuideTimer = setInterval(updateQiblaInfo, 30000);
+            // На Android компасът тръгва сам; на айфон трябва разрешение с натискане на бутона
+            if (!compassNeedsPermission && !compassActive) startCompass();
+        }
+        function hideQiblaView() {
+            if (qiblaView.classList.contains('hidden')) return;
+            qiblaView.classList.add('hidden');
+            clearInterval(qiblaGuideTimer);
+            stopCompass(false);
+        }
+
         // --- View Switching Logic ---
         function showPrayerTimesView() {
             sacredEventsView.classList.add('hidden');
+            hideQiblaView();
             prayerTimesView.classList.remove('hidden');
             setActiveNav(navPrayersBtn);
             clearInterval(sacredEventsCountdownIntervalId);
@@ -2142,6 +2584,7 @@
 
         async function showSacredEventsView() {
             prayerTimesView.classList.add('hidden');
+            hideQiblaView();
             sacredEventsView.classList.remove('hidden');
             setActiveNav(navSacredBtn);
             updateSacredModeLabel();
@@ -2431,7 +2874,7 @@
                 isCustomDateSelected = selectedDate.toDateString() !== new Date().toDateString();
                 hiddenDateInput.value = value;
                 closeMenu();
-                if (sacredEventsView.classList.contains('hidden')) fetchPrayerTimes(); else showPrayerTimesView();
+                if (prayerTimesView.classList.contains('hidden')) showPrayerTimesView(); else fetchPrayerTimes();
                 saveSettings();
             };
             hiddenDateInput.addEventListener('click', () => openNativePicker(hiddenDateInput));
@@ -2442,7 +2885,10 @@
             returnTodayBtn.addEventListener('click', returnToToday);
 
             // --- Навигация ---
-            navPrayersBtn.addEventListener('click', () => { if (sacredEventsView.classList.contains('hidden')) return; showPrayerTimesView(); });
+            navPrayersBtn.addEventListener('click', () => { if (!prayerTimesView.classList.contains('hidden')) return; showPrayerTimesView(); });
+            navQiblaBtn.addEventListener('click', () => { if (!qiblaView.classList.contains('hidden')) return; showQiblaView(); });
+            qiblaStartBtn.addEventListener('click', () => { if (compassActive) stopCompass(true); else startCompass(); });
+            qiblaLocationBtn.addEventListener('click', toggleQiblaLocation);
             navSacredBtn.addEventListener('click', () => { if (!sacredEventsView.classList.contains('hidden')) return; showSacredEventsView(); });
             navMenuBtn.addEventListener('click', openMenu);
 
