@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#136b4a"/><stop offset="1" stop-color="#083f30"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e2c77d"/><stop offset="1" stop-color="#b8954a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <!-- златен пръстен (в безопасната зона за maskable) -->
+  <circle cx="256" cy="256" r="178" fill="none" stroke="url(#gold)" stroke-width="7"/>
+  <circle cx="256" cy="256" r="164" fill="none" stroke="#b8954a" stroke-opacity=".45" stroke-width="2"/>
+  <!-- джамия: купол, основа и две минарета -->
+  <g fill="#f8f5e9">
+    <!-- минарета -->
+    <rect x="160" y="196" width="22" height="160" rx="3"/>
+    <path d="M171 140 L185 196 L157 196 Z"/>
+    <rect x="155" y="236" width="32" height="8" rx="2"/>
+    <rect x="330" y="196" width="22" height="160" rx="3"/>
+    <path d="M341 140 L355 196 L327 196 Z"/>
+    <rect x="325" y="236" width="32" height="8" rx="2"/>
+    <!-- купол -->
+    <path d="M196 280 C196 222 226 196 256 182 C286 196 316 222 316 280 Z"/>
+    <rect x="252" y="160" width="8" height="24" rx="3"/>
+    <!-- основа -->
+    <rect x="190" y="280" width="132" height="76" rx="4"/>
+  </g>
+  <!-- врата и прозорци -->
+  <g fill="#0e5a3f">
+    <path d="M244 356 V322 C244 312 268 312 268 322 V356 Z"/>
+    <path d="M208 340 V312 C208 304 224 304 224 312 V340 Z"/>
+    <path d="M288 340 V312 C288 304 304 304 304 312 V340 Z"/>
+  </g>
+  <!-- полумесец -->
+  <path d="M262 150 a14 14 0 1 1 -8 -26 a11 11 0 1 0 8 26 Z" fill="url(#gold)" transform="translate(-4 4)"/>
+  <!-- земя -->
+  <rect x="140" y="356" width="232" height="8" rx="4" fill="url(#gold)"/>
+</svg>
