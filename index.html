@@ -1157,6 +1157,7 @@
                 <p>Всичко се изчислява в самото устройство и работи <b>без интернет</b>, за всяка година.</p>
                 <p><b>Времена за намаз</b> — по метода на Диянет: зора (имсак) при 18° под хоризонта, нощна при 17°, следобедна при сянка, равна на височината на предмета. Предпазни минути: изгрев −7, обедна +5, следобедна +4, вечерна +7. Сверено с официалната таблица за София за 2027 г.</p>
                 <p><b>Инсталиране</b> — от „Меню → Инсталирай приложението“ може да се добави на началния екран на телефона или на компютъра и да се ползва без интернет.</p>
+                <p><b>Статистика</b> — броим анонимно колко устройства ползват приложението (чрез GoatCounter, без бисквитки и без лични данни), за да знаем дали е полезно.</p>
                 <p><b>Други градове</b> — с постоянна разлика в минути спрямо София.</p>
                 <p><b>Хиджри дата и свещени дни</b> — по критерия на Единния хиджри календар (Истанбул, 2016), който използва и Диянет. Кандилните нощи са отбелязани на датата, на чиято вечер започват.</p>
             </div>
@@ -2589,6 +2590,49 @@
             stopCompass(false);
         }
 
+        // --- Анонимна статистика (GoatCounter): всяко устройство се отчита веднъж на ден ---
+        // Без бисквитки и без лични данни. Без интернет просто не се отчита.
+        const STATS = {
+            endpoint: 'https://vremenazanamaz.goatcounter.com/count',
+            script: 'https://gc.zgo.at/count.js',
+            countCity: true          // false = да не се отчита избраният град
+        };
+        function statsPlatform() {
+            if (isIOS) return 'iphone';
+            if (/Android/i.test(navigator.userAgent)) return 'android';
+            return 'kompyutar';
+        }
+        function statsSendDaily() {
+            if (!window.goatcounter || typeof window.goatcounter.count !== 'function' || !navigator.onLine) return;
+            const today = formatDateForInputAndLookup(new Date());
+            let last = null;
+            try { last = localStorage.getItem('prayerApp_statsDay'); } catch (e) { /* без запазване */ }
+            if (last === today) return;
+            try {
+                const gc = window.goatcounter;
+                gc.count({ path: '/', title: 'Времена за намаз' });                                   // активно устройство днес
+                gc.count({ path: isStandalone() ? 'instalirano' : 'v-brauzara', title: isStandalone() ? 'Инсталирано приложение' : 'Отворено в браузъра', event: true });
+                gc.count({ path: 'ustroystvo-' + statsPlatform(), title: 'Устройство: ' + statsPlatform(), event: true });
+                if (STATS.countCity) gc.count({ path: 'grad-' + selectedCity, title: 'Град: ' + selectedCity, event: true });
+                try { localStorage.setItem('prayerApp_statsDay', today); } catch (e) { /* без запазване */ }
+            } catch (e) { console.warn('Статистиката не се изпрати:', e); }
+        }
+        function statsLoad() {
+            if (!/^https?:$/.test(location.protocol)) return;   // не броим при отваряне като файл
+            window.goatcounter = Object.assign(window.goatcounter || {}, { no_onload: true });
+            const sc = document.createElement('script');
+            sc.async = true;
+            sc.src = STATS.script;
+            sc.dataset.goatcounter = STATS.endpoint;
+            sc.dataset.goatcounterSettings = JSON.stringify({ no_onload: true });
+            sc.onload = () => setTimeout(statsSendDaily, 1500);
+            document.head.appendChild(sc);
+            window.addEventListener('online', () => setTimeout(statsSendDaily, 1500));
+        }
+        window.addEventListener('appinstalled', () => {
+            try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: 'novo-instalirane', title: 'Ново инсталиране', event: true }); } catch (e) { /* няма значение */ }
+        });
+
         // --- Бутон „Назад“ на телефона ---
         // Докато е отворен друг раздел или прозорец, в историята на браузъра стои един „пазач“.
         // „Назад“ маха пазача: затваря най-горния прозорец, а ако няма такъв — връща към времената.
@@ -3018,6 +3062,7 @@
             closeInstallBtn.addEventListener('click', () => installModal.classList.add('hidden'));
             installModal.addEventListener('click', (event) => { if (event.target === installModal) installModal.classList.add('hidden'); });
             updateInstallUI();
+            statsLoad();
 
             // --- Свещени дни ---
             toggleSacredEventsCountdownBtn.addEventListener('click', () => {
