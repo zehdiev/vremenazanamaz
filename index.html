@@ -721,6 +721,7 @@
         #sacred-events-list-container::-webkit-scrollbar-track { background: rgba(8, 63, 48, 0.06); }
         #sacred-events-list-container::-webkit-scrollbar-thumb { background: rgba(19, 138, 53, 0.55); }
         #sacred-events-view .text-gray-400 { color: var(--ink-soft); }
+        #sacred-events-list-container { position: relative; max-height: 21rem; min-height: 0; }
 
         /* ---------- Долна навигация ---------- */
         .bottom-nav {
@@ -870,6 +871,18 @@
         .qibla-status { color: var(--ink-soft); font-size: 0.8rem; margin: 0.5rem 0.5rem 0; line-height: 1.35; min-height: 1.1rem; }
         .qibla-status.warn { color: var(--red); }
         .qibla-guide { margin-top: 0.9rem; }
+        .qg-toggle { display: flex; width: 100%; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
+        .qg-toggle:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+        .qg-chev { transition: transform 0.2s; display: inline-block; }
+        .qg-toggle[aria-expanded="true"] .qg-chev { transform: rotate(180deg); }
+        .qibla-hint {
+            display: flex; gap: 0.55rem; align-items: flex-start; text-align: left;
+            margin: 0.7rem 0 0; padding: 0.6rem 0.75rem; border-radius: 0.9rem;
+            background: rgba(255, 248, 225, 0.75); border: 1px solid rgba(184, 149, 74, 0.55);
+            color: var(--ink); font-size: 0.82rem; line-height: 1.4;
+        }
+        .qibla-hint b { color: var(--emerald); }
+        .qibla-hint-icon { font-size: 1.15rem; line-height: 1.2; }
         .qibla-guide.emph .qg-head { background: linear-gradient(180deg, var(--emerald-2), var(--emerald)); color: var(--cream); }
         .qg-head {
             text-align: center; font-family: 'Oswald', 'Arial Narrow', sans-serif; text-transform: uppercase; letter-spacing: 0.04em;
@@ -1015,11 +1028,17 @@
                     <button id="qibla-location-btn" class="chip">📍 <span id="qibla-location-label">София</span></button>
                 </div>
                 <div id="qibla-status" class="qibla-status">Дръжте телефона хоризонтално, далеч от метал и магнити.</div>
+                <div class="qibla-hint">
+                    <span class="qibla-hint-icon">🧲</span>
+                    <span>Ако калъфът на телефона има <b>метални или магнитни пластини</b> (за стойка в колата, MagSafe, капаче с магнит), <b>свалете го</b> — те объркват компаса на телефона.</span>
+                </div>
             </div>
 
             <div class="qibla-guide">
-                <div class="qg-head">Без компас — как да намерите къбле</div>
-                <div id="qibla-guide-list" class="flex flex-col gap-2"></div>
+                <button id="qibla-guide-toggle" class="qg-head qg-toggle" aria-expanded="false" aria-controls="qibla-guide-list">
+                    <span>📖 Как да намерите къбле без компас</span><span class="qg-chev">▾</span>
+                </button>
+                <div id="qibla-guide-list" class="flex flex-col gap-2 hidden"></div>
             </div>
         </div>
 
@@ -1631,6 +1650,7 @@
         const qiblaStatusEl = document.getElementById('qibla-status');
         const qiblaGuideList = document.getElementById('qibla-guide-list');
         const qiblaGuideBox = document.querySelector('.qibla-guide');
+        const qiblaGuideToggle = document.getElementById('qibla-guide-toggle');
         const installBanner = document.getElementById('install-banner');
         const installBannerGo = document.getElementById('install-banner-go');
         const installBannerClose = document.getElementById('install-banner-close');
@@ -2428,8 +2448,8 @@
             renderQiblaDial(null);
             qiblaGuideBox.classList.add('emph');
             setQiblaStatus(reason === 'denied'
-                ? 'Нямате разрешение за компаса. Използвайте начините по-долу или разрешете „Движение и ориентация“ в настройките на браузъра.'
-                : 'Това устройство няма компас. Северът на картата е горе — използвайте начините по-долу.', true);
+                ? 'Нямате разрешение за компаса. Разрешете „Движение и ориентация“ в настройките на браузъра или натиснете „Как да намерите къбле без компас“ по-долу.'
+                : 'Това устройство няма компас. Северът на картата е горе — натиснете „Как да намерите къбле без компас“ по-долу.', true);
         }
 
         async function startCompass() {
@@ -2569,6 +2589,38 @@
             stopCompass(false);
         }
 
+        // --- Бутон „Назад“ на телефона ---
+        // Докато е отворен друг раздел или прозорец, в историята на браузъра стои един „пазач“.
+        // „Назад“ маха пазача: затваря най-горния прозорец, а ако няма такъв — връща към времената.
+        // На началния екран „Назад“ работи както обикновено (излиза от приложението).
+        const overlayLayers = () => [
+            [installModal, () => installModal.classList.add('hidden')],
+            [aboutModal, () => aboutModal.classList.add('hidden')],
+            [adjustmentModal, () => closeAdjustmentModal()],
+            [citySelectionModal, () => closeCitySelectionModal()],
+            [menuSheet, () => closeMenu()]
+        ];
+        const isOpen = (el) => !el.classList.contains('hidden');
+        const isHomeState = () => isOpen(prayerTimesView) && !overlayLayers().some(([el]) => isOpen(el));
+        let historyBackPending = false;
+        function syncHistory() {
+            if (historyBackPending) return;
+            const hasGuard = !!(history.state && history.state.namazGuard);
+            if (!isHomeState() && !hasGuard) history.pushState({ namazGuard: true }, '');
+            else if (isHomeState() && hasGuard) { historyBackPending = true; history.back(); }
+        }
+        window.addEventListener('popstate', () => {
+            if (historyBackPending) { historyBackPending = false; syncHistory(); return; }
+            const top = overlayLayers().find(([el]) => isOpen(el));
+            if (top) top[1]();
+            else if (!isOpen(prayerTimesView)) showPrayerTimesView();
+            syncHistory();
+        });
+        // след всяко докосване/клавиш проверяваме дали е нужен „пазач“
+        document.addEventListener('click', () => setTimeout(syncHistory, 0), true);
+        document.addEventListener('keydown', () => setTimeout(syncHistory, 0), true);
+        document.addEventListener('change', () => setTimeout(syncHistory, 0), true);
+
         // --- View Switching Logic ---
         function showPrayerTimesView() {
             sacredEventsView.classList.add('hidden');
@@ -2680,12 +2732,23 @@
                 }, 1000);
             }
 
+            fitSacredListToRows(5);
             if (elementToScrollTo) {
-                setTimeout(() => {
-                    elementToScrollTo.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
+                // превърта само списъка, не цялата страница
+                setTimeout(() => { sacredEventsListContainer.scrollTop = Math.max(0, elementToScrollTo.offsetTop - 6); }, 50);
             }
         }
+
+        // Височина на списъка = точно N реда (редовете са с различна височина според дължината на името)
+        function fitSacredListToRows(n) {
+            const rows = sacredEventsListEl.children;
+            if (!rows.length || sacredEventsView.classList.contains('hidden')) return;
+            const last = rows[Math.min(n, rows.length) - 1];
+            const cs = getComputedStyle(sacredEventsListContainer);
+            const pad = parseFloat(cs.paddingBottom) + parseFloat(cs.borderBottomWidth);
+            sacredEventsListContainer.style.maxHeight = `${last.offsetTop + last.offsetHeight + pad}px`;
+        }
+        window.addEventListener('resize', () => fitSacredListToRows(5));
 
         // Function to update the main sacred events countdown
         function updateSacredEventsMainCountdown() {
@@ -2889,6 +2952,12 @@
             navQiblaBtn.addEventListener('click', () => { if (!qiblaView.classList.contains('hidden')) return; showQiblaView(); });
             qiblaStartBtn.addEventListener('click', () => { if (compassActive) stopCompass(true); else startCompass(); });
             qiblaLocationBtn.addEventListener('click', toggleQiblaLocation);
+            qiblaGuideToggle.addEventListener('click', () => {
+                const open = qiblaGuideList.classList.contains('hidden');
+                qiblaGuideList.classList.toggle('hidden', !open);
+                qiblaGuideToggle.setAttribute('aria-expanded', String(open));
+                if (open) setTimeout(() => qiblaGuideToggle.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+            });
             navSacredBtn.addEventListener('click', () => { if (!sacredEventsView.classList.contains('hidden')) return; showSacredEventsView(); });
             navMenuBtn.addEventListener('click', openMenu);
 
