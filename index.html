@@ -1135,6 +1135,16 @@
                 </ol>
                 <p class="install-note">След това отваряйте „Намаз“ от иконата на началния екран — работи и без интернет.</p>
             </div>
+            <div id="install-samsung" class="hidden">
+                <p class="install-note" style="margin-bottom:0.6rem">В <b>Samsung Internet</b> инсталирането в момента се спира от Google Play Protect („Блокирано е небезопасно приложение“). Това е проблем на браузъра Samsung Internet, не на приложението — затова инсталирайте през <b>Google Chrome</b>:</p>
+                <ol class="install-steps">
+                    <li><span>Натиснете бутона <b>„Отвори в Chrome“</b> по-долу.</span></li>
+                    <li><span>В Chrome натиснете <b>„Меню“ → „Инсталирай приложението“</b> (или бутона „Добави“ долу).</span></li>
+                    <li><span>Потвърдете с <b>„Инсталиране“</b>.</span></li>
+                </ol>
+                <div class="flex justify-center mb-3"><a id="open-in-chrome" class="modal-action-button modal-action-button-primary" href="#">Отвори в Chrome</a></div>
+                <p class="install-note">Не използвайте иконката за изтегляне ⬇ в адресната лента на Samsung Internet. Ако нямате Chrome, бутонът ще ви отведе към Google Play, за да го инсталирате. Приложението може да се ползва и направо в браузъра, без инсталиране.</p>
+            </div>
             <div id="install-other" class="hidden">
                 <ol class="install-steps">
                     <li><span>Отворете менюто на браузъра (<b>⋮</b> или <b>☰</b>).</span></li>
@@ -2319,6 +2329,7 @@
 
         // --- Инсталиране като приложение (PWA) ---
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isSamsungInternet = /SamsungBrowser/i.test(navigator.userAgent);
         const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
         const canUseServiceWorker = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
         let deferredInstallPrompt = null;
@@ -2331,9 +2342,23 @@
             try { dismissed = localStorage.getItem('prayerApp_installDismissed') === '1'; } catch (e) { /* без запазване */ }
             const isMobile = isIOS || /Android/i.test(navigator.userAgent);
             installBanner.classList.toggle('hidden', !(possible && !dismissed && (isMobile || deferredInstallPrompt !== null)));
+            if (isSamsungInternet) {
+                installBanner.querySelector('.ib-text').innerHTML = '<b>Инсталирай през Chrome</b>В Samsung Internet се блокира';
+                document.getElementById('menu-install-note').textContent = 'През Google Chrome (в Samsung Internet се блокира)';
+            }
         }
         async function startInstall() {
             closeMenu();
+            if (isSamsungInternet) {
+                // Samsung Internet прави инсталационен файл, който Google Play Protect блокира — пращаме към Chrome
+                const chromePlay = 'https://play.google.com/store/apps/details?id=com.android.chrome';
+                document.getElementById('open-in-chrome').href =
+                    `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(chromePlay)};end`;
+                ['install-ios', 'install-other'].forEach(id => document.getElementById(id).classList.add('hidden'));
+                document.getElementById('install-samsung').classList.remove('hidden');
+                installModal.classList.remove('hidden');
+                return;
+            }
             if (deferredInstallPrompt) {
                 deferredInstallPrompt.prompt();
                 try { await deferredInstallPrompt.userChoice; } catch (e) { /* няма значение */ }
@@ -2341,6 +2366,7 @@
                 updateInstallUI();
                 return;
             }
+            document.getElementById('install-samsung').classList.add('hidden');
             document.getElementById('install-ios').classList.toggle('hidden', !isIOS);
             document.getElementById('install-other').classList.toggle('hidden', isIOS);
             installModal.classList.remove('hidden');
