@@ -672,6 +672,20 @@
             text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9), 0 10px 30px rgba(8, 63, 48, 0.28);
         }
         .countdown-text { color: var(--ink-soft); text-shadow: none; font-weight: 600; }
+        /* брояч на изминалото време от последния намаз */
+        .elapsed-line {
+            display: inline-flex; align-items: baseline; gap: 0.45rem; margin: 0.45rem 0 0.6rem;
+            padding: 0.3rem 0.85rem; border-radius: 999px;
+            background: rgba(255, 255, 255, 0.45); border: 1px solid rgba(255, 255, 255, 0.75);
+            box-shadow: inset 0 1px 0 #fff, 0 3px 8px -4px rgba(8, 63, 48, 0.25);
+            color: var(--ink-soft); font-size: 0.85rem; font-weight: 600;
+        }
+        .elapsed-line.hidden { display: none; }
+        .elapsed-time {
+            font-family: 'Playfair Display', 'Noto Serif', 'Times New Roman', serif; font-weight: 700;
+            font-size: 1.15rem; color: var(--emerald-2); font-variant-numeric: lining-nums tabular-nums;
+        }
+        .elapsed-time::before { content: '+'; opacity: 0.7; margin-right: 0.05rem; }
 
         /* ---------- Редове с времена ---------- */
         .prayer-row {
@@ -945,6 +959,10 @@
                     <div id="countdown" class="text-5xl md:text-6xl lg:text-7xl">--:--:--</div>
                 </div>
                 <div id="countdown-text" class="countdown-text">зареждане...</div>
+                <div id="elapsed-line" class="elapsed-line hidden" aria-live="off">
+                    <span class="elapsed-time" id="elapsed-time">00:00:00</span>
+                    <span class="elapsed-label">от <span id="elapsed-name"></span></span>
+                </div>
             </div>
             
             <!-- Loading Indicator -->
@@ -2165,6 +2183,33 @@
             return { years, months, days };
         }
 
+        // Време на намаз за дадена дата, със същите корекции като в списъка (темкин, град, ръчни)
+        function adjustedPrayerDate(date, key) {
+            const base = OfflineCalc.prayerTimesSofia(date.getFullYear(), date.getMonth() + 1, date.getDate());
+            const [h, m] = base[key].split(':').map(Number);
+            const d = new Date(date.getFullYear(), date.getMonth(), date.getDate(), h, m, 0);
+            d.setMinutes(d.getMinutes() + (adjustments[key] || 0) + (cityOffsets[selectedCity] || 0) + (Number(customPrayerAdjustments[key]) || 0));
+            return d;
+        }
+        const elapsedLineEl = document.getElementById('elapsed-line');
+        const elapsedTimeEl = document.getElementById('elapsed-time');
+        const elapsedNameEl = document.getElementById('elapsed-name');
+        function hideElapsed() { elapsedLineEl.classList.add('hidden'); }
+        // Колко време е минало от последния намаз (или от изгрева)
+        function updateElapsed(now, prayers) {
+            let last = null;
+            for (const p of prayers) { if (p.date <= now) last = p; }
+            if (!last) {   // след полунощ, преди зората — последна е нощната от вчера
+                const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+                last = { date: adjustedPrayerDate(y, 'Isha'), displayName: getCurrentPrayerNames().Isha };
+            }
+            const diff = Math.max(0, now - last.date);
+            const h = Math.floor(diff / 3600000), m = Math.floor(diff % 3600000 / 60000), sec = Math.floor(diff % 60000 / 1000);
+            elapsedTimeEl.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+            elapsedNameEl.textContent = last.displayName;
+            elapsedLineEl.classList.remove('hidden');
+        }
+
         // Function to update the countdown to the next prayer (main countdown)
         function updateCountdown() {
             const now = new Date();
@@ -2173,6 +2218,7 @@
             let nextPrayerDisplayName;
 
             if (selectedDate.toDateString() !== now.toDateString()) {
+                hideElapsed();
                 const diff = getYearsMonthsDaysDifference(now, selectedDate);
                 let displayMessage = '';
                 returnTodayBtn.classList.remove('hidden');
@@ -2213,10 +2259,12 @@
                 countdownEl.textContent = '--:--:--';
                 countdownTextEl.textContent = 'Няма отброяване за избраната дата.';
                 countdownTextEl.classList.remove('highlight-text-green');
+                hideElapsed();
                 return;
             }
 
             let prayersArrayForCountdown = prayersDataForDisplay;
+            updateElapsed(now, prayersArrayForCountdown);
             let nextPrayerCandidateIndex = -1; 
 
             for (let i = 0; i < prayersArrayForCountdown.length; i++) {
