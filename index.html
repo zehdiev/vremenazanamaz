@@ -1056,6 +1056,25 @@
         #sacred-countdown-display { font-size: clamp(2.1rem, 6.5dvh, 4.5rem); }
         #sacred-events-view .countdown-text { font-size: 0.9rem; }
 
+        /* стрелки за смяна на деня */
+        .day-switch { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; width: 100%; }
+        .day-switch #countdown { flex: 1 1 auto; text-align: center; min-width: 0; white-space: nowrap; }
+        .day-arrow {
+            flex-shrink: 0; width: clamp(2.2rem, 10vw, 2.8rem); height: clamp(2.2rem, 10vw, 2.8rem); border-radius: 50%;
+            display: grid; place-items: center; font-size: 1.6rem; line-height: 1; padding-bottom: 0.15rem; cursor: pointer;
+            color: var(--emerald); background: rgba(255, 255, 255, 0.55); border: 1px solid rgba(255, 255, 255, 0.85);
+            box-shadow: inset 0 1px 0 #fff, 0 4px 10px -4px rgba(8, 63, 48, 0.35);
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: background-color 0.15s, transform 0.1s;
+        }
+        .day-arrow:hover { background: rgba(255, 255, 255, 0.8); }
+        .day-arrow:active { transform: scale(0.92); }
+        .day-arrow:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+        #prayer-times-list.slide-left { animation: dayLeft 0.22s ease-out; }
+        #prayer-times-list.slide-right { animation: dayRight 0.22s ease-out; }
+        @keyframes dayLeft { from { opacity: 0.3; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+        @keyframes dayRight { from { opacity: 0.3; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
+        @media (prefers-reduced-motion: reduce) { #prayer-times-list.slide-left, #prayer-times-list.slide-right { animation: none; } }
+
         /* без поддръжка на размазване — по-плътен фон, за да се чете */
         @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
             .container { background: rgba(248, 245, 233, 0.94); }
@@ -1091,8 +1110,10 @@
         <!-- Prayer Times View -->
         <div id="prayer-times-view">
             <div class="text-center flex flex-col items-center">
-                <div class="flex items-center justify-center gap-2 mb-1">
+                <div class="day-switch mb-1">
+                    <button id="day-prev" class="day-arrow" aria-label="Предишен ден">‹</button>
                     <div id="countdown" class="text-5xl md:text-6xl lg:text-7xl">--:--:--</div>
+                    <button id="day-next" class="day-arrow" aria-label="Следващ ден">›</button>
                 </div>
                 <div id="countdown-text" class="countdown-text">зареждане...</div>
                 <div id="elapsed-line" class="elapsed-line hidden" aria-live="off">
@@ -2477,37 +2498,14 @@
 
             if (selectedDate.toDateString() !== now.toDateString()) {
                 hideElapsed();
-                const diff = getYearsMonthsDaysDifference(now, selectedDate);
-                let displayMessage = '';
                 returnTodayBtn.classList.remove('hidden');
-
-                if (selectedDate > now) {
-                    if (diff.years > 0) {
-                        displayMessage += `след ${diff.years} г.`;
-                        if (diff.months > 0) {
-                            displayMessage += ` ${diff.months} м.`;
-                        }
-                    } else if (diff.months > 0) {
-                        displayMessage += `след ${diff.months} м.`;
-                        if (diff.days > 0) {
-                            displayMessage += ` ${diff.days} дни`;
-                        }
-                    } else if (diff.days > 0) {
-                        displayMessage += `след ${diff.days} дни`;
-                    } else {
-                        countdownEl.textContent = '--:--:--';
-                        countdownTextEl.textContent = 'Избрана е бъдеща дата.'; 
-                        countdownTextEl.classList.remove('highlight-text-green');
-                        return;
-                    }
-                    countdownEl.textContent = '--:--:--'; 
-                    countdownTextEl.textContent = displayMessage || 'Изберете дата.';
-                    countdownTextEl.classList.remove('highlight-text-green');
-                } else {
-                    countdownEl.textContent = '--:--:--';
-                    countdownTextEl.textContent = 'Избрана е минала дата.';
-                    countdownTextEl.classList.remove('highlight-text-green');
-                }
+                const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const startSel = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                const dd = Math.round((startSel - startToday) / 86400000);
+                const when = dd === 1 ? 'Утре' : dd === -1 ? 'Вчера' : dd > 1 ? `след ${dd} дни` : `преди ${-dd} дни`;
+                countdownEl.textContent = `${String(selectedDate.getDate()).padStart(2, '0')}.${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
+                countdownTextEl.textContent = `${getDayNameBg(selectedDate)} · ${when}`;
+                countdownTextEl.classList.remove('highlight-text-green');
                 return;
             }
 
@@ -3083,6 +3081,21 @@
         document.addEventListener('keydown', () => setTimeout(syncHistory, 0), true);
         document.addEventListener('change', () => setTimeout(syncHistory, 0), true);
 
+        // --- Смяна на деня със стрелките (и с плъзгане) ---
+        function shiftDay(n) {
+            selectedDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + n);
+            isCustomDateSelected = selectedDate.toDateString() !== new Date().toDateString();
+            if (!isCustomDateSelected) selectedDate = new Date();
+            hiddenDateInput.value = formatDateForInputAndLookup(selectedDate);
+            fetchPrayerTimes();
+            updateCountdown();
+            const list = document.getElementById('prayer-times-list');
+            list.classList.remove('slide-left', 'slide-right');
+            void list.offsetWidth;
+            list.classList.add(n > 0 ? 'slide-left' : 'slide-right');
+            saveSettings();
+        }
+
         // --- Фази на Луната ---
         let moonDate = new Date();
         let moonTimer = null;
@@ -3532,6 +3545,26 @@
             qiblaGuideToggle.addEventListener('click', () => { updateQiblaInfo(); qiblaGuideModal.classList.remove('hidden'); qiblaGuideList.scrollTop = 0; });
             document.getElementById('close-qibla-guide-btn').addEventListener('click', () => qiblaGuideModal.classList.add('hidden'));
             qiblaGuideModal.addEventListener('click', (e) => { if (e.target === qiblaGuideModal) qiblaGuideModal.classList.add('hidden'); });
+            // Дни напред/назад
+            document.getElementById('day-prev').addEventListener('click', () => shiftDay(-1));
+            document.getElementById('day-next').addEventListener('click', () => shiftDay(1));
+            (() => {   // плъзгане наляво/надясно по времената
+                let sx = null, sy = null;
+                prayerTimesView.addEventListener('touchstart', (e) => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; }, { passive: true });
+                prayerTimesView.addEventListener('touchend', (e) => {
+                    if (sx === null) return;
+                    const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+                    sx = null;
+                    if (Math.abs(dx) > 60 && Math.abs(dy) < 45) shiftDay(dx < 0 ? 1 : -1);
+                }, { passive: true });
+            })();
+            document.addEventListener('keydown', (e) => {
+                if (prayerTimesView.classList.contains('hidden') || /INPUT|TEXTAREA/.test((e.target.tagName || ''))) return;
+                if (!document.querySelector('.modal-overlay:not(.hidden), .sheet-overlay:not(.hidden)')) {
+                    if (e.key === 'ArrowLeft') shiftDay(-1);
+                    if (e.key === 'ArrowRight') shiftDay(1);
+                }
+            });
             // Луна
             document.getElementById('hijri-moon-btn').addEventListener('click', () => showMoonView(selectedDate));
             document.getElementById('menu-moon').addEventListener('click', () => { closeMenu(); showMoonView(selectedDate); });
