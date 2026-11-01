@@ -1075,6 +1075,26 @@
         @keyframes dayRight { from { opacity: 0.3; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
         @media (prefers-reduced-motion: reduce) { #prayer-times-list.slide-left, #prayer-times-list.slide-right { animation: none; } }
 
+        /* --- заглавната част никога не излиза от прозореца --- */
+        html, body { overflow-x: hidden; overscroll-behavior-x: none; }
+        .container { overflow-x: hidden; overflow-x: clip; max-width: min(100%, 480px); }
+        @media (min-width: 640px) { .container { max-width: 520px; } }
+        @media (min-width: 768px) { .container { max-width: 640px; } }
+        @media (min-width: 1024px) { .container { max-width: 720px; } }
+        .app-header { gap: 0.5rem; width: 100%; min-width: 0; }
+        #gregorian-date-info { flex: 0 0 auto; }
+        #hijri-and-sacred-info { flex: 1 1 auto; min-width: 0; }
+        .hijri-moon-btn { max-width: 100%; align-items: flex-start; }
+        #hijri-date { white-space: normal; overflow-wrap: break-word; text-align: right; min-width: 0; }
+        @media (max-width: 400px) { #hijri-date { font-size: 0.8rem; } .container { padding-top: 1.15rem !important; } }
+        .hijri-moon-icon { margin-top: 0.05rem; }
+        #sacred-day-info { max-width: 100%; white-space: normal; }
+        #city-chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+        #return-today-btn { padding: 0.2rem 0.6rem; font-size: 0.8rem; }
+        #prayer-times-view { touch-action: pan-y; }
+        .day-switch { gap: 0.5rem; }
+        .day-switch #countdown { overflow: visible; }
+
         /* без поддръжка на размазване — по-плътен фон, за да се чете */
         @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
             .container { background: rgba(248, 245, 233, 0.94); }
@@ -1086,7 +1106,7 @@
 <body class="antialiased">
     <div class="container">
         <!-- Top row: Gregorian Date & Day + Current Time (left), Hijri Date & Sacred Day + Location (right) -->
-        <div class="flex justify-between items-start text-sm md:text-base">
+        <div class="app-header flex justify-between items-start text-sm md:text-base">
             <div id="gregorian-date-info" class="flex flex-col items-start font-medium">
                 <div class="header-tap relative" title="Изберете дата">
                     <span class="header-tap-line"><span id="current-date"></span><span class="chev-down">▾</span></span>
@@ -2323,7 +2343,7 @@
 
                 // Хиджри дата и свещен ден (без интернет)
                 const hijri = OfflineCalc.gregorianToHijri(selectedDate);
-                currentHijriDate = `${hijri.day} ${hijriMonthNamesBg[hijri.month - 1]} ${hijri.year} г.`;
+                currentHijriDate = `${hijri.day}\u00a0${hijriMonthNamesBg[hijri.month - 1]} ${hijri.year}\u00a0г.`;   // пренася се само преди годината
                 hijriDateEl.textContent = currentHijriDate;
                 updateHeaderMoonIcon();
                 const foundSacredDay = sacredEventOn(selectedDate);
@@ -2489,6 +2509,20 @@
             elapsedLineEl.classList.remove('hidden');
         }
 
+        // Големият брояч винаги се побира между стрелките (смалява шрифта при нужда)
+        let countdownFitKey = '';
+        function fitCountdownFont() {
+            const key = `${countdownEl.textContent.length}|${window.innerWidth}|${window.innerHeight}`;
+            if (key === countdownFitKey) return;
+            countdownFitKey = key;
+            countdownEl.style.fontSize = '';
+            const avail = countdownEl.clientWidth, need = countdownEl.scrollWidth;
+            if (avail > 0 && need > avail) {
+                countdownEl.style.fontSize = `${Math.floor(parseFloat(getComputedStyle(countdownEl).fontSize) * avail / need * 0.96)}px`;
+            }
+        }
+        window.addEventListener('resize', () => { countdownFitKey = ''; fitCountdownFont(); });
+
         // Function to update the countdown to the next prayer (main countdown)
         function updateCountdown() {
             const now = new Date();
@@ -2506,6 +2540,7 @@
                 countdownEl.textContent = `${String(selectedDate.getDate()).padStart(2, '0')}.${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
                 countdownTextEl.textContent = `${getDayNameBg(selectedDate)} · ${when}`;
                 countdownTextEl.classList.remove('highlight-text-green');
+                fitCountdownFont();
                 return;
             }
 
@@ -2555,6 +2590,7 @@
                 const seconds = Math.floor((diff % (1000 * 60)) / 1000);
                 countdownEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
             }
+            fitCountdownFont();
             
             countdownTextEl.classList.remove('highlight-text-green');
         }
