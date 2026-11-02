@@ -1095,6 +1095,39 @@
         .day-switch { gap: 0.5rem; }
         .day-switch #countdown { overflow: visible; }
 
+        /* стрелките — от двете страни на малкия брояч */
+        #return-today-btn { display: none !important; }
+        .sub-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.6rem; width: 100%;
+            margin: clamp(0.2rem, 0.8dvh, 0.45rem) 0 clamp(0.3rem, 1dvh, 0.6rem); }
+        .sub-center { display: flex; justify-content: center; min-width: 0; }
+        .sub-row .elapsed-line { margin: 0; position: relative; overflow: hidden; max-width: 100%; padding-bottom: 0.42rem; }
+        .elapsed-bar { position: absolute; left: 0.9rem; right: 0.9rem; bottom: 0.2rem; height: 4px; border-radius: 99px; background: rgba(8, 63, 48, 0.12); overflow: hidden; }
+        #elapsed-fill { display: block; height: 100%; width: 0%; border-radius: 99px; background: linear-gradient(90deg, #b8954a, #24bb4e); transition: width 0.8s linear; }
+        .today-pill {
+            padding: 0.4rem 1rem; border-radius: 999px; font-weight: 700; font-size: 0.88rem; cursor: pointer;
+            color: #fff; background: linear-gradient(180deg, #24bb4e, var(--green-dark)); border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 6px 14px -6px rgba(19, 138, 53, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        }
+        .today-pill.hidden { display: none; }
+        .day-switch { justify-content: center; }
+
+        /* времето, което е настъпило в момента */
+        .prayer-row.current-prayer {
+            background: linear-gradient(180deg, rgba(255, 246, 214, 0.95), rgba(240, 222, 170, 0.85));
+            border: 1.5px solid var(--gold);
+            box-shadow: 0 0 0 3px rgba(184, 149, 74, 0.25), 0 8px 20px -8px rgba(184, 149, 74, 0.8), inset 0 1px 0 #fff;
+            animation: nowGlow 2.6s ease-in-out infinite;
+        }
+        .prayer-row.current-prayer .prayer-name, .prayer-row.current-prayer .prayer-time { color: #5a3e05; text-shadow: none; }
+        .prayer-row.current-prayer .prayer-name::after {
+            content: 'сега'; display: inline-block; margin-left: 0.5rem; padding: 0.05rem 0.45rem; border-radius: 99px;
+            font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; vertical-align: 0.12em;
+            color: #fff; background: var(--gold);
+        }
+        @keyframes nowGlow { 0%, 100% { box-shadow: 0 0 0 3px rgba(184, 149, 74, 0.22), 0 8px 20px -8px rgba(184, 149, 74, 0.7), inset 0 1px 0 #fff; }
+                             50% { box-shadow: 0 0 0 5px rgba(184, 149, 74, 0.38), 0 10px 26px -8px rgba(184, 149, 74, 0.95), inset 0 1px 0 #fff; } }
+        @media (prefers-reduced-motion: reduce) { .prayer-row.current-prayer { animation: none; } }
+
         /* без поддръжка на размазване — по-плътен фон, за да се чете */
         @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
             .container { background: rgba(248, 245, 233, 0.94); }
@@ -1131,14 +1164,20 @@
         <div id="prayer-times-view">
             <div class="text-center flex flex-col items-center">
                 <div class="day-switch mb-1">
-                    <button id="day-prev" class="day-arrow" aria-label="Предишен ден">‹</button>
                     <div id="countdown" class="text-5xl md:text-6xl lg:text-7xl">--:--:--</div>
-                    <button id="day-next" class="day-arrow" aria-label="Следващ ден">›</button>
                 </div>
                 <div id="countdown-text" class="countdown-text">зареждане...</div>
-                <div id="elapsed-line" class="elapsed-line hidden" aria-live="off">
-                    <span class="elapsed-time" id="elapsed-time">00:00:00</span>
-                    <span class="elapsed-label">от <span id="elapsed-name"></span></span>
+                <div class="sub-row">
+                    <button id="day-prev" class="day-arrow" aria-label="Предишен ден">‹</button>
+                    <div class="sub-center">
+                        <div id="elapsed-line" class="elapsed-line hidden" aria-live="off">
+                            <span class="elapsed-time" id="elapsed-time">00:00:00</span>
+                            <span class="elapsed-label">от <span id="elapsed-name"></span></span>
+                            <span class="elapsed-bar" aria-hidden="true"><span id="elapsed-fill"></span></span>
+                        </div>
+                        <button id="today-pill" class="today-pill hidden">↺ Към днес</button>
+                    </div>
+                    <button id="day-next" class="day-arrow" aria-label="Следващ ден">›</button>
                 </div>
             </div>
             
@@ -2495,18 +2534,38 @@
         const elapsedNameEl = document.getElementById('elapsed-name');
         function hideElapsed() { elapsedLineEl.classList.add('hidden'); }
         // Колко време е минало от последния намаз (или от изгрева)
-        function updateElapsed(now, prayers) {
+        function updateElapsed(now, prayers, nextDate) {
             let last = null;
             for (const p of prayers) { if (p.date <= now) last = p; }
             if (!last) {   // след полунощ, преди зората — последна е нощната от вчера
                 const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-                last = { date: adjustedPrayerDate(y, 'Isha'), displayName: getCurrentPrayerNames().Isha };
+                last = { date: adjustedPrayerDate(y, 'Isha'), displayName: `${getCurrentPrayerNames().Isha} вчера` };
+            }
+            const fill = document.getElementById('elapsed-fill');
+            if (nextDate && nextDate > last.date) {
+                const pct = Math.max(0, Math.min(100, (now - last.date) / (nextDate - last.date) * 100));
+                fill.style.width = `${pct.toFixed(2)}%`;
+                elapsedLineEl.title = `${Math.round(pct)}% от времето до следващия намаз`;
             }
             const diff = Math.max(0, now - last.date);
             const h = Math.floor(diff / 3600000), m = Math.floor(diff % 3600000 / 60000), sec = Math.floor(diff % 60000 / 1000);
             elapsedTimeEl.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
             elapsedNameEl.textContent = last.displayName;
             elapsedLineEl.classList.remove('hidden');
+        }
+
+        // Осветяване: зелено = следващото време, златно „сега“ = времето, което е настъпило
+        // След полунощ и преди зората нищо не свети като „сега“ — текущата е нощната от вчера
+        function updateRowHighlights(now) {
+            const rows = prayerTimesListEl.children;
+            let cur = -1, next = -1;
+            if (now) {
+                prayersDataForDisplay.forEach((p, i) => { if (p.date <= now) cur = i; else if (next === -1) next = i; });
+            }
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].classList.toggle('current-prayer', i === cur);
+                rows[i].classList.toggle('highlighted-prayer', i === next);
+            }
         }
 
         // Големият брояч винаги се побира между стрелките (смалява шрифта при нужда)
@@ -2540,6 +2599,8 @@
                 countdownEl.textContent = `${String(selectedDate.getDate()).padStart(2, '0')}.${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
                 countdownTextEl.textContent = `${getDayNameBg(selectedDate)} · ${when}`;
                 countdownTextEl.classList.remove('highlight-text-green');
+                document.getElementById('today-pill').classList.remove('hidden');
+                updateRowHighlights(null);
                 fitCountdownFont();
                 return;
             }
@@ -2555,7 +2616,6 @@
             }
 
             let prayersArrayForCountdown = prayersDataForDisplay;
-            updateElapsed(now, prayersArrayForCountdown);
             let nextPrayerCandidateIndex = -1; 
 
             for (let i = 0; i < prayersArrayForCountdown.length; i++) {
@@ -2579,6 +2639,9 @@
                 countdownTextEl.textContent = `до ${nextPrayerDisplayName} утре`;
             }
 
+            updateElapsed(now, prayersArrayForCountdown, nextPrayerTimeDate);
+            updateRowHighlights(now);
+            document.getElementById('today-pill').classList.add('hidden');
             const diff = nextPrayerTimeDate.getTime() - now.getTime();
 
             if (diff <= 0) {
@@ -3584,6 +3647,7 @@
             // Дни напред/назад
             document.getElementById('day-prev').addEventListener('click', () => shiftDay(-1));
             document.getElementById('day-next').addEventListener('click', () => shiftDay(1));
+            document.getElementById('today-pill').addEventListener('click', () => { returnToToday(); updateCountdown(); });
             (() => {   // плъзгане наляво/надясно по времената
                 let sx = null, sy = null;
                 prayerTimesView.addEventListener('touchstart', (e) => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; }, { passive: true });
