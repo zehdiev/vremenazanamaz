@@ -1130,6 +1130,20 @@
             font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; vertical-align: 0.12em;
             color: var(--green-dark); background: rgba(255, 255, 255, 0.92); text-shadow: none;
         }
+        /* „сега“ — светло зелено (като празничните дни в календара) */
+        #prayer-times-list .prayer-row.current-prayer {
+            background: linear-gradient(180deg, rgba(222, 240, 205, 0.97), rgba(184, 213, 157, 0.92));
+            border: 1.5px solid rgba(26, 170, 66, 0.55);
+            animation: nowGlowGreen 2.6s ease-in-out infinite;
+        }
+        #prayer-times-list .prayer-row.current-prayer .prayer-name,
+        #prayer-times-list .prayer-row.current-prayer .prayer-time { color: var(--emerald); }
+        #prayer-times-list .prayer-row.current-prayer .prayer-name::after { background: var(--green-dark); color: #fff; }
+        @keyframes nowGlowGreen {
+            0%, 100% { box-shadow: 0 0 0 3px rgba(26, 170, 66, 0.16), 0 8px 20px -8px rgba(26, 170, 66, 0.55), inset 0 1px 0 #fff; }
+            50% { box-shadow: 0 0 0 5px rgba(26, 170, 66, 0.28), 0 10px 26px -8px rgba(26, 170, 66, 0.75), inset 0 1px 0 #fff; }
+        }
+        @media (prefers-reduced-motion: reduce) { #prayer-times-list .prayer-row.current-prayer { animation: none; } }
         @keyframes nowGlow { 0%, 100% { box-shadow: 0 0 0 3px rgba(184, 149, 74, 0.22), 0 8px 20px -8px rgba(184, 149, 74, 0.7), inset 0 1px 0 #fff; }
                              50% { box-shadow: 0 0 0 5px rgba(184, 149, 74, 0.38), 0 10px 26px -8px rgba(184, 149, 74, 0.95), inset 0 1px 0 #fff; } }
         @media (prefers-reduced-motion: reduce) { .prayer-row.current-prayer { animation: none; } }
