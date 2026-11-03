@@ -1124,6 +1124,12 @@
             font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; vertical-align: 0.12em;
             color: #fff; background: var(--gold);
         }
+        /* „следва“ — в стила на „сега“, за следващото време (зеленият ред) */
+        #prayer-times-list .prayer-row.highlighted-prayer .prayer-name::after {
+            content: 'следва'; display: inline-block; margin-left: 0.5rem; padding: 0.05rem 0.45rem; border-radius: 99px;
+            font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; vertical-align: 0.12em;
+            color: var(--green-dark); background: rgba(255, 255, 255, 0.92); text-shadow: none;
+        }
         @keyframes nowGlow { 0%, 100% { box-shadow: 0 0 0 3px rgba(184, 149, 74, 0.22), 0 8px 20px -8px rgba(184, 149, 74, 0.7), inset 0 1px 0 #fff; }
                              50% { box-shadow: 0 0 0 5px rgba(184, 149, 74, 0.38), 0 10px 26px -8px rgba(184, 149, 74, 0.95), inset 0 1px 0 #fff; } }
         @media (prefers-reduced-motion: reduce) { .prayer-row.current-prayer { animation: none; } }
@@ -2556,11 +2562,14 @@
 
         // Осветяване: зелено = следващото време, златно „сега“ = времето, което е настъпило
         // След полунощ и преди зората нищо не свети като „сега“ — текущата е нощната от вчера
+        const SUNRISE_NOW_MINUTES = 30;
         function updateRowHighlights(now) {
             const rows = prayerTimesListEl.children;
             let cur = -1, next = -1;
             if (now) {
                 prayersDataForDisplay.forEach((p, i) => { if (p.date <= now) cur = i; else if (next === -1) next = i; });
+                // Изгревът не е време за намаз — свети като „сега“ само първите 30 минути след него
+                if (cur !== -1 && prayersDataForDisplay[cur].name === 'Sunrise' && now - prayersDataForDisplay[cur].date > SUNRISE_NOW_MINUTES * 60000) cur = -1;
             }
             for (let i = 0; i < rows.length; i++) {
                 rows[i].classList.toggle('current-prayer', i === cur);
