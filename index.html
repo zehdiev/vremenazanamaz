@@ -1148,6 +1148,18 @@
                              50% { box-shadow: 0 0 0 5px rgba(184, 149, 74, 0.38), 0 10px 26px -8px rgba(184, 149, 74, 0.95), inset 0 1px 0 #fff; } }
         @media (prefers-reduced-motion: reduce) { .prayer-row.current-prayer { animation: none; } }
 
+        /* малкият брояч: постоянна ширина, нищо не се мести */
+        .sub-row .elapsed-line { width: 100%; max-width: 17.5rem; justify-content: center; gap: 0.5rem; white-space: nowrap; }
+        .sub-row .elapsed-time { display: inline-block; width: 4.45em; text-align: left; flex-shrink: 0; font-variant-numeric: lining-nums tabular-nums; }
+        .sub-row .elapsed-label { flex: 0 1 7.6rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+        .sub-row .today-pill { width: 100%; max-width: 17.5rem; }
+        @media (max-width: 370px) {
+            .sub-row { gap: 0.35rem; }
+            .sub-row .elapsed-line { padding-left: 0.55rem; padding-right: 0.55rem; gap: 0.3rem; font-size: 0.74rem; }
+            .sub-row .elapsed-time { font-size: 0.98rem; }
+            .day-arrow { width: 2.1rem; height: 2.1rem; font-size: 1.4rem; }
+        }
+
         /* без поддръжка на размазване — по-плътен фон, за да се чете */
         @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
             .container { background: rgba(248, 245, 233, 0.94); }
@@ -2584,6 +2596,8 @@
                 prayersDataForDisplay.forEach((p, i) => { if (p.date <= now) cur = i; else if (next === -1) next = i; });
                 // Изгревът не е време за намаз — свети като „сега“ само първите 30 минути след него
                 if (cur !== -1 && prayersDataForDisplay[cur].name === 'Sunrise' && now - prayersDataForDisplay[cur].date > SUNRISE_NOW_MINUTES * 60000) cur = -1;
+                // Зората (имсак) е краен срок за сухура — след нея не пишем „сега“, маркира се само следващото време
+                if (cur !== -1 && prayersDataForDisplay[cur].name === 'Fajr') cur = -1;
             }
             for (let i = 0; i < rows.length; i++) {
                 rows[i].classList.toggle('current-prayer', i === cur);
