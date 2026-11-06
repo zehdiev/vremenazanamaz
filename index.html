@@ -1643,6 +1643,11 @@
                     <span class="menu-label">Екранът да не угасва<small id="opt-wakelock-note">Докато приложението е отворено</small></span>
                     <input type="checkbox" id="opt-wakelock" class="switch">
                 </label>
+                <label class="menu-row" for="opt-notify">
+                    <span class="menu-icon">🔕</span>
+                    <span class="menu-label">Тихи известия<small id="opt-notify-note">Следващият намаз в лентата с известия, без звук</small></span>
+                    <input type="checkbox" id="opt-notify" class="switch">
+                </label>
             </div>
 
             <div class="menu-group">
@@ -2861,6 +2866,7 @@
                 sacredDayInfoEl.classList.toggle('hidden', !foundSacredDay);
 
                 displayPrayerTimes();
+                if (isNotifyActive) refreshNotify(false);
                 
             } catch (error) {
                 console.error('Error fetching prayer times:', error);
@@ -3003,6 +3009,93 @@
             const d = new Date(date.getFullYear(), date.getMonth(), date.getDate(), h, m, 0);
             d.setMinutes(d.getMinutes() + (adjustments[key] || 0) + (cityOffsets[selectedCity] || 0) + (Number(customPrayerAdjustments[key]) || 0));
             return d;
+        }
+        // --- Тихи известия (без сървър): следващият намаз в лентата с известия ---
+        let isNotifyActive = false, notifySig = '', notifyNextT = 0;
+        const optNotify = document.getElementById('opt-notify');
+        const optNotifyNote = document.getElementById('opt-notify-note');
+        const notifySupported = ('Notification' in window) && ('serviceWorker' in navigator);
+        function notifySchedule() {
+            const names = getCurrentPrayerNames(), now = new Date(), out = [];
+            for (let k = -1; k <= 6; k++) {
+                const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + k);
+                for (const key of allPrayerKeys) {
+                    let dt; try { dt = adjustedPrayerDate(d, key); } catch (e) { continue; }
+                    if (!dt || isNaN(dt.getTime()) || dt.getTime() < 1e12) continue;
+                    const name = key === 'Dhuhr' ? getDhuhrName(d) : (names[key] || key);
+                    const time = isAbroad() ? OfflineCalc.formatTzTime(dt.getTime(), worldLocation.tz) : formatTime(dt);
+                    out.push({ t: dt.getTime(), name, time });
+                }
+            }
+            return out.sort((a, b) => a.t - b.t);
+        }
+        async function notifyStore(obj) {
+            try { const c = await caches.open('namaz-notify'); await c.put('./__notify.json', new Response(JSON.stringify(obj), { headers: { 'Content-Type': 'application/json' } })); } catch (e) { /* няма кеш */ }
+        }
+        async function refreshNotify(force) {
+            if (!isNotifyActive || !notifySupported || Notification.permission !== 'granted') return;
+            const list = notifySchedule(), now = Date.now(), i = list.findIndex(p => p.t > now);
+            if (i < 0) return;
+            const next = list[i], after = list[i + 1], loc = locationName();
+            notifyNextT = next.t;
+            const sig = `${next.t}|${next.name}|${next.time}|${loc}`;
+            if (!force && sig === notifySig) return;
+            notifySig = sig;
+            const title = `Следва: ${next.name} в ${next.time}`;
+            const body = `📍 ${loc}` + (after ? ` · после ${after.name} ${after.time}` : '');
+            try {
+                const reg = await navigator.serviceWorker.ready;
+                await reg.showNotification(title, { body, tag: 'namaz-next', silent: true, renotify: false, icon: 'icon-192.png', badge: 'badge-96.png', timestamp: next.t, data: { url: './' } });
+            } catch (e) { console.warn('Известието не се показа:', e); }
+            await notifyStore({ on: true, loc, shown: sig, list: list.filter(p => p.t > now - 6 * 3600000) });
+        }
+        async function registerPeriodicNotify() {
+            try {
+                const reg = await navigator.serviceWorker.ready;
+                if (!('periodicSync' in reg)) return;
+                const st = await navigator.permissions.query({ name: 'periodic-background-sync' });
+                if (st.state === 'granted') await reg.periodicSync.register('namaz-notify', { minInterval: 60 * 60 * 1000 });
+            } catch (e) { /* не се поддържа */ }
+        }
+        async function disableNotify() {
+            notifySig = ''; notifyNextT = 0;
+            await notifyStore({ on: false, list: [] });
+            try {
+                const reg = await navigator.serviceWorker.ready;
+                (await reg.getNotifications({ tag: 'namaz-next' })).forEach(n => n.close());
+                if ('periodicSync' in reg) await reg.periodicSync.unregister('namaz-notify');
+            } catch (e) { /* нищо */ }
+        }
+        function initNotify() {
+            const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+            if (!notifySupported) {
+                optNotify.disabled = true; isNotifyActive = false;
+                optNotifyNote.textContent = ios && !standalone ? 'На iPhone — само след „Добави към началния екран“ (iOS 16.4+)' : 'Не се поддържа от този браузър';
+                return;
+            }
+            if (isNotifyActive && Notification.permission !== 'granted') { isNotifyActive = false; saveSettings(); }
+            optNotify.checked = isNotifyActive;
+            optNotify.addEventListener('change', async () => {
+                if (optNotify.checked) {
+                    let perm = Notification.permission;
+                    if (perm === 'default') { try { perm = await Notification.requestPermission(); } catch (e) { perm = 'denied'; } }
+                    if (perm !== 'granted') {
+                        optNotify.checked = false; isNotifyActive = false; saveSettings();
+                        showMessage(perm === 'denied' ? 'Известията са забранени — разрешете ги за сайта от настройките на браузъра или телефона.' : 'Няма разрешение за известия.');
+                        return;
+                    }
+                    isNotifyActive = true; saveSettings();
+                    await refreshNotify(true); registerPeriodicNotify();
+                    showMessage('Тихите известия са включени.');
+                } else {
+                    isNotifyActive = false; saveSettings(); disableNotify();
+                    showMessage('Тихите известия са изключени.');
+                }
+            });
+            document.addEventListener('visibilitychange', () => { if (isNotifyActive) refreshNotify(false); });
+            setInterval(() => { if (isNotifyActive && notifyNextT && Date.now() >= notifyNextT) refreshNotify(false); }, 15000);
+            if (isNotifyActive) { refreshNotify(true); registerPeriodicNotify(); }
         }
         const elapsedLineEl = document.getElementById('elapsed-line');
         const elapsedTimeEl = document.getElementById('elapsed-time');
@@ -3249,6 +3342,7 @@
             optCountdown.checked = isCountdownMode;
             optClassical.checked = isClassicalNamesActive;
             optWakeLock.checked = isWakeLockActive;
+            optNotify.checked = isNotifyActive;
             const n = Object.values(customPrayerAdjustments).filter(v => Number(v) !== 0).length;
             menuAdjustValue.textContent = n === 0 ? 'няма' : (n === 1 ? '1 корекция' : `${n} корекции`);
             menuSheet.classList.remove('hidden');
@@ -4196,6 +4290,7 @@
                 isClassicalNamesActive: isClassicalNamesActive,
                 isSacredEventsCountdownMode: isSacredEventsCountdownMode,
                 isWakeLockActive: isWakeLockActive,
+                isNotifyActive: isNotifyActive,
                 isCountdownMode: isCountdownMode,
                 theme: appTheme,
                 worldLocation: worldLocation,
@@ -4220,6 +4315,7 @@
                     isClassicalNamesActive = savedSettings.isClassicalNamesActive || false;
                     isSacredEventsCountdownMode = savedSettings.isSacredEventsCountdownMode || false;
                     isWakeLockActive = savedSettings.isWakeLockActive || false;
+                    isNotifyActive = savedSettings.isNotifyActive || false;
                     isCustomDateSelected = savedSettings.isCustomDateSelected || false;
                     isCountdownMode = savedSettings.isCountdownMode || false;
                     worldLocation = savedSettings.worldLocation || null;
@@ -4388,6 +4484,7 @@
             // Ако екранът е бил оставен да не угасва — включи го отново
             if (isWakeLockActive) { isWakeLockActive = false; requestWakeLock(); }
             updateWakeLockButton();
+            initNotify();
 
             // --- Инсталиране ---
             menuInstallBtn.addEventListener('click', startInstall);
