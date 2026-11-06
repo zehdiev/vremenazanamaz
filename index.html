@@ -1190,6 +1190,17 @@
         .highlat-note.hidden { display: none; }
 
 
+        /* разширени времена в списъка */
+        #prayer-times-list.has-extra { overflow-y: auto; overscroll-behavior: contain; }
+        #prayer-times-list.has-extra { gap: clamp(0.15rem, 0.5dvh, 0.4rem); }
+        #prayer-times-list.has-extra .prayer-row { min-height: 1.75rem; }
+        .extra-row { flex: 0.55 1 0; min-height: 1.2rem; max-height: 2.4rem; display: flex; align-items: center; justify-content: space-between; padding: 0 0.8rem 0 1.1rem; border-radius: 0.6rem; border: 1px dashed rgba(var(--p-rgb, 8, 63, 48), 0.28); background: rgba(255, 255, 255, 0.22); color: var(--ink-soft, #4f6355); }
+        html[data-mode="dark"] .extra-row { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.18); }
+        .extra-row.extra-ker { background: rgba(var(--p-rgb, 8, 63, 48), 0.10); color: var(--ink, #15301f); }
+        .extra-name { font-weight: 600; font-size: 0.8rem; display: flex; align-items: baseline; gap: 0.4rem; min-width: 0; white-space: nowrap; }
+        .extra-name small { font-weight: 500; font-size: 0.68rem; opacity: 0.75; overflow: hidden; text-overflow: ellipsis; }
+        .extra-time { font-weight: 700; font-size: 0.85rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        #counter-stage { cursor: pointer; -webkit-tap-highlight-color: transparent; }
         /* изглед на брояча */
         .counter-stage { display: contents; }
         .counter-viz:empty { display: none; }
@@ -1480,7 +1491,7 @@
         <!-- Prayer Times View -->
         <div id="prayer-times-view">
             <div class="text-center flex flex-col items-center">
-                <div class="counter-stage" id="counter-stage">
+                <div class="counter-stage" id="counter-stage" title="Докоснете, за да смените изгледа на брояча">
                     <div id="counter-viz" class="counter-viz"></div>
                     <div class="counter-core">
                         <div class="day-switch mb-1">
@@ -1689,6 +1700,11 @@
                     <span class="menu-icon">⌛</span>
                     <span class="menu-label">Обратно броене за всеки намаз<small>Вместо часа показва колко остава</small></span>
                     <input type="checkbox" id="opt-countdown" class="switch">
+                </label>
+                <label class="menu-row" for="opt-extended">
+                    <span class="menu-icon">🕰️</span>
+                    <span class="menu-label">Разширени времена<small>Сабах, ишрак, керахат, полунощ, последна трета</small></span>
+                    <input type="checkbox" id="opt-extended" class="switch">
                 </label>
                 <button id="menu-counter" class="menu-row">
                     <span class="menu-icon">⏱️</span>
@@ -3007,6 +3023,19 @@
                 prayerTimesListEl.appendChild(prayerRow);
             });
 
+            if (isExtendedTimes) {
+                let ext = []; try { ext = extendedTimes(new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate())); } catch (e) { console.warn(e); }
+                const rows = [...prayerTimesListEl.querySelectorAll(':scope > .prayer-row')];
+                ext.forEach(x => {
+                    const el = document.createElement('div');
+                    el.className = 'extra-row' + (x.name === 'Керахат' ? ' extra-ker' : '');
+                    el.innerHTML = `<span class="extra-name">${x.name}<small>${x.note}</small></span><span class="extra-time">${vzFmt(x.t)}${x.end ? '–' + vzFmt(x.end) : ''}</span>`;
+                    const idx = prayersDataForDisplay.findIndex(p => p.date.getTime() > x.t);
+                    if (idx === -1) prayerTimesListEl.appendChild(el); else prayerTimesListEl.insertBefore(el, rows[idx]);
+                });
+            }
+            prayerTimesListEl.classList.toggle('has-extra', isExtendedTimes);
+
             startStopIndividualCountdowns();
             updateCountdown();
         }
@@ -3074,27 +3103,43 @@
             return d;
         }
         // --- Изглед на брояча: класически / циферблат / лента ---
-        let counterStyle = 'classic';
+        let counterStyle = 'classic', isExtendedTimes = false;
         const COUNTER_STYLES = { classic: 'Класически', dial: 'Циферблат', strip: 'Лента' };
-        const KERAHAT_MIN = 45, ISHRAK_MIN = 60, SABAH_MIN = 60;
+        const KERAHAT_MIN = 45, ISHRAK_MIN = 60, SABAH_MIN = 60, VIZ_LEAD_MIN = 90;
         let vizKey = '';
         const vzFmt = (ms) => isAbroad() ? OfflineCalc.formatTzTime(ms, worldLocation.tz) : formatTime(new Date(ms));
+        // Допълнителни времена за списъка (за деня D)
+        function extendedTimes(D) {
+            const P = (d, k) => { const v = adjustedPrayerDate(d, k).getTime(); return v > 1e12 ? v : null; }, M = 60000;
+            const N = new Date(D.getFullYear(), D.getMonth(), D.getDate() + 1);
+            const sr = P(D, 'Sunrise'), dh = P(D, 'Dhuhr'), mg = P(D, 'Maghrib'), fj = P(D, 'Fajr'), fj2 = P(N, 'Fajr');
+            const out = [];
+            if (sr && fj) out.push({ name: 'Сабах', t: Math.max(fj, sr - SABAH_MIN * M), note: 'час преди изгрев' });
+            if (sr) out.push({ name: 'Ишрак', t: sr + KERAHAT_MIN * M, note: 'начало на Духа' });
+            if (dh) out.push({ name: 'Керахат', t: dh - KERAHAT_MIN * M, end: dh, note: 'преди обед' });
+            if (mg) out.push({ name: 'Керахат', t: mg - KERAHAT_MIN * M, end: mg, note: 'преди залез' });
+            if (mg && fj2) {
+                out.push({ name: 'Полунощ', t: mg + (fj2 - mg) / 2, note: 'среда на нощта' });
+                out.push({ name: 'Последна трета', t: mg + (fj2 - mg) * 2 / 3, note: 'на нощта' });
+            }
+            return out;
+        }
         function vizModel() {
             const now = Date.now(), isToday = selectedDate.toDateString() === new Date().toDateString();
             let D = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
             const P = (d, k) => { const v = adjustedPrayerDate(d, k).getTime(); return v > 1e12 ? v : null; };
-            if (isToday) { const f = P(D, 'Fajr'); if (f && now < f - 30 * 60000) D = new Date(D.getFullYear(), D.getMonth(), D.getDate() - 1); }
+            if (isToday) { const f = P(D, 'Fajr'); if (f && now < f - VIZ_LEAD_MIN * 60000) D = new Date(D.getFullYear(), D.getMonth(), D.getDate() - 1); }
             const N = new Date(D.getFullYear(), D.getMonth(), D.getDate() + 1);
             const t = {}; for (const k of allPrayerKeys) t[k] = P(D, k);
             const fajr2 = P(N, 'Fajr');
             if (allPrayerKeys.some(k => t[k] == null) || fajr2 == null) return null;
-            let start = t.Fajr - 30 * 60000;
+            let start = t.Fajr - VIZ_LEAD_MIN * 60000;
             const mm = Number(vzFmt(start).split(':')[1]) || 0;
             start = Math.floor((start - mm * 60000) / 60000) * 60000;
             const end = start + 24 * 3600000, M = 60000, names = getCurrentPrayerNames();
             const sabah = Math.max(t.Fajr, t.Sunrise - SABAH_MIN * M);
             const segs = [
-                { a: start, b: t.Fajr, cls: 'night', label: '' },
+                { a: start, b: t.Fajr, cls: 'night', label: 'Нощ' },
                 { a: t.Fajr, b: sabah, cls: 'p', label: names.Fajr },
                 { a: sabah, b: t.Sunrise, cls: 'p', label: 'Сабах' },
                 { a: t.Sunrise, b: t.Sunrise + KERAHAT_MIN * M, cls: 'ker', label: 'Керахат' },
@@ -3111,9 +3156,16 @@
                 { a: t.Sunrise + KERAHAT_MIN * M, b: t.Sunrise + (KERAHAT_MIN + ISHRAK_MIN) * M, label: 'Ишрак' },
                 { a: t.Maghrib, b: t.Isha, label: 'Евабин' },
             ];
-            const thirds = [{ f: 1 / 3, label: '⅓' }, { f: 1 / 2, label: '½' }, { f: 2 / 3, label: '⅔' }].map(x => ({ t: night + nlen * x.f, label: x.label, time: vzFmt(night + nlen * x.f) }));
-            const lastThird = { a: night + nlen * 2 / 3, b: Math.min(fajr2, end) };
-            return { start, end, segs, extras, thirds, lastThird, now: isToday ? now : null };
+            const PD = new Date(D.getFullYear(), D.getMonth(), D.getDate() - 1), pmag = P(PD, 'Maghrib');
+            const nights = [{ a: t.Maghrib, b: fajr2 }]; if (pmag) nights.unshift({ a: pmag, b: t.Fajr });
+            const thirds = [], lastThirds = [], nightBars = [];
+            for (const n of nights) {
+                const L = n.b - n.a;
+                [{ f: 1 / 3, label: '⅓' }, { f: 1 / 2, label: '½' }, { f: 2 / 3, label: '⅔' }].forEach(x => { const tt = n.a + L * x.f; if (tt > start && tt < end) thirds.push({ t: tt, label: x.label, time: vzFmt(tt) }); });
+                const la = Math.max(start, n.a + L * 2 / 3), lb = Math.min(end, n.b); if (lb > la) lastThirds.push({ a: la, b: lb });
+                const na = Math.max(start, n.a), nb = Math.min(end, n.b); if (nb > na) nightBars.push({ a: na, b: nb });
+            }
+            return { start, end, segs, extras, thirds, lastThirds, nightBars, now: isToday ? now : null };
         }
         const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
         function dialSvg(m) {
@@ -3147,13 +3199,13 @@
                 if (!g.label) continue;
                 const fm = (Math.max(0, f1) + Math.min(1, f2)) / 2, width = (Math.min(1, f2) - Math.max(0, f1)) * Math.PI * 147;
                 let fs = Math.min(12, 52 / (g.label.length * 0.58)); if (g.cls === 'ker') fs = Math.min(fs, 8.5);
-                if (width < fs * 1.05) continue;
+                fs = Math.min(fs, width / 1.05); if (fs < 6.5) continue;
                 const [lx, ly] = pt((R1 + R2) / 2, fm), th = 180 * (1 - fm);
                 const rot = th > 90 ? 180 - th : -th;
                 s += `<text class="vz-label${on ? ' vz-cur-t' : ''}${g.cls === 'ker' ? ' vz-ker-t' : ''}" style="font-size:${fs.toFixed(1)}px" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" transform="rotate(${rot.toFixed(1)} ${lx.toFixed(1)} ${ly.toFixed(1)})">${esc(g.label)}</text>`;
             }
             // допълнителни: ишрак, евабин, последната трета на нощта
-            s += `<path class="vz-third" d="${arc(R3, R2 - 1, F(m.lastThird.a), F(m.lastThird.b))}"/>`;
+            m.lastThirds.forEach(x => { s += `<path class="vz-third" d="${arc(R3, R2 - 1, F(x.a), F(x.b))}"/>`; });
             m.extras.forEach((x, i) => {
                 s += `<path class="vz-extra" d="${arc(R3, R2 - 1, F(x.a), F(x.b))}"/>`;
                 const fm = (Math.max(0, F(x.a)) + Math.min(1, F(x.b))) / 2, id = `vzx${i}`, a1 = Math.max(0, fm - 0.08), a2 = Math.min(1, fm + 0.08), [px1, py1] = pt(R3 + 3.5, a1), [px2, py2] = pt(R3 + 3.5, a2);
@@ -3185,7 +3237,7 @@
                 s += `<rect class="vz-seg vz-${g.cls}${on ? ' vz-cur' : ''}" x="${x1.toFixed(1)}" y="${yM}" width="${w.toFixed(1)}" height="${hM}"/><line class="vz-sep" x1="${x1.toFixed(1)}" y1="${yM}" x2="${x1.toFixed(1)}" y2="${yM + hM}"/>`;
                 if (!g.label) continue;
                 let fs = Math.min(12, 60 / (g.label.length * 0.58)); if (g.cls === 'ker') fs = Math.min(fs, 8.5);
-                if (w < fs * 1.05) continue;
+                fs = Math.min(fs, w / 1.05); if (fs < 6.5) continue;
                 const cx = x1 + w / 2, cy = yM + hM / 2;
                 s += `<text class="vz-label${on ? ' vz-cur-t' : ''}${g.cls === 'ker' ? ' vz-ker-t' : ''}" style="font-size:${fs.toFixed(1)}px" x="${cx.toFixed(1)}" y="${cy.toFixed(1)}" transform="rotate(-90 ${cx.toFixed(1)} ${cy.toFixed(1)})">${esc(g.label)}</text>`;
             }
@@ -3193,9 +3245,8 @@
                 const x1 = X(x.a), x2 = X(x.b); if (x2 - x1 <= 0) return;
                 s += `<rect class="vz-extra" x="${x1.toFixed(1)}" y="${yE}" width="${(x2 - x1).toFixed(1)}" height="${hE}" rx="3"/><text class="vz-xlabel" x="${((x1 + x2) / 2).toFixed(1)}" y="${yE + hE / 2}">${x.label}</text>`;
             });
-            const n1 = X(m.thirds[0].t - (m.thirds[1].t - m.thirds[0].t) * 2), lt1 = X(m.lastThird.a), lt2 = X(m.lastThird.b);
-            s += `<rect class="vz-night" x="${n1.toFixed(1)}" y="${yN}" width="${(W - n1).toFixed(1)}" height="${hN}" rx="3"/>`;
-            s += `<rect class="vz-third" x="${lt1.toFixed(1)}" y="${yN}" width="${(lt2 - lt1).toFixed(1)}" height="${hN}" rx="3"/>`;
+            m.nightBars.forEach(x => { s += `<rect class="vz-night" x="${X(x.a).toFixed(1)}" y="${yN}" width="${(X(x.b) - X(x.a)).toFixed(1)}" height="${hN}" rx="3"/>`; });
+            m.lastThirds.forEach(x => { s += `<rect class="vz-third" x="${X(x.a).toFixed(1)}" y="${yN}" width="${(X(x.b) - X(x.a)).toFixed(1)}" height="${hN}" rx="3"/>`; });
             m.thirds.forEach(x => {
                 const xx = X(x.t); s += `<line class="vz-tmark" x1="${xx.toFixed(1)}" y1="${yN - 3}" x2="${xx.toFixed(1)}" y2="${yN + 1}"/><text class="vz-tlabel" x="${xx.toFixed(1)}" y="${yN + 6}">${x.label}</text><text class="vz-ttime" x="${xx.toFixed(1)}" y="${yN + 16}" text-anchor="middle">${x.time}</text>`;
             });
@@ -3352,7 +3403,7 @@
         // След полунощ и преди зората нищо не свети като „сега“ — текущата е нощната от вчера
         const SUNRISE_NOW_MINUTES = 30;
         function updateRowHighlights(now) {
-            const rows = prayerTimesListEl.children;
+            const rows = prayerTimesListEl.querySelectorAll(':scope > .prayer-row');
             let cur = -1, next = -1;
             if (now) {
                 prayersDataForDisplay.forEach((p, i) => { if (p.date <= now) cur = i; else if (next === -1) next = i; });
@@ -3552,6 +3603,7 @@
             optWakeLock.checked = isWakeLockActive;
             optNotify.checked = isNotifyActive;
             document.getElementById('menu-counter-value').textContent = COUNTER_STYLES[counterStyle];
+            document.getElementById('opt-extended').checked = isExtendedTimes;
             const n = Object.values(customPrayerAdjustments).filter(v => Number(v) !== 0).length;
             menuAdjustValue.textContent = n === 0 ? 'няма' : (n === 1 ? '1 корекция' : `${n} корекции`);
             menuSheet.classList.remove('hidden');
@@ -4501,6 +4553,7 @@
                 isWakeLockActive: isWakeLockActive,
                 isNotifyActive: isNotifyActive,
                 counterStyle: counterStyle,
+                isExtendedTimes: isExtendedTimes,
                 isCountdownMode: isCountdownMode,
                 theme: appTheme,
                 worldLocation: worldLocation,
@@ -4526,6 +4579,7 @@
                     isSacredEventsCountdownMode = savedSettings.isSacredEventsCountdownMode || false;
                     isWakeLockActive = savedSettings.isWakeLockActive || false;
                     isNotifyActive = savedSettings.isNotifyActive || false;
+                    isExtendedTimes = savedSettings.isExtendedTimes || false;
                     counterStyle = COUNTER_STYLES[savedSettings.counterStyle] ? savedSettings.counterStyle : 'classic';
                     isCustomDateSelected = savedSettings.isCustomDateSelected || false;
                     isCountdownMode = savedSettings.isCountdownMode || false;
@@ -4696,12 +4750,20 @@
             if (isWakeLockActive) { isWakeLockActive = false; requestWakeLock(); }
             updateWakeLockButton();
             initNotify();
+            document.getElementById('opt-extended').addEventListener('change', (e) => {
+                isExtendedTimes = e.target.checked; saveSettings(); displayPrayerTimes();
+            });
             document.getElementById('menu-counter').addEventListener('click', () => {
                 const order = Object.keys(COUNTER_STYLES), next = order[(order.indexOf(counterStyle) + 1) % order.length];
                 setCounterStyle(next); saveSettings();
                 showMessage(`Брояч: ${COUNTER_STYLES[next]}`);
             });
             setCounterStyle(counterStyle);
+            document.getElementById('counter-stage').addEventListener('click', () => {
+                const order = Object.keys(COUNTER_STYLES), next = order[(order.indexOf(counterStyle) + 1) % order.length];
+                setCounterStyle(next); saveSettings();
+                showMessage(`Брояч: ${COUNTER_STYLES[next]} (докоснете пак за смяна)`);
+            });
 
             // --- Инсталиране ---
             menuInstallBtn.addEventListener('click', startInstall);
