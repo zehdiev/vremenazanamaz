@@ -1239,10 +1239,13 @@
         html[data-mode="dark"] .vz-p { fill: rgba(255, 255, 255, 0.07); }
         html[data-mode="dark"] .vz-ker { fill: rgba(255, 255, 255, 0.20); }
         html[data-mode="dark"] .vz-ring { fill: rgba(255, 255, 255, 0.10); }
+        .vz-pop { fill: rgb(var(--a-rgb, 26, 170, 66)); filter: url(#vzsh); stroke: rgba(255, 255, 255, 0.85); stroke-width: 1.2; }
+        .vz-pop + .vz-sep { display: none; }
         .vz-sep { stroke: rgb(var(--a-rgb, 26, 170, 66)); stroke-width: 1; }
         .vz-label { fill: var(--ink, #15301f); font-weight: 700; text-anchor: middle; dominant-baseline: central; }
         .vz-ker-t { font-weight: 600; opacity: 0.85; }
         .vz-cur-t { fill: var(--now-ink, var(--ink, #15301f)); }
+        .vz-pop-t { fill: #fff; }
         .vz-extra { fill: rgba(var(--a-rgb, 26, 170, 66), 0.30); }
         .vz-third { fill: rgba(var(--g-rgb, 184, 149, 74), 0.40); }
         .vz-xlabel { fill: var(--ink, #15301f); font-size: 8px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
@@ -3105,7 +3108,22 @@
         // --- Изглед на брояча: класически / циферблат / лента ---
         let counterStyle = 'classic', isExtendedTimes = false;
         const COUNTER_STYLES = { classic: 'Класически', dial: 'Циферблат', strip: 'Лента' };
-        const KERAHAT_MIN = 45, ISHRAK_MIN = 60, SABAH_MIN = 60, VIZ_LEAD_MIN = 90, NIGHT_SCALE = 0.5;
+        const KERAHAT_MIN = 45, ISHRAK_MIN = 60, SABAH_MIN = 60, VIZ_LEAD_MIN = 90, NIGHT_SCALE = 0.5, FOCUS_GROW = 1.6, FOCUS_MIN_SHARE = 0.11;
+        const FOCUS_ANIM_MS = 900;
+        let vizAnim = { ctx: '', cur: null, prev: null, t0: 0 }, vizRaf = 0;
+        // Колко е „фокусиран“ всеки период (0…1) — с плавен преход при смяна на времето
+        function focusAmounts(ctx, curId) {
+            const now = performance.now();
+            if (vizAnim.ctx !== ctx) vizAnim = { ctx, cur: curId, prev: null, t0: 0 };
+            else if (vizAnim.cur !== curId) vizAnim = { ctx, cur: curId, prev: vizAnim.cur, t0: now };
+            const raw = vizAnim.t0 ? Math.min(1, (now - vizAnim.t0) / FOCUS_ANIM_MS) : 1;
+            let p = raw;
+            p = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+            const amt = {};
+            if (vizAnim.cur) amt[vizAnim.cur] = p;
+            if (vizAnim.prev && p < 1) amt[vizAnim.prev] = (amt[vizAnim.prev] || 0) + (1 - p);
+            return { amt, animating: raw < 1 };
+        }
         let vizKey = '';
         const vzFmt = (ms) => isAbroad() ? OfflineCalc.formatTzTime(ms, worldLocation.tz) : formatTime(new Date(ms));
         // Допълнителни времена за списъка (за деня D)
@@ -3140,7 +3158,7 @@
             const sabah = Math.max(t.Fajr, t.Sunrise - SABAH_MIN * M);
             const segs = [
                 { a: start, b: t.Fajr, cls: 'night', label: 'Нощ' },
-                { a: t.Fajr, b: sabah, cls: 'p', label: names.Fajr },
+                { a: t.Fajr, b: sabah, cls: 'p', label: `След ${names.Fajr.toLowerCase()}`, k: 'Fajr' },
                 { a: sabah, b: t.Sunrise, cls: 'p', label: 'Сабах' },
                 { a: t.Sunrise, b: t.Sunrise + KERAHAT_MIN * M, cls: 'ker', label: 'Керахат' },
                 { a: t.Sunrise + KERAHAT_MIN * M, b: t.Dhuhr - KERAHAT_MIN * M, cls: 'p', label: 'Духа' },
@@ -3166,19 +3184,48 @@
                 const na = Math.max(start, n.a), nb = Math.min(end, n.b); if (nb > na) nightBars.push({ a: na, b: nb });
             }
             // Нощта (след нощната и преди зората) се свива наполовина — денят получава повече място, стрелката нощем върви по-бавно
-            const knots = [[start, 0]], wsum = [[start, NIGHT_SCALE], [t.Fajr, 1], [Math.min(t.Isha, end), NIGHT_SCALE]];
-            let acc = 0;
-            const bps = [start, t.Fajr, Math.min(t.Isha, end), end];
-            for (let i = 0; i < 3; i++) { acc += (bps[i + 1] - bps[i]) * wsum[i][1]; knots.push([bps[i + 1], acc]); }
+            segs.forEach(g => { g.id = `${g.label}|${g.a}`; });
+            // Периодът след зората се маркира като другите, но с надпис „След зора“ / „След заговеване“
+            const curSeg = isToday ? segs.find(g => now >= g.a && now < g.b) : null;
+            const fo = focusAmounts(`${counterStyle}|${D.toDateString()}|${locationName()}`, curSeg ? curSeg.id : null);
+            segs.forEach(g => { g.focus = fo.amt[g.id] || 0; });
+            const focused = segs.filter(g => g.focus > 0);
+            const bps = [...new Set([start, t.Fajr, Math.min(t.Isha, end), end].concat(...focused.map(g => [Math.max(start, g.a), Math.min(end, g.b)])))].sort((a, b) => a - b);
+            const baseW = (mid) => (mid < t.Fajr || mid >= t.Isha) ? NIGHT_SCALE : 1;
+            const totalBase = (Math.min(t.Fajr, end) - start) * NIGHT_SCALE + (Math.min(t.Isha, end) - t.Fajr) + Math.max(0, end - t.Isha) * NIGHT_SCALE;
+            // текущият период е поне ~11% от циферблата/лентата, за да се чете надписът и при тесните периоди
+            focused.forEach(g => {
+                const a = Math.max(start, g.a), b = Math.min(end, g.b), sb = (b - a) * baseW((a + b) / 2);
+                g.k = sb > 0 ? Math.max(FOCUS_GROW, FOCUS_MIN_SHARE * (totalBase - sb) / ((1 - FOCUS_MIN_SHARE) * sb)) : 1;
+            });
+            const knots = [[start, 0]]; let acc = 0;
+            for (let i = 0; i + 1 < bps.length; i++) {
+                const a = bps[i], b = bps[i + 1], mid = (a + b) / 2;
+                let w = baseW(mid);
+                for (const g of focused) if (mid >= g.a && mid < g.b) w *= 1 + (g.k - 1) * g.focus;
+                acc += (b - a) * w; knots.push([b, acc]);
+            }
             const total = acc;
             const map = (ms) => {
                 if (ms <= start) return 0; if (ms >= end) return 1;
                 for (let i = 1; i < knots.length; i++) if (ms <= knots[i][0]) { const [a, va] = knots[i - 1], [b, vb] = knots[i]; return (va + (ms - a) / (b - a || 1) * (vb - va)) / total; }
                 return 1;
             };
-            return { start, end, map, segs, extras, thirds, lastThirds, nightBars, now: isToday ? now : null };
+            return { start, end, map, cur: curSeg, animating: fo.animating, segs, extras, thirds, lastThirds, nightBars, now: isToday ? now : null };
         }
         const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        // Надпис в период: един ред или два (ако така става по-едър)
+        function vzLabel(label, len, width, maxFs, cls, x, y, rot) {
+            const one = Math.min(maxFs, len / (label.length * 0.64), width / 1.05);
+            const parts = label.split(' '), two = parts.length === 2 ? Math.min(maxFs, len / (Math.max(parts[0].length, parts[1].length) * 0.64), width / 2.3) : 0;
+            const tr = `transform="rotate(${rot.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})"`;
+            if (two >= one * 0.95 && two >= 6.5) {
+                return `<text class="${cls}" style="font-size:${two.toFixed(1)}px" x="${x.toFixed(1)}" y="${y.toFixed(1)}" ${tr}><tspan x="${x.toFixed(1)}" dy="-0.55em">${esc(parts[0])}</tspan><tspan x="${x.toFixed(1)}" dy="1.1em">${esc(parts[1])}</tspan></text>`;
+            }
+            if (one < 6.5) return '';
+            return `<text class="${cls}" style="font-size:${one.toFixed(1)}px" x="${x.toFixed(1)}" y="${y.toFixed(1)}" ${tr}>${esc(label)}</text>`;
+        }
+        const VZ_DEFS = '<defs><filter id="vzsh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="1.5" stdDeviation="2.2" flood-color="#000" flood-opacity="0.35"/></filter></defs>';
         function dialSvg(m) {
             const cx = 200, cy = 200, F = m.map;
             const ang = (f) => Math.PI * (1 - f);
@@ -3205,19 +3252,17 @@
                     s += `<text class="vz-hour" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" transform="rotate(${deg.toFixed(1)} ${lx.toFixed(1)} ${ly.toFixed(1)})">${vzFmt(h0 + i * 3600000).slice(0, 2)}</text>`;
                 }
             }
-            const cur = m.now != null ? m.segs.find(g => m.now >= g.a && m.now < g.b) : null;
-            for (const g of m.segs) {
-                const f1 = F(g.a), f2 = F(g.b), on = g === cur;
-                s += `<path class="vz-seg vz-${g.cls}${on ? ' vz-cur' : ''}" d="${arc(R2, R1, f1, f2)}"/>`;
+            const segOrder = m.segs.filter(g => !g.focus).concat(m.segs.filter(g => g.focus).sort((a, b) => a.focus - b.focus));
+            for (const g of segOrder) {
+                const f1 = F(g.a), f2 = F(g.b), a = g.focus, on = a > 0.5, popped = a > 0.01;
+                s += `<path class="vz-seg vz-${g.cls}${popped ? ' vz-pop' : ''}" style="${popped ? `fill-opacity:${(0.3 + 0.7 * a).toFixed(2)}` : ''}" d="${arc(R2 - 3 * a, R1 + 12 * a, f1, f2)}"/>`;
                 const [ex1, ey1] = pt(R1, f1), [ex2, ey2] = pt(R2, f1);
                 s += `<line class="vz-sep" x1="${ex1.toFixed(1)}" y1="${ey1.toFixed(1)}" x2="${ex2.toFixed(1)}" y2="${ey2.toFixed(1)}"/>`;
                 if (!g.label) continue;
                 const fm = (Math.max(0, f1) + Math.min(1, f2)) / 2, width = (Math.min(1, f2) - Math.max(0, f1)) * Math.PI * 147;
-                let fs = Math.min(12, 52 / (g.label.length * 0.58)); if (g.cls === 'ker') fs = Math.min(fs, 8.5);
-                fs = Math.min(fs, width / 1.05); if (fs < 6.5) continue;
-                const [lx, ly] = pt((R1 + R2) / 2, fm), th = 180 * (1 - fm);
+                const [lx, ly] = pt((R1 + 12 * a + R2 - 3 * a) / 2, fm), th = 180 * (1 - fm);
                 const rot = th > 90 ? 180 - th : -th;
-                s += `<text class="vz-label${on ? ' vz-cur-t' : ''}${g.cls === 'ker' ? ' vz-ker-t' : ''}" style="font-size:${fs.toFixed(1)}px" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" transform="rotate(${rot.toFixed(1)} ${lx.toFixed(1)} ${ly.toFixed(1)})">${esc(g.label)}</text>`;
+                s += vzLabel(g.label, 52 + 14 * a, width, g.cls === 'ker' ? 8.5 + 1.5 * a : 12 + 2 * a, `vz-label${on ? ' vz-pop-t' : ''}${g.cls === 'ker' ? ' vz-ker-t' : ''}`, lx, ly, rot);
             }
             // допълнителни: ишрак, евабин, последната трета на нощта
             m.lastThirds.forEach(x => { s += `<path class="vz-third" d="${arc(R3, R2 - 1, F(x.a), F(x.b))}"/>`; });
@@ -3236,7 +3281,7 @@
                 const f = F(m.now);
                 if (f >= 0 && f <= 1) { const [x1, y1] = pt(RH + 2, f), [x2, y2] = pt(R0 - 2, f); s += `<line class="vz-needle" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/><circle class="vz-needle-dot" cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" r="3.2"/>`; }
             }
-            return `<svg viewBox="0 0 400 204" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${s}</svg>`;
+            return `<svg viewBox="0 0 400 204" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${VZ_DEFS}${s}</svg>`;
         }
         function stripSvg(m) {
             const W = 400, X = (ms) => m.map(ms) * W;
@@ -3248,15 +3293,14 @@
                 s += `<line class="vz-tick" x1="${x.toFixed(1)}" y1="${yT}" x2="${x.toFixed(1)}" y2="${yT - (even ? 5 : 3)}"/>`;
                 if (i > 0 && i < 24 && x > 8 && x < W - 8 && x - lastX >= 16 && (x - lastX >= 20 || even)) { lastX = x; s += `<text class="vz-hour" x="${x.toFixed(1)}" y="${yT - 7}">${hh}</text>`; }
             }
-            const cur = m.now != null ? m.segs.find(g => m.now >= g.a && m.now < g.b) : null;
-            for (const g of m.segs) {
-                const x1 = X(g.a), x2 = X(g.b), w = x2 - x1, on = g === cur; if (w <= 0) continue;
-                s += `<rect class="vz-seg vz-${g.cls}${on ? ' vz-cur' : ''}" x="${x1.toFixed(1)}" y="${yM}" width="${w.toFixed(1)}" height="${hM}"/><line class="vz-sep" x1="${x1.toFixed(1)}" y1="${yM}" x2="${x1.toFixed(1)}" y2="${yM + hM}"/>`;
+            const segOrder = m.segs.filter(g => !g.focus).concat(m.segs.filter(g => g.focus).sort((a, b) => a.focus - b.focus));
+            for (const g of segOrder) {
+                const x1 = X(g.a), x2 = X(g.b), w = x2 - x1, a = g.focus, on = a > 0.5, popped = a > 0.01; if (w <= 0) continue;
+                s += popped ? `<rect class="vz-seg vz-${g.cls} vz-pop" style="fill-opacity:${(0.3 + 0.7 * a).toFixed(2)}" x="${(x1 - 1.5 * a).toFixed(1)}" y="${(yM - 5 * a).toFixed(1)}" width="${(w + 3 * a).toFixed(1)}" height="${(hM + 10 * a).toFixed(1)}" rx="${(4 * a).toFixed(1)}"/>`
+                    : `<rect class="vz-seg vz-${g.cls}${on ? ' vz-cur' : ''}" x="${x1.toFixed(1)}" y="${yM}" width="${w.toFixed(1)}" height="${hM}"/><line class="vz-sep" x1="${x1.toFixed(1)}" y1="${yM}" x2="${x1.toFixed(1)}" y2="${yM + hM}"/>`;
                 if (!g.label) continue;
-                let fs = Math.min(12, 60 / (g.label.length * 0.58)); if (g.cls === 'ker') fs = Math.min(fs, 8.5);
-                fs = Math.min(fs, w / 1.05); if (fs < 6.5) continue;
                 const cx = x1 + w / 2, cy = yM + hM / 2;
-                s += `<text class="vz-label${on ? ' vz-cur-t' : ''}${g.cls === 'ker' ? ' vz-ker-t' : ''}" style="font-size:${fs.toFixed(1)}px" x="${cx.toFixed(1)}" y="${cy.toFixed(1)}" transform="rotate(-90 ${cx.toFixed(1)} ${cy.toFixed(1)})">${esc(g.label)}</text>`;
+                s += vzLabel(g.label, 60 + 10 * a, w, g.cls === 'ker' ? 8.5 + 1.5 * a : 12 + 2 * a, `vz-label${on ? ' vz-pop-t' : ''}${g.cls === 'ker' ? ' vz-ker-t' : ''}`, cx, cy, -90);
             }
             m.extras.forEach(x => {
                 const x1 = X(x.a), x2 = X(x.b); if (x2 - x1 <= 0) return;
@@ -3270,17 +3314,18 @@
                 s += `<line class="vz-tmark" x1="${xx.toFixed(1)}" y1="${yN - 3}" x2="${xx.toFixed(1)}" y2="${yN + 1}"/><text class="vz-tlabel" x="${xx.toFixed(1)}" y="${yN + 6}">${x.label}</text>` + (tight ? '' : `<text class="vz-ttime" x="${xx.toFixed(1)}" y="${yN + 16}" text-anchor="middle">${x.time}</text>`);
             });
             if (m.now != null) { const xn = X(m.now); if (m.now >= m.start && m.now <= m.end) s += `<line class="vz-needle" x1="${xn.toFixed(1)}" y1="2" x2="${xn.toFixed(1)}" y2="${H - 1}"/><circle class="vz-needle-dot" cx="${xn.toFixed(1)}" cy="2.5" r="2.6"/>`; }
-            return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${s}</svg>`;
+            return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${VZ_DEFS}${s}</svg>`;
         }
         function renderCounterViz(force) {
             const box = document.getElementById('counter-viz');
             document.documentElement.dataset.counter = counterStyle;
             if (counterStyle === 'classic') { if (box.innerHTML) { box.innerHTML = ''; vizKey = ''; } return; }
-            const key = `${counterStyle}|${Math.floor(Date.now() / 30000)}|${selectedDate.toDateString()}|${locationName()}|${isClassicalNamesActive}|${JSON.stringify(customPrayerAdjustments)}`;
+            const key = `${counterStyle}|${Math.floor(Date.now() / 5000)}|${selectedDate.toDateString()}|${locationName()}|${isClassicalNamesActive}|${JSON.stringify(customPrayerAdjustments)}`;
             if (!force && key === vizKey) return;
             vizKey = key;
             let m = null; try { m = vizModel(); } catch (e) { console.warn(e); }
             box.innerHTML = m ? (counterStyle === 'dial' ? dialSvg(m) : stripSvg(m)) : '';
+            if (m && m.animating && !vizRaf) vizRaf = requestAnimationFrame(() => { vizRaf = 0; renderCounterViz(true); });
         }
         function setCounterStyle(st) {
             counterStyle = COUNTER_STYLES[st] ? st : 'classic';
