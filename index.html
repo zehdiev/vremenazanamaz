@@ -1173,16 +1173,19 @@
         }
 
         /* място в чужбина */
-        .loc-seg { grid-template-columns: 1fr 1fr; margin-top: 0; }
+        .loc-seg { grid-template-columns: minmax(0,1fr) minmax(0,1fr); margin-top: 0; }
+        .loc-seg button { white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+        #world-panel, #world-panel * { box-sizing: border-box; max-width: 100%; }
+        #world-panel { min-width: 0; overflow-x: hidden; }
         .world-gps { width: 100%; margin-bottom: 0.6rem; }
         .world-search { width: 100%; padding: 0.6rem 0.8rem; border-radius: 0.8rem; margin-bottom: 0.5rem; background: var(--surf-1, #fff); color: var(--ink); border: 1px solid var(--gold-soft); font-size: 16px; }
         .world-country { font-family: 'Oswald', 'Arial Narrow', sans-serif; text-transform: uppercase; letter-spacing: 0.05em; color: var(--title, var(--emerald)); font-size: 0.75rem; font-weight: 600; margin: 0.5rem 0.3rem 0.15rem; }
         .world-manual { margin-top: 0.6rem; padding: 0.5rem 0.7rem; border-radius: 0.8rem; background: var(--surf-2, rgba(255,255,255,0.4)); border: 1px solid var(--surf-border, rgba(255,255,255,0.7)); }
         .world-manual summary { cursor: pointer; font-weight: 600; color: var(--ink); }
-        .world-manual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-top: 0.5rem; }
-        .world-manual-grid label { display: flex; flex-direction: column; font-size: 0.75rem; color: var(--ink-soft); gap: 0.2rem; }
+        .world-manual-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0.45rem; margin-top: 0.5rem; }
+        .world-manual-grid label { min-width: 0; display: flex; flex-direction: column; font-size: 0.75rem; color: var(--ink-soft); gap: 0.2rem; }
         .world-manual-grid label:first-child, .world-manual-grid label:last-child { grid-column: 1 / -1; }
-        .world-manual-grid input, .world-manual-grid select { padding: 0.45rem 0.55rem; border-radius: 0.6rem; border: 1px solid var(--gold-soft); background: var(--surf-1, #fff); color: var(--ink); font-size: 16px; }
+        .world-manual-grid input, .world-manual-grid select { padding: 0.45rem 0.55rem; border-radius: 0.6rem; border: 1px solid var(--gold-soft); background: var(--surf-1, #fff); color: var(--ink); font-size: 16px; width: 100%; min-width: 0; text-overflow: ellipsis; }
         .highlat-note { font-size: 0.72rem; color: var(--ink-soft); text-align: center; margin: -0.15rem 0 0.25rem; }
         .highlat-note.hidden { display: none; }
 
