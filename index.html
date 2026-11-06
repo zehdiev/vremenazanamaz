@@ -3105,7 +3105,7 @@
         // --- Изглед на брояча: класически / циферблат / лента ---
         let counterStyle = 'classic', isExtendedTimes = false;
         const COUNTER_STYLES = { classic: 'Класически', dial: 'Циферблат', strip: 'Лента' };
-        const KERAHAT_MIN = 45, ISHRAK_MIN = 60, SABAH_MIN = 60, VIZ_LEAD_MIN = 90;
+        const KERAHAT_MIN = 45, ISHRAK_MIN = 60, SABAH_MIN = 60, VIZ_LEAD_MIN = 90, NIGHT_SCALE = 0.5;
         let vizKey = '';
         const vzFmt = (ms) => isAbroad() ? OfflineCalc.formatTzTime(ms, worldLocation.tz) : formatTime(new Date(ms));
         // Допълнителни времена за списъка (за деня D)
@@ -3165,11 +3165,22 @@
                 const la = Math.max(start, n.a + L * 2 / 3), lb = Math.min(end, n.b); if (lb > la) lastThirds.push({ a: la, b: lb });
                 const na = Math.max(start, n.a), nb = Math.min(end, n.b); if (nb > na) nightBars.push({ a: na, b: nb });
             }
-            return { start, end, segs, extras, thirds, lastThirds, nightBars, now: isToday ? now : null };
+            // Нощта (след нощната и преди зората) се свива наполовина — денят получава повече място, стрелката нощем върви по-бавно
+            const knots = [[start, 0]], wsum = [[start, NIGHT_SCALE], [t.Fajr, 1], [Math.min(t.Isha, end), NIGHT_SCALE]];
+            let acc = 0;
+            const bps = [start, t.Fajr, Math.min(t.Isha, end), end];
+            for (let i = 0; i < 3; i++) { acc += (bps[i + 1] - bps[i]) * wsum[i][1]; knots.push([bps[i + 1], acc]); }
+            const total = acc;
+            const map = (ms) => {
+                if (ms <= start) return 0; if (ms >= end) return 1;
+                for (let i = 1; i < knots.length; i++) if (ms <= knots[i][0]) { const [a, va] = knots[i - 1], [b, vb] = knots[i]; return (va + (ms - a) / (b - a || 1) * (vb - va)) / total; }
+                return 1;
+            };
+            return { start, end, map, segs, extras, thirds, lastThirds, nightBars, now: isToday ? now : null };
         }
         const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
         function dialSvg(m) {
-            const cx = 200, cy = 200, F = (ms) => (ms - m.start) / (m.end - m.start);
+            const cx = 200, cy = 200, F = m.map;
             const ang = (f) => Math.PI * (1 - f);
             const pt = (r, f) => [cx + r * Math.cos(ang(f)), cy - r * Math.sin(ang(f))];
             const arc = (r1, r2, f1, f2) => {
@@ -3182,10 +3193,14 @@
             let s = `<path class="vz-ring" d="${arc(R1, R0, 0, 1)}"/>`;
             // часове
             const h0 = m.start;
+            let lastLab = -1;
             for (let i = 0; i <= 24; i++) {
-                const f = i / 24, [x1, y1] = pt(R0 - 3, f), [x2, y2] = pt(R0 - (i % 2 ? 6 : 9), f);
+                const f = F(h0 + i * 3600000), hr = Number(vzFmt(h0 + i * 3600000).slice(0, 2)), even = hr % 2 === 0;
+                const [x1, y1] = pt(R0 - 3, f), [x2, y2] = pt(R0 - (even ? 9 : 6), f);
                 s += `<line class="vz-tick" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
-                if (i % 3 === 0 && i > 0 && i < 24) {
+                const gap = (f - lastLab) * Math.PI * 187;
+                if (i > 0 && i < 24 && f > 0.03 && f < 0.97 && gap >= 21 && (gap >= 26 || even)) {
+                    lastLab = f;
                     const [lx, ly] = pt((R0 + R1) / 2 - 2, f); const deg = 90 - 180 * (1 - f);
                     s += `<text class="vz-hour" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" transform="rotate(${deg.toFixed(1)} ${lx.toFixed(1)} ${ly.toFixed(1)})">${vzFmt(h0 + i * 3600000).slice(0, 2)}</text>`;
                 }
@@ -3224,12 +3239,14 @@
             return `<svg viewBox="0 0 400 204" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${s}</svg>`;
         }
         function stripSvg(m) {
-            const W = 400, X = (ms) => Math.max(0, Math.min(W, (ms - m.start) / (m.end - m.start) * W));
+            const W = 400, X = (ms) => m.map(ms) * W;
             const yT = 15, yM = 17, hM = 66, yE = 86, hE = 15, yN = 104, hN = 22, H = 128;
             let s = `<rect class="vz-ring" x="0" y="0" width="${W}" height="${yT}" rx="3"/>`;
+            let lastX = -99;
             for (let i = 0; i <= 24; i++) {
-                const x = i * W / 24; s += `<line class="vz-tick" x1="${x.toFixed(1)}" y1="${yT}" x2="${x.toFixed(1)}" y2="${yT - (i % 2 ? 3 : 5)}"/>`;
-                if (i % 2 === 0 && i > 0 && i < 24) s += `<text class="vz-hour" x="${x.toFixed(1)}" y="${yT - 7}">${vzFmt(m.start + i * 3600000).slice(0, 2)}</text>`;
+                const ms = m.start + i * 3600000, x = X(ms), hh = vzFmt(ms).slice(0, 2), even = Number(hh) % 2 === 0;
+                s += `<line class="vz-tick" x1="${x.toFixed(1)}" y1="${yT}" x2="${x.toFixed(1)}" y2="${yT - (even ? 5 : 3)}"/>`;
+                if (i > 0 && i < 24 && x > 8 && x < W - 8 && x - lastX >= 16 && (x - lastX >= 20 || even)) { lastX = x; s += `<text class="vz-hour" x="${x.toFixed(1)}" y="${yT - 7}">${hh}</text>`; }
             }
             const cur = m.now != null ? m.segs.find(g => m.now >= g.a && m.now < g.b) : null;
             for (const g of m.segs) {
@@ -3247,8 +3264,10 @@
             });
             m.nightBars.forEach(x => { s += `<rect class="vz-night" x="${X(x.a).toFixed(1)}" y="${yN}" width="${(X(x.b) - X(x.a)).toFixed(1)}" height="${hN}" rx="3"/>`; });
             m.lastThirds.forEach(x => { s += `<rect class="vz-third" x="${X(x.a).toFixed(1)}" y="${yN}" width="${(X(x.b) - X(x.a)).toFixed(1)}" height="${hN}" rx="3"/>`; });
-            m.thirds.forEach(x => {
-                const xx = X(x.t); s += `<line class="vz-tmark" x1="${xx.toFixed(1)}" y1="${yN - 3}" x2="${xx.toFixed(1)}" y2="${yN + 1}"/><text class="vz-tlabel" x="${xx.toFixed(1)}" y="${yN + 6}">${x.label}</text><text class="vz-ttime" x="${xx.toFixed(1)}" y="${yN + 16}" text-anchor="middle">${x.time}</text>`;
+            m.thirds.forEach((x, i) => {
+                const xx = X(x.t), prev = m.thirds[i - 1], next = m.thirds[i + 1];
+                const tight = x.label === '½' && ((prev && xx - X(prev.t) < 24) || (next && X(next.t) - xx < 24));
+                s += `<line class="vz-tmark" x1="${xx.toFixed(1)}" y1="${yN - 3}" x2="${xx.toFixed(1)}" y2="${yN + 1}"/><text class="vz-tlabel" x="${xx.toFixed(1)}" y="${yN + 6}">${x.label}</text>` + (tight ? '' : `<text class="vz-ttime" x="${xx.toFixed(1)}" y="${yN + 16}" text-anchor="middle">${x.time}</text>`);
             });
             if (m.now != null) { const xn = X(m.now); if (m.now >= m.start && m.now <= m.end) s += `<line class="vz-needle" x1="${xn.toFixed(1)}" y1="2" x2="${xn.toFixed(1)}" y2="${H - 1}"/><circle class="vz-needle-dot" cx="${xn.toFixed(1)}" cy="2.5" r="2.6"/>`; }
             return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${s}</svg>`;
