@@ -3407,7 +3407,7 @@
                         showMessage(perm === 'denied' ? 'Известията са забранени — разрешете ги за сайта от настройките на браузъра или телефона.' : 'Няма разрешение за известия.');
                         return;
                     }
-                    isNotifyActive = true; saveSettings();
+                    isNotifyActive = true; saveSettings(); statsUse('izvestiya-vkl', 'Включени тихи известия');
                     await refreshNotify(true); registerPeriodicNotify();
                     showMessage('Тихите известия са включени.');
                 } else {
@@ -3782,6 +3782,7 @@
             deferredInstallPrompt = event;
             updateInstallUI();
         });
+        window.addEventListener('online', () => setTimeout(statsFlush, 2000));
         window.addEventListener('appinstalled', () => {
             deferredInstallPrompt = null;
             installBanner.classList.add('hidden');
@@ -3838,6 +3839,7 @@
             qiblaTurnEl.classList.toggle('ok', aligned);
             if (aligned) {
                 qiblaTurnEl.textContent = 'Вие сте с лице към къбле';
+                if (!wasAligned) statsUse('kuble-namereno', 'Компас – намерено къбле');
                 if (!wasAligned && navigator.vibrate) { try { navigator.vibrate(60); } catch (e) { /* няма вибрация */ } }
             } else {
                 qiblaTurnEl.textContent = d > 0 ? `Завъртете се надясно ${Math.round(d)}°` : `Завъртете се наляво ${Math.round(-d)}°`;
@@ -3862,6 +3864,7 @@
             const screenAngle = (screen.orientation && typeof screen.orientation.angle === 'number') ? screen.orientation.angle : (window.orientation || 0);
             h = (h + screenAngle + declinationAt(...qiblaCoords()) + 720) % 360;
             if (!compassGotData) {
+                statsUse('kompas-raboti', 'Компас – работи');
                 compassGotData = true;
                 clearTimeout(compassTimer);
                 qiblaGuideBox.classList.remove('emph');
@@ -3877,6 +3880,7 @@
         }
 
         function showNoCompass(reason) {
+            statsUse(reason === 'denied' ? 'kompas-otkazan' : 'kompas-nyama', reason === 'denied' ? 'Компас – отказано разрешение' : 'Компас – няма компас');
             stopCompass(false);
             renderQiblaDial(null);
             qiblaGuideBox.classList.add('emph');
@@ -4002,6 +4006,7 @@
         }
 
         function showQiblaView() {
+            statsUse('kuble', 'Къбле – отворен екран');
             prayerTimesView.classList.add('hidden');
             sacredEventsView.classList.add('hidden');
             hideMoonView();
@@ -4035,23 +4040,80 @@
             if (/Android/i.test(navigator.userAgent)) return 'android';
             return 'kompyutar';
         }
+        const APP_VERSION = 'v28';   // сменяйте заедно с VERSION в sw.js — вижда се кои устройства са обновени
+        // Ползване на функции: всяка се отчита най-много веднъж на ден от устройство (без лични данни)
+        function statsUseState() {
+            const today = formatDateForInputAndLookup(new Date());
+            let st = null;
+            try { st = JSON.parse(localStorage.getItem('prayerApp_statsUse') || 'null'); } catch (e) { st = null; }
+            if (!st || st.day !== today) st = { day: today, sent: [], pending: {} };
+            return st;
+        }
+        function statsUseSave(st) { try { localStorage.setItem('prayerApp_statsUse', JSON.stringify(st)); } catch (e) { /* без запазване */ } }
+        function statsUse(key, title) {
+            try {
+                const st = statsUseState();
+                if (st.sent.includes(key) || st.pending[key]) return;
+                st.pending[key] = title; statsUseSave(st); statsFlush();
+            } catch (e) { /* статистиката не е важна */ }
+        }
+        function statsFlush() {
+            if (!window.goatcounter || typeof window.goatcounter.count !== 'function' || !navigator.onLine) return;
+            const st = statsUseState();
+            for (const [key, title] of Object.entries(st.pending)) {
+                try { window.goatcounter.count({ path: 'f-' + key, title: 'Функция: ' + title, event: true }); st.sent.push(key); delete st.pending[key]; } catch (e) { break; }
+            }
+            statsUseSave(st);
+        }
+        function statsCountry() {
+            if (!isAbroad()) return 'Bulgaria';
+            if (worldLocation.source === 'list') return worldLocation.country;
+            let best = null, bd = Infinity;
+            for (const c of WORLD_CITIES) { const d = distKm(worldLocation.lat, worldLocation.lon, c[2], c[3]); if (d < bd) { bd = d; best = c; } }
+            return best && bd < 500 ? best[1] : 'друга';
+        }
         function statsSendDaily() {
             if (!window.goatcounter || typeof window.goatcounter.count !== 'function' || !navigator.onLine) return;
             const today = formatDateForInputAndLookup(new Date());
             let last = null;
             try { last = localStorage.getItem('prayerApp_statsDay'); } catch (e) { /* без запазване */ }
-            if (last === today) return;
+            if (last === today) { statsFlush(); return; }
             try {
                 const gc = window.goatcounter;
                 gc.count({ path: '/', title: 'Времена за намаз' });                                   // активно устройство днес
                 gc.count({ path: isStandalone() ? 'instalirano' : 'v-brauzara', title: isStandalone() ? 'Инсталирано приложение' : 'Отворено в браузъра', event: true });
                 gc.count({ path: 'ustroystvo-' + statsPlatform(), title: 'Устройство: ' + statsPlatform(), event: true });
                 if (STATS.countCity) {
-                    const nm = isAbroad() ? `chuzhbina-${worldLocation.country}-${worldLocation.source === 'list' ? worldLocation.name : worldLocation.source}` : 'grad-' + selectedCity;
-                    gc.count({ path: nm, title: isAbroad() ? `Чужбина: ${worldLocation.country} · ${worldLocation.name}` : 'Град: ' + selectedCity, event: true });
+                    const country = statsCountry();
+                    const nm = isAbroad() ? `chuzhbina-${country}-${worldLocation.source === 'list' ? worldLocation.name : worldLocation.source}` : 'grad-' + selectedCity;
+                    gc.count({ path: nm, title: isAbroad() ? `Чужбина: ${country} · ${worldLocation.source === 'list' ? worldLocation.name : (worldLocation.source === 'gps' ? 'по GPS' : 'ръчни координати')}` : 'Град: ' + selectedCity, event: true });
+                    if (isAbroad()) gc.count({ path: 'darzhava-' + country, title: 'Държава: ' + country, event: true });
+                }
+                gc.count({ path: isAbroad() ? 'lokaciya-chuzhbina-' + worldLocation.source : 'lokaciya-bulgaria', title: isAbroad() ? 'Местоположение: чужбина (' + ({ list: 'от списъка', gps: 'GPS', manual: 'ръчно' }[worldLocation.source] || worldLocation.source) + ')' : 'Местоположение: България', event: true });
+                // Настройки на устройството днес
+                const yn = (v) => v ? 'da' : 'ne', ynBg = (v) => v ? 'да' : 'не';
+                const themeName = (THEMES.find(t => t.id === appTheme) || { name: appTheme }).name;
+                const snap = [
+                    [`verziya-${APP_VERSION}`, `Версия: ${APP_VERSION}`],
+                    [`n-tema-${appTheme}`, `Тема: ${themeName}`],
+                    [`n-rezhim-${appThemeMode}`, `Режим: ${MODE_NAMES[appThemeMode] || appThemeMode}`],
+                    [`n-broyach-${counterStyle}`, `Брояч: ${COUNTER_STYLES[counterStyle]}`],
+                    [`n-imena-${isClassicalNamesActive ? 'klasicheski' : 'obiknoveni'}`, `Имена: ${isClassicalNamesActive ? 'класически' : 'обикновени'}`],
+                    [`n-razshireni-${yn(isExtendedTimes)}`, `Разширени времена: ${ynBg(isExtendedTimes)}`],
+                    [`n-izvestiya-${yn(isNotifyActive)}`, `Тихи известия: ${ynBg(isNotifyActive)}`],
+                    [`n-obratno-broene-${yn(isCountdownMode)}`, `Обратно броене в списъка: ${ynBg(isCountdownMode)}`],
+                    [`n-ekran-${yn(isWakeLockActive)}`, `Екранът не угасва: ${ynBg(isWakeLockActive)}`],
+                    [`n-korekcii-${yn(Object.values(customPrayerAdjustments).some(v => Number(v) !== 0))}`, `Ръчни корекции: ${ynBg(Object.values(customPrayerAdjustments).some(v => Number(v) !== 0))}`],
+                ];
+                // настройките се отчитат веднъж седмично — пестим от лимита на GoatCounter
+                let lastSnap = 0; try { lastSnap = Number(localStorage.getItem('prayerApp_statsSnap')) || 0; } catch (e) { /* няма */ }
+                if (Date.now() - lastSnap > 6.5 * 86400000) {
+                    snap.forEach(([path, title]) => gc.count({ path, title, event: true }));
+                    try { localStorage.setItem('prayerApp_statsSnap', String(Date.now())); } catch (e) { /* без запазване */ }
                 }
                 try { localStorage.setItem('prayerApp_statsDay', today); } catch (e) { /* без запазване */ }
             } catch (e) { console.warn('Статистиката не се изпрати:', e); }
+            statsFlush();
         }
         function statsLoad() {
             if (!/^https?:$/.test(location.protocol)) return;   // не броим при отваряне като файл
@@ -4106,6 +4168,7 @@
 
         // --- Смяна на деня със стрелките (и с плъзгане) ---
         function shiftDay(n) {
+            statsUse('dni-strelki', 'Смяна на деня със стрелките');
             selectedDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + n);
             isCustomDateSelected = selectedDate.toDateString() !== new Date().toDateString();
             if (!isCustomDateSelected) selectedDate = new Date();
@@ -4181,7 +4244,7 @@
             if (!moonView.classList.contains('hidden')) renderMoonView();
             saveSettings();
         }
-        function chooseWorld(loc) { worldLocation = loc; applyLocationChange(); }
+        function chooseWorld(loc) { statsUse('lokaciya-' + loc.source, 'Избор на място в чужбина: ' + ({ list: 'от списъка', gps: 'GPS', manual: 'ръчно' }[loc.source] || loc.source)); worldLocation = loc; applyLocationChange(); }
         const WORLD_ALIASES = {
             "Истанбул":"Istanbul İstanbul Constantinople Цариград","Анкара":"Ankara","Измир":"Izmir İzmir Smyrna","Бурса":"Bursa","Одрин":"Edirne Adrianople Одрин Едирне","Лозенград":"Kirklareli Kırklareli Къркларели",
             "Текирдаг":"Tekirdag Tekirdağ Родосто","Чанаккале":"Canakkale Çanakkale","Балъкесир":"Balikesir Balıkesir","Измит (Коджаели)":"Izmit İzmit Kocaeli","Адапазаръ (Сакария)":"Adapazari Adapazarı Sakarya","Ялова":"Yalova",
@@ -4230,7 +4293,7 @@
         }
         function initWorldPanel() {
             document.getElementById('loc-seg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setLocTab(b.dataset.loc); });
-            document.getElementById('world-search').addEventListener('input', renderWorldList);
+            document.getElementById('world-search').addEventListener('input', () => { statsUse('tarsene-grad', 'Търсене на град в чужбина'); renderWorldList(); });
             document.getElementById('world-list').addEventListener('click', (e) => {
                 const it = e.target.closest('[data-wi]'); if (!it) return;
                 const c = WORLD_CITIES[+it.dataset.wi];
@@ -4242,6 +4305,7 @@
                 navigator.geolocation.getCurrentPosition((pos) => {
                     btn.textContent = '📍 Моето местоположение';
                     const lat = +pos.coords.latitude.toFixed(4), lon = +pos.coords.longitude.toFixed(4);
+                    statsUse('gps-buton', 'Бутон „Моето местоположение“');
                     if (inBulgaria(lat, lon)) {   // в България — най-близкият град от календара на Мюфтийството
                         let best = 'София', bd = Infinity;
                         for (const [nm, [a, o]] of Object.entries(cityCoords)) { const dd = distKm(lat, lon, a, o); if (dd < bd) { bd = dd; best = nm; } }
@@ -4357,6 +4421,7 @@
             document.getElementById('moon-details').dataset.city = selectedCity;
         }
         function showMoonView(date) {
+            statsUse('luna', 'Фази на Луната');
             moonDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
             prayerTimesView.classList.add('hidden');
             sacredEventsView.classList.add('hidden');
@@ -4391,6 +4456,7 @@
         }
 
         async function showSacredEventsView() {
+            statsUse('svesheni-dni', 'Свещени дни');
             prayerTimesView.classList.add('hidden');
             hideQiblaView();
             hideMoonView();
@@ -4720,7 +4786,7 @@
             navQiblaBtn.addEventListener('click', () => { if (!qiblaView.classList.contains('hidden')) return; showQiblaView(); });
             qiblaStartBtn.addEventListener('click', () => { if (compassActive) stopCompass(true); else startCompass(); });
             qiblaLocationBtn.addEventListener('click', toggleQiblaLocation);
-            qiblaGuideToggle.addEventListener('click', () => { updateQiblaInfo(); qiblaGuideModal.classList.remove('hidden'); qiblaGuideList.scrollTop = 0; });
+            qiblaGuideToggle.addEventListener('click', () => { statsUse('kuble-bez-kompas', 'Къбле без компас – упътване'); updateQiblaInfo(); qiblaGuideModal.classList.remove('hidden'); qiblaGuideList.scrollTop = 0; });
             document.getElementById('close-qibla-guide-btn').addEventListener('click', () => qiblaGuideModal.classList.add('hidden'));
             qiblaGuideModal.addEventListener('click', (e) => { if (e.target === qiblaGuideModal) qiblaGuideModal.classList.add('hidden'); });
             // Дни напред/назад
@@ -4749,7 +4815,7 @@
             document.getElementById('menu-theme').addEventListener('click', () => { closeMenu(); openThemePicker(); });
             document.getElementById('theme-grid').addEventListener('click', (e) => {
                 const card = e.target.closest('.theme-card'); if (!card) return;
-                appTheme = card.dataset.themeId; applyTheme(); saveSettings(); renderThemePicker();
+                appTheme = card.dataset.themeId; applyTheme(); saveSettings(); renderThemePicker(); statsUse('tema-smyana', 'Смяна на темата');
             });
             document.getElementById('mode-seg').addEventListener('click', (e) => {
                 const b = e.target.closest('button'); if (!b) return;
@@ -4824,6 +4890,7 @@
             });
             setCounterStyle(counterStyle);
             document.getElementById('counter-stage').addEventListener('click', () => {
+                statsUse('broyach-dokosvane', 'Смяна на брояча с докосване');
                 const order = Object.keys(COUNTER_STYLES), next = order[(order.indexOf(counterStyle) + 1) % order.length];
                 setCounterStyle(next); saveSettings();
                 showMessage(`Брояч: ${COUNTER_STYLES[next]} (докоснете пак за смяна)`);
