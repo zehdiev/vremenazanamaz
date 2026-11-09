@@ -945,7 +945,7 @@
             gap: clamp(0.35rem, 1.2dvh, 1rem);
             padding-top: clamp(0.75rem, 2dvh, 1.25rem); padding-bottom: clamp(0.5rem, 1.5dvh, 1rem);
         }
-        #prayer-times-view:not(.hidden), #sacred-events-view:not(.hidden), #qibla-view:not(.hidden), #moon-view:not(.hidden) {
+        #prayer-times-view:not(.hidden), #sacred-events-view:not(.hidden), #qibla-view:not(.hidden), #moon-view:not(.hidden), #clock-view:not(.hidden) {
             flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden;
             scrollbar-width: none;
         }
@@ -1201,6 +1201,49 @@
         .extra-name small { font-weight: 500; font-size: 0.68rem; opacity: 0.75; overflow: hidden; text-overflow: ellipsis; }
         .extra-time { font-weight: 700; font-size: 0.85rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
         #counter-stage { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+        /* часовник 1–12 / 13–24 */
+        #clock-view:not(.hidden) { overflow: hidden; }
+        .clock-top { flex-shrink: 0; gap: 0.2rem; }
+        .clock-loc { font-size: 0.8rem; font-weight: 600; color: var(--ink-soft); }
+        .clock-wrap { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0.3rem 0; }
+        #clock-svg { width: 100%; height: 100%; max-width: 100%; max-height: 100%; display: block; overflow: visible; font-family: 'Inter', system-ui, sans-serif; }
+        .clock-note { flex-shrink: 0; text-align: center; font-size: 0.72rem; color: var(--ink-soft); padding-bottom: 0.2rem; }
+        #current-time { cursor: pointer; border-radius: 0.4rem; }
+        #current-time:hover { background: rgba(var(--p-rgb, 8, 63, 48), 0.08); }
+        :root { --ck-f1: var(--cream, #f8f5e9); --ck-f2: color-mix(in srgb, var(--cream, #f8f5e9) 55%, rgb(var(--g-rgb, 184, 149, 74)) 45%);
+            --ck-day: color-mix(in srgb, var(--cream, #f8f5e9) 75%, #fff); --ck-night: color-mix(in srgb, rgb(var(--g-rgb, 184, 149, 74)) 55%, var(--cream, #f8f5e9));
+            --ck-ker: color-mix(in srgb, rgb(var(--p-rgb, 8, 63, 48)) 55%, var(--cream, #f8f5e9)); --ck-bezel: #1a1a1a; --ck-glow: rgba(255, 243, 196, 0.95); }
+        html[data-mode="dark"] { --ck-f1: color-mix(in srgb, rgb(var(--d-rgb, 10, 30, 22)) 80%, #fff); --ck-f2: rgb(var(--d-rgb, 10, 30, 22));
+            --ck-day: rgba(255, 255, 255, 0.16); --ck-night: rgba(255, 255, 255, 0.07); --ck-ker: rgba(255, 255, 255, 0.3); --ck-bezel: #050505; --ck-glow: rgba(255, 236, 170, 0.7); }
+        .ck-f1 { stop-color: var(--ck-f1); } .ck-f2 { stop-color: var(--ck-f2); }
+        .ck-bezel { fill: var(--ck-bezel); }
+        .ck-tick { stroke: var(--ink); stroke-width: 2.5; } .ck-tick.big { stroke-width: 6; }
+        .ck-seg { stroke: var(--ck-f1); stroke-width: 1.5; }
+        .ck-d { fill: var(--ck-day); } .ck-n { fill: var(--ck-night); } .ck-k { fill: var(--ck-ker); }
+        .ck-cur { fill: var(--green); stroke: #fff; stroke-width: 2; }
+        .ck-lab { fill: var(--ink); font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+        .ck-lab-on { fill: #fff; font-weight: 800; } .ck-lab-k { fill: #fff; } .ck-lab-t { font-weight: 800; }
+        .ck-sub-x { fill: rgb(var(--p-rgb, 8, 63, 48)); opacity: 0.75; } .ck-sub-t { fill: var(--gold); }
+        .ck-third { stroke: var(--ink); stroke-width: 1.6; stroke-dasharray: 3 2; }
+        .ck-ring { transition: opacity 0.9s, filter 0.9s; }
+        .ck-off { opacity: 0.32; filter: saturate(0.25); }
+        .ck-in { animation: ckIn 0.9s ease; } .ck-out { animation: ckOut 0.9s ease; }
+        @keyframes ckIn { from { opacity: 0.32; filter: saturate(0.25); } to { opacity: 1; filter: none; } }
+        @keyframes ckOut { from { opacity: 1; filter: none; } to { opacity: 0.32; filter: saturate(0.25); } }
+        .ck-glow circle { fill: none; stroke: var(--ck-glow); filter: url(#ck-gl); }
+        .ck-num { font-weight: 800; text-anchor: middle; dominant-baseline: central; transition: opacity 0.9s; }
+        .ck-num-am { fill: var(--ink); font-size: 30px; opacity: 0.35; } .ck-num-am.ck-num-on { font-size: 36px; opacity: 1; }
+        .ck-num-pm { fill: var(--green); font-size: 14px; opacity: 0.45; } .ck-num-pm.ck-num-on { font-size: 17px; opacity: 1; }
+        .ck-hand { stroke: var(--ink); stroke-linecap: round; }
+        .ck-hand-h { stroke-width: 10; } .ck-hand-m { stroke-width: 6; } .ck-hand-s { stroke-width: 2; stroke: var(--green); }
+        .ck-hand-dot { fill: var(--green); stroke: #fff; stroke-width: 2; }
+        .ck-pin { fill: var(--ink); } .ck-pin2 { fill: var(--ck-f2); }
+        .ck-pill { fill: var(--ck-f1); fill-opacity: 0.95; stroke: rgba(var(--g-rgb, 184, 149, 74), 0.8); }
+        .ck-cd { fill: var(--ink); font-size: 22px; font-weight: 800; text-anchor: middle; font-variant-numeric: tabular-nums; }
+        .ck-cdl { fill: var(--ink-soft); font-size: 9.5px; font-weight: 600; text-anchor: middle; }
+        html[data-theme="lcd"] .ck-bezel { fill: var(--lcd-ink); } html[data-theme="lcd"] .ck-glow circle { stroke: rgba(255, 255, 255, 0.6); }
+        html[data-theme="lcd"] .ck-cur { fill: var(--lcd-ink); stroke: var(--lcd-bg); } html[data-theme="lcd"] .ck-lab-on, html[data-theme="lcd"] .ck-lab-k { fill: var(--lcd-bg); }
         /* изглед на брояча */
         .counter-stage { display: contents; }
         .counter-viz:empty { display: none; }
@@ -1762,6 +1805,14 @@
         </div>
 
         <!-- Фази на Луната -->
+        <div id="clock-view" class="hidden">
+            <div class="text-center flex flex-col items-center clock-top">
+                <h3 class="ribbon text-base">Часовник</h3>
+                <div id="clock-loc" class="clock-loc"></div>
+            </div>
+            <div class="clock-wrap"><svg id="clock-svg" viewBox="0 0 600 600" role="img" aria-label="Часовник с времената за намаз"></svg></div>
+            <div id="clock-note" class="clock-note">Отвън: 00–12 ч · отвътре: 13–24 ч · свети половината на деня, в която сте</div>
+        </div>
         <div id="moon-view" class="hidden">
             <div class="text-center flex flex-col items-center moon-top">
                 <h3 class="ribbon text-base">Фази на Луната</h3>
@@ -1827,6 +1878,11 @@
                     <span class="menu-chev">›</span>
                     <input type="date" id="menu-date-input" class="hidden-date-input" aria-label="Изберете дата">
                 </div>
+                <button id="menu-clock" class="menu-row">
+                    <span class="menu-icon">🕛</span>
+                    <span class="menu-label">Часовник<small>Целият ден върху циферблат</small></span>
+                    <span class="menu-chev">›</span>
+                </button>
                 <button id="menu-moon" class="menu-row">
                     <span class="menu-icon" id="menu-moon-icon">🌙</span>
                     <span class="menu-label">Фази на Луната</span>
@@ -4154,6 +4210,7 @@
 
         function showQiblaView() {
             statsUse('kuble', 'Къбле – отворен екран');
+            hideClockView();
             prayerTimesView.classList.add('hidden');
             sacredEventsView.classList.add('hidden');
             hideMoonView();
@@ -4187,7 +4244,7 @@
             if (/Android/i.test(navigator.userAgent)) return 'android';
             return 'kompyutar';
         }
-        const APP_VERSION = 'v30';   // сменяйте заедно с VERSION в sw.js — вижда се кои устройства са обновени
+        const APP_VERSION = 'v31';   // сменяйте заедно с VERSION в sw.js — вижда се кои устройства са обновени
         // Ползване на функции: всяка се отчита най-много веднъж на ден от устройство (без лични данни)
         function statsUseState() {
             const today = formatDateForInputAndLookup(new Date());
@@ -4597,6 +4654,7 @@
         }
         function showMoonView(date) {
             statsUse('luna', 'Фази на Луната');
+            hideClockView();
             moonDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
             prayerTimesView.classList.add('hidden');
             sacredEventsView.classList.add('hidden');
@@ -4616,8 +4674,157 @@
             clearInterval(moonTimer);
         }
 
+        // --- Часовник: 1–12 / 13–24 с два пръстена (сутрин отвън, следобед отвътре) ---
+        const clockView = document.getElementById('clock-view');
+        const clockSvg = document.getElementById('clock-svg');
+        let clockTimer = null, clockKey = '', clockAm = null, clockCtx = '';
+        function clockLocToday() {
+            if (!isAbroad()) { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
+            const p = new Intl.DateTimeFormat('en-CA', { timeZone: worldLocation.tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()).split('-').map(Number);
+            return new Date(p[0], p[1] - 1, p[2]);
+        }
+        const clockMin = (ms) => { const [h, m] = vzFmt(ms).split(':').map(Number); return h * 60 + m; };
+        function clockModel() {
+            const D = clockLocToday(), PD = new Date(D.getFullYear(), D.getMonth(), D.getDate() - 1), ND = new Date(D.getFullYear(), D.getMonth(), D.getDate() + 1);
+            const P = (d, k) => { const v = adjustedPrayerDate(d, k).getTime(); return v > 1e12 ? v : null; };
+            const inst = {}; for (const k of allPrayerKeys) inst[k] = P(D, k);
+            const nf = P(ND, 'Fajr'), pi = P(PD, 'Isha'), pm = P(PD, 'Maghrib');
+            if (allPrayerKeys.some(k => inst[k] == null) || nf == null || pi == null || pm == null) return null;
+            const t = {}; for (const k of allPrayerKeys) t[k] = clockMin(inst[k]);
+            const F2 = clockMin(nf) + 1440, IP = clockMin(pi) - 1440, MP = clockMin(pm) - 1440, M = 1;
+            const names = getCurrentPrayerNames(), K = KERAHAT_MIN;
+            const sabah = Math.max(t.Fajr, t.Sunrise - SABAH_MIN);
+            const seg = [
+                [names.Isha, IP, t.Fajr, 'n'], [`След ${names.Fajr.toLowerCase()}`, t.Fajr, sabah, 'd'], ['Сабах', sabah, t.Sunrise, 'd'],
+                ['Керахат', t.Sunrise, t.Sunrise + K, 'k'], ['Духа', t.Sunrise + K, t.Dhuhr - K, 'd'], ['Керахат', t.Dhuhr - K, t.Dhuhr, 'k'],
+                [getDhuhrName(D), t.Dhuhr, t.Asr, 'd'], [names.Asr, t.Asr, t.Maghrib - K, 'd'], ['Керахат', t.Maghrib - K, t.Maghrib, 'k'],
+                [names.Maghrib, t.Maghrib, t.Isha, 'd'], [names.Isha, t.Isha, F2, 'n']
+            ].filter(s => s[2] - s[1] > M);
+            const nl = F2 - t.Maghrib, nlp = t.Fajr - MP;
+            const sub = [['Ишрак', t.Sunrise + K, t.Sunrise + K + ISHRAK_MIN, 'x'], ['Евабин', t.Maghrib, t.Isha, 'x'],
+                ['', MP + nlp * 2 / 3, t.Fajr, 't'], ['', t.Maghrib + nl * 2 / 3, F2, 't']];
+            const thirds = [[1 / 3, '⅓'], [1 / 2, '½'], [2 / 3, '⅔']].flatMap(([f, l]) => [[MP + nlp * f, l], [t.Maghrib + nl * f, l]]);
+            // следващо време за обратното броене
+            const list = allPrayerKeys.map(k => [inst[k], k === 'Dhuhr' ? getDhuhrName(D) : names[k]]).concat([[nf, names.Fajr]]);
+            return { seg, sub, thirds, list, ctx: `${D.toDateString()}|${locationName()}|${isClassicalNamesActive}|${JSON.stringify(customPrayerAdjustments)}` };
+        }
+        function clockNowMin() { const n = Date.now(); return clockMin(n) + (new Date(n).getSeconds() + (n % 1000) / 1000) / 60; }
+        function renderClock(force) {
+            const m = clockModel();
+            if (!m) { clockSvg.innerHTML = ''; document.getElementById('clock-note').textContent = 'За това място някои времена не могат да се изчислят днес.'; return; }
+            const now = clockNowMin(), am = now < 720;
+            const cur = m.seg.find(s => s[1] <= now && now < s[2]);
+            const key = `${m.ctx}|${am}|${cur ? cur[0] + cur[1] : ''}|${document.documentElement.getAttribute('data-theme')}`;
+            if (force || key !== clockKey) {
+                const swap = clockAm !== null && clockAm !== am && clockCtx === m.ctx;
+                clockKey = key; clockAm = am; clockCtx = m.ctx;
+                clockSvg.innerHTML = buildClockSvg(m, now, am, cur, swap);
+            }
+            updateClockHands(m, now, am);
+        }
+        function buildClockSvg(m, now, am, cur, swap) {
+            const cx = 300, cy = 300, per = 720;
+            const ang = (x) => (((x % 720) + 720) % 720) / 720 * 2 * Math.PI;
+            const pt = (r, x) => { const a = ang(x); return [cx + r * Math.sin(a), cy - r * Math.cos(a)]; };
+            const f1 = (v) => v.toFixed(1);
+            const arc = (r1, r2, a, b) => {
+                let span = (b - a) / per; if (span >= 0.999) b = a + per * 0.999;
+                const lg = span > 0.5 ? 1 : 0, [x1, y1] = pt(r2, a), [x2, y2] = pt(r2, b), [x3, y3] = pt(r1, b), [x4, y4] = pt(r1, a);
+                return `M${f1(x1)},${f1(y1)} A${r2},${r2} 0 ${lg} 1 ${f1(x2)},${f1(y2)} L${f1(x3)},${f1(y3)} A${r1},${r1} 0 ${lg} 0 ${f1(x4)},${f1(y4)}Z`;
+            };
+            const cwf = document.documentElement.getAttribute('data-theme') === 'lcd' ? 0.74 : 0.62;
+            const label = (r, x, txt, fs, cls, span) => {
+                const room = span / per * 2 * Math.PI * r; fs = Math.min(fs, room / (txt.length * cwf));
+                if (fs < 7) return '';
+                const [lx, ly] = pt(r, x), d = ang(x) * 180 / Math.PI, rot = (d < 90 || d > 270) ? d : d - 180;
+                return `<text class="${cls}" x="${f1(lx)}" y="${f1(ly)}" transform="rotate(${f1(rot)} ${f1(lx)} ${f1(ly)})" style="font-size:${f1(fs)}px">${esc(txt)}</text>`;
+            };
+            const ring = (half, R1, R2, rs) => {
+                const lo = half * 720, hi = lo + 720; let out = '';
+                for (const s of m.seg) {
+                    for (const sh of [-1440, 0, 1440]) {
+                        const A = Math.max(s[1] + sh, lo), B = Math.min(s[2] + sh, hi); if (B <= A) continue;
+                        const on = s === cur && sh === 0 && (am ? half === 0 : half === 1);
+                        out += `<path class="ck-seg ck-${s[3]}${on ? ' ck-cur' : ''}" d="${arc(R2 - (on ? 3 : 0), R1 + (on ? 4 : 0), A, B)}"/>`;
+                        out += label((R1 + R2) / 2 + 3, (A + B) / 2, s[0], on ? 15 : (s[3] === 'k' ? 9 : 12.5), `ck-lab${on ? ' ck-lab-on' : (s[3] === 'k' ? ' ck-lab-k' : '')}`, B - A);
+                    }
+                }
+                for (const s of m.sub) {
+                    for (const sh of [-1440, 0, 1440]) {
+                        const A = Math.max(s[1] + sh, lo), B = Math.min(s[2] + sh, hi); if (B <= A) continue;
+                        out += `<path class="ck-sub ck-sub-${s[3]}" d="${arc(R2 - rs, R2 - 1.5, A, B)}"/>`;
+                        if (s[0]) out += label(R2 - rs - 7, (A + B) / 2, s[0], 9, 'ck-lab ck-lab-s', Math.max(B - A, 90));
+                    }
+                }
+                for (const [x, l] of m.thirds) {
+                    const xm = [x, x - 1440, x + 1440].find(v => v >= lo && v < hi); if (xm === undefined) continue;
+                    const [x1, y1] = pt(R2 - rs, xm), [x2, y2] = pt(R1, xm);
+                    out += `<line class="ck-third" x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}"/>` + label(R2 - rs - 8, xm, l, 12, 'ck-lab ck-lab-t', 200);
+                }
+                return out;
+            };
+            let s = `<defs><radialGradient id="ck-face" cx="0.45" cy="0.35" r="0.75"><stop offset="0" class="ck-f1"/><stop offset="1" class="ck-f2"/></radialGradient>
+                <filter id="ck-gl" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="3.5"/></filter></defs>`;
+            s += `<circle class="ck-bezel" cx="${cx}" cy="${cy}" r="296"/><circle cx="${cx}" cy="${cy}" r="276" fill="url(#ck-face)"/>`;
+            for (let k = 0; k < 60; k++) {
+                const big = k % 5 === 0, [x1, y1] = pt(272, k * 12), [x2, y2] = pt(272 - (big ? 24 : 12), k * 12);
+                s += `<line class="ck-tick${big ? ' big' : ''}" x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}"/>`;
+            }
+            const glow = (R1, R2) => `<g class="ck-glow"><circle cx="${cx}" cy="${cy}" r="${R1 + 7}" stroke-width="5"/><circle cx="${cx}" cy="${cy}" r="${R2 - 10}" stroke-width="4"/></g>`;
+            const anim = (on) => swap ? (on ? ' ck-in' : ' ck-out') : '';
+            s += (am ? glow(240, 206) : '') + `<g class="ck-ring ${am ? 'ck-on' : 'ck-off'}${anim(am)}">${ring(0, 240, 206, 7)}</g>`;
+            s += (!am ? glow(150, 118) : '') + `<g class="ck-ring ${!am ? 'ck-on' : 'ck-off'}${anim(!am)}">${ring(1, 150, 118, 7)}</g>`;
+            for (let h = 1; h <= 12; h++) {
+                let [x, y] = pt(178, h * 60);
+                s += `<text class="ck-num ck-num-am${am ? ' ck-num-on' : ''}" x="${f1(x)}" y="${f1(y)}">${h}</text>`;
+                [x, y] = pt(93, h * 60);
+                s += `<text class="ck-num ck-num-pm${!am ? ' ck-num-on' : ''}" x="${f1(x)}" y="${f1(y)}">${h + 12}</text>`;
+            }
+            const hl = am ? 214 : 128;
+            s += `<g id="ck-hour"><line class="ck-hand ck-hand-h" x1="${cx}" y1="${cy + 26}" x2="${cx}" y2="${cy - hl}"/><circle class="ck-hand-dot" cx="${cx}" cy="${cy - hl}" r="7"/></g>`;
+            s += `<g id="ck-min"><line class="ck-hand ck-hand-m" x1="${cx}" y1="${cy + 30}" x2="${cx}" y2="${cy - 250}"/></g>`;
+            s += `<g id="ck-sec"><line class="ck-hand ck-hand-s" x1="${cx}" y1="${cy + 40}" x2="${cx}" y2="${cy - 255}"/></g>`;
+            s += `<circle class="ck-pin" cx="${cx}" cy="${cy}" r="11"/><circle class="ck-pin2" cx="${cx}" cy="${cy}" r="4"/>`;
+            s += `<rect class="ck-pill" x="${cx - 60}" y="${cy + 22}" width="120" height="44" rx="11"/>`;
+            s += `<text id="ck-cd" class="ck-cd" x="${cx}" y="${cy + 48}">--:--:--</text><text id="ck-cdl" class="ck-cdl" x="${cx}" y="${cy + 61}"></text>`;
+            return s;
+        }
+        function updateClockHands(m, now, am) {
+            const rot = (id, deg) => { const g = document.getElementById(id); if (g) g.setAttribute('transform', `rotate(${deg.toFixed(2)} 300 300)`); };
+            rot('ck-hour', (now % 720) / 720 * 360);
+            rot('ck-min', (now % 60) / 60 * 360);
+            rot('ck-sec', ((now * 60) % 60) / 60 * 360);
+            const t = Date.now(), nx = m.list.find(([ms]) => ms > t);
+            if (nx) {
+                const d = Math.floor((nx[0] - t) / 1000);
+                document.getElementById('ck-cd').textContent = `${String(Math.floor(d / 3600)).padStart(2, '0')}:${String(Math.floor(d % 3600 / 60)).padStart(2, '0')}:${String(d % 60).padStart(2, '0')}`;
+                document.getElementById('ck-cdl').textContent = `до ${nx[1]}`;
+            }
+        }
+        function showClockView() {
+            statsUse('chasovnik', 'Часовник');
+            prayerTimesView.classList.add('hidden');
+            sacredEventsView.classList.add('hidden');
+            hideQiblaView();
+            hideMoonView();
+            clockView.classList.remove('hidden');
+            setActiveNav(null);
+            clearInterval(individualCountdownIntervalId); individualCountdownIntervalId = null;
+            clearInterval(sacredEventsCountdownIntervalId); clearInterval(sacredEventsMainCountdownIntervalId);
+            document.getElementById('clock-loc').textContent = '📍 ' + locationName();
+            clockKey = ''; clockAm = null;
+            renderClock(true);
+            clearInterval(clockTimer);
+            clockTimer = setInterval(() => renderClock(false), 1000);
+        }
+        function hideClockView() {
+            if (clockView.classList.contains('hidden')) return;
+            clockView.classList.add('hidden');
+            clearInterval(clockTimer); clockTimer = null;
+        }
         // --- View Switching Logic ---
         function showPrayerTimesView() {
+            hideClockView();
             sacredEventsView.classList.add('hidden');
             hideQiblaView();
             hideMoonView();
@@ -4632,6 +4839,7 @@
 
         async function showSacredEventsView() {
             statsUse('svesheni-dni', 'Свещени дни');
+            hideClockView();
             prayerTimesView.classList.add('hidden');
             hideQiblaView();
             hideMoonView();
@@ -5002,6 +5210,9 @@
             // Луна
             document.getElementById('hijri-moon-btn').addEventListener('click', () => showMoonView(selectedDate));
             document.getElementById('menu-moon').addEventListener('click', () => { closeMenu(); showMoonView(selectedDate); });
+            document.getElementById('menu-clock').addEventListener('click', () => { closeMenu(); showClockView(); });
+            currentTimeEl.addEventListener('click', () => showClockView());
+            currentTimeEl.title = 'Часовник';
             document.getElementById('moon-prev').addEventListener('click', () => { moonDate = new Date(moonDate.getFullYear(), moonDate.getMonth(), moonDate.getDate() - 1); renderMoonView(); });
             document.getElementById('moon-next').addEventListener('click', () => { moonDate = new Date(moonDate.getFullYear(), moonDate.getMonth(), moonDate.getDate() + 1); renderMoonView(); });
             document.getElementById('moon-today').addEventListener('click', () => { moonDate = new Date(); renderMoonView(); });
