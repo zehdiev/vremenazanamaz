@@ -1466,6 +1466,134 @@
         .menu-theme-dot { display: inline-block; width: 0.85rem; height: 0.85rem; border-radius: 50%; vertical-align: -0.1em; margin-right: 0.3rem; background: var(--green); box-shadow: 0 0 0 2px var(--surf-border); }
     </style>
 
+
+    <style id="theme-lcd">
+        /* ---------- Тема „LCD часовник“: сегментен дисплей, всичко в един цвят ---------- */
+        @font-face { font-family: 'LCD16'; src: url(data:font/woff2;base64,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) format('woff2'); font-display: block; }
+        @font-face { font-family: 'LCD16 Ghost'; src: url(data:font/woff2;base64,d09GMgABAAAAAAW8AAoAAAABAvQAAAVsAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmAAhUYKg+YQgt11ATYCJAOGKAuDFgAEIAVsB4xmG468EdWkY0FomWAcyz74KFKYaTSYnOCd2pl96SMi0rFiEFBeVZ30As6s6AOBF4AXmQiAyOly4waPtqOIQxByeh8QwzJkl1Gl1LBxcawDmIA4d0+6al+Lt3jZ4ShWzh8Z44Hv3jf9Mzd1XtKBYsnxeAOM2U/6/NSXUG3WtmDvKBV0gZakEa5QeE9wHVZYV1WHsgsHByKKk9IGJPZ3vwqqslnMxgiJ9R+NosKzwYSsCjdrQQ3V8XoynOtcBgvKz30P0OKPAirgiIqQnVLZe/lqTjZGeOJHAFGkkMVQhrOabezmEMc4wV0ppJE0lVayStbIBrKxbKHZaY6am+atBWqpBmdDiqHeMNsw13DU19632PdDwCXgZMDFwOgghyCnoIa6DmgEEEQ0qeQU6JTSJNh21stGfW01B81V85QysG6495eEiaDfAMBDb6N/0P9irb8C/eHfMoC/JfDnL8Cf389GPBsOz6Y9WwdPFz0d87TzU8NT7yf6k1FPBj6+9+D/gx8Pfj2YfH/N/ZX3uyJoDrQGejIYO7nHAzg+KhqKxgAg6sV71sL/GTeCy2xkF2tZzAp2Mp+zTOcMCzjHeZYwj5VsxRJrbLHHEWdccccTbzR88SeQYEIJJ5JoYoknkWRSSSeT5SxkDYeYywassMEOB5xwwQ0PvPDBgB8BBBFCGBFEEUMcCSSRQhoZZDGeqUxkMtnkkk8hxZRSSTW11NOYpjSnJa1pS3s60pmudKcnvelLfwYymNEMZSzDGUkOeRRQRAllVFFDHQ1oQjNa0Io2tKMDnehCN3rQiz70YwCDGMIYhjGOEYxiAtOYxBTWs45lrAbgKoCYD5YSij5CkwgAwBMAANu9R6Cgzgn+TR0AMOZw8nyrLIuMdEUjPEv78HxHNSsDpbeD3mPQUeOPt7RogHnDdhbUm9cjt0te6fsAlNixEBa4nXqLenO50FAgNL0tDM00uiX1LBY8qv3xeObjrbwdcb1jTEXiqPsr48ePWd6P4GsJFSxithQRFafObilNOpjneqXlluYlHVy+dl6uqAf7rhqgACrvVpaWlvpzORap0QOCo6WSEwiud8yUFQ3EXMC5VKJtzYmZs9lubNLHkpL3bjXRvmrkd9tVrWzSv5kK9R3AWxfLMfLLrvpIZbgaCKgoA8fWhPw9lONAY6U9Apu52rkkOt/0h5YbmTe8Kq7Livj+XKU1tgAo2DdDkogAQGABCAAUTLBARUgzBM7Yhx9UsCa4PC8/JlGrl6A9/kf1fxcoJ498YkhEo4jO9KIf/amlA50YQHfa0BcF/Mu6CqgmESBEhBgJUmTIFUpUqDVo0aHHgBETZixYsWHHgRMXbjx48fmDMIqTNMuLsqqbttNirPMhJmk/jNO8rFlelFXdtF0/jNO8rNt+nNf9vN+/7cd53TAuJEobi/MhpkyprY/J2ue+/7zfT5CQMBFRYuIkJElJk5ElJ09BkZIyFVVq6jQ0aWnT0aWnz8CQkTETU2bmLCxZWbOxZWfPwZGTM1euuXHLnQv3Hnj0xLMXXr3xDj/4hF98wx9+4R//NKBISGAglHEhYyXl0pkAhFDKGOdCSKmU1sZ4nrXO+fEnoyIIYwBCKGWMcyGkVEpX0aVMpRAwBiCEUhYtEddsOOdCSKmUtVob43l2bIhzfvwJVCoRYwBCKGWMcyGkVEprz3PO942xcRNpYSqElCzYDHFXiElgEnQZ/DnFn2QTpsD34kvILK2ppyK5ECcDSa42N2ibo2guMfbzydQFXl7mmyr+EjZhoC5mL9BBVrnAKjtpYzXYEKTb5nI+RjUsXdrSdEtShUnWQmE7oLkj9pw1K+pmHsZeKsnEWcWdGHvgClcX7Q8AAA==) format('woff2'); font-display: block; }
+        @font-face { font-family: 'LCD Emoji'; src: url(data:font/woff2;base64,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) format('woff2'); font-display: block; }
+        html[data-theme="lcd"] {
+            --lcd-bg: #b3baa2; --lcd-bg-2: #a2aa90; --lcd-ink: #1a1e18; --lcd-ghost: rgba(26, 30, 24, 0.075);
+            --lcd-case: #121412;
+            --emerald: var(--lcd-ink); --emerald-2: var(--lcd-ink); --green: var(--lcd-ink); --green-dark: var(--lcd-ink); --green-soft: rgba(26, 30, 24, 0.14);
+            --accent-hi: var(--lcd-ink); --soft-hi: rgba(26, 30, 24, 0.08); --gold: var(--lcd-ink); --gold-soft: rgba(26, 30, 24, 0.55);
+            --cream: var(--lcd-bg); --ink: var(--lcd-ink); --ink-soft: rgba(26, 30, 24, 0.78);
+            --p-rgb: 26, 30, 24; --a-rgb: 26, 30, 24; --g-rgb: 26, 30, 24; --d-rgb: 14, 16, 13;
+            --title-dark: var(--lcd-ink);
+            --bg-base: #0d0f0d;
+            --bg-image: radial-gradient(120% 60% at 50% 0%, #2b2f2b 0%, #121412 55%, #070807 100%);
+            --glass-1: var(--lcd-bg); --glass-2: var(--lcd-bg); --glass-3: var(--lcd-bg-2);
+            --surf-1: transparent; --surf-2: transparent; --surf-border: rgba(26, 30, 24, 0.6);
+            --well: transparent; --panel-1: var(--lcd-bg); --panel-2: var(--lcd-bg-2); --note-bg: transparent;
+            --switch-off: rgba(26, 30, 24, 0.2); --dial-1: var(--lcd-bg); --dial-2: var(--lcd-bg-2);
+            --title: var(--lcd-ink); --time: var(--lcd-ink); --value: var(--lcd-ink); --chip-ink: var(--lcd-ink); --now-ink: var(--lcd-ink);
+            --hairline: rgba(26, 30, 24, 0.3); --title-shadow: none; --veil: none;
+            color-scheme: light;
+        }
+        /* тъмен режим = подсветка на дисплея */
+        html[data-theme="lcd"][data-mode="dark"] {
+            --lcd-bg: #8fd9a8; --lcd-bg-2: #5fb383; --lcd-ghost: rgba(10, 40, 22, 0.1);
+            --glass-1: var(--lcd-bg); --glass-2: var(--lcd-bg); --glass-3: var(--lcd-bg-2); --panel-1: var(--lcd-bg); --panel-2: var(--lcd-bg-2);
+            --ink: var(--lcd-ink); --ink-soft: rgba(26, 30, 24, 0.78); --title: var(--lcd-ink); --time: var(--lcd-ink); --value: var(--lcd-ink);
+            --chip-ink: var(--lcd-ink); --now-ink: var(--lcd-ink); --soft-hi: rgba(26, 30, 24, 0.08); --green-soft: rgba(26, 30, 24, 0.14);
+            --surf-1: transparent; --surf-2: transparent; --surf-border: rgba(26, 30, 24, 0.6); --well: transparent; --hairline: rgba(26, 30, 24, 0.3);
+            --title-shadow: none; --veil: none; --switch-off: rgba(26, 30, 24, 0.2); --dial-1: var(--lcd-bg); --dial-2: var(--lcd-bg-2);
+            color-scheme: light;
+        }
+        html[data-theme="lcd"] *, html[data-theme="lcd"] *::before, html[data-theme="lcd"] *::after {
+            font-family: 'LCD16', 'LCD Emoji', monospace !important; font-weight: 400 !important; font-style: normal !important;
+            font-synthesis: none; text-shadow: none !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+            letter-spacing: 0.02em; border-radius: 2px !important; animation-name: none;
+        }
+        html[data-theme="lcd"] body::after { background: none !important; }
+        html[data-theme="lcd"] .container::before { display: none !important; }
+        /* корпусът на часовника и дисплеят */
+        html[data-theme="lcd"] .container {
+            background: radial-gradient(130% 90% at 30% 15%, var(--lcd-bg) 0%, var(--lcd-bg) 55%, var(--lcd-bg-2) 100%) !important;
+            border: 0.55rem solid #070807 !important; border-radius: 0.9rem !important;
+            box-shadow: 0 0 0 0.35rem #2a2e2a, 0 0 0 0.45rem #050605, inset 0 0.25rem 0.6rem rgba(0, 0, 0, 0.35), 0 26px 60px -20px rgba(0, 0, 0, 0.9) !important;
+            color: var(--lcd-ink);
+        }
+        html[data-theme="lcd"][data-mode="dark"] .container { box-shadow: 0 0 0 0.35rem #2a2e2a, 0 0 0 0.45rem #050605, inset 0 0 2.5rem rgba(220, 255, 200, 0.55), 0 0 40px rgba(120, 230, 150, 0.25) !important; }
+        html[data-theme="lcd"] .ornament { color: var(--lcd-ink); }
+        /* сегменти, които „не светят“ */
+        html[data-theme="lcd"] .lcd-ghost { position: relative; isolation: isolate; }
+        html[data-theme="lcd"] .lcd-ghost::before { content: attr(data-ghost); position: absolute; inset: 0; font-family: 'LCD16 Ghost' !important; color: var(--lcd-ghost); z-index: -1; pointer-events: none; white-space: pre; text-align: inherit; }
+        /* редове с времена */
+        html[data-theme="lcd"] .prayer-row { background: transparent !important; border: 1.5px solid rgba(26, 30, 24, 0.55) !important; }
+        html[data-theme="lcd"] .prayer-row:hover { background: rgba(26, 30, 24, 0.05) !important; }
+        html[data-theme="lcd"] .prayer-row.highlighted-prayer { background: var(--lcd-ink) !important; border-color: var(--lcd-ink) !important; }
+        html[data-theme="lcd"] .prayer-row.highlighted-prayer .prayer-name, html[data-theme="lcd"] .prayer-row.highlighted-prayer .prayer-time { color: var(--lcd-bg) !important; }
+        html[data-theme="lcd"] #prayer-times-list .prayer-row.highlighted-prayer .prayer-name::after { background: var(--lcd-bg) !important; color: var(--lcd-ink) !important; }
+        html[data-theme="lcd"] #prayer-times-list .prayer-row.current-prayer { background: rgba(26, 30, 24, 0.1) !important; border: 3px solid var(--lcd-ink) !important; animation: none !important; }
+        html[data-theme="lcd"] #prayer-times-list .prayer-row.current-prayer .prayer-name::after { background: var(--lcd-ink) !important; color: var(--lcd-bg) !important; animation: lcdBlink 1s steps(1) infinite !important; }
+        @keyframes lcdBlink { 50% { opacity: 0; } }
+        html[data-theme="lcd"] .extra-row { border: 1.5px dashed rgba(26, 30, 24, 0.5) !important; background: transparent !important; color: var(--lcd-ink) !important; }
+        /* бутони, чипове, лента отдолу */
+        html[data-theme="lcd"] .chip, html[data-theme="lcd"] .day-arrow, html[data-theme="lcd"] .modal-action-button, html[data-theme="lcd"] .elapsed-line, html[data-theme="lcd"] .today-pill,
+        html[data-theme="lcd"] .hijri-moon-btn, html[data-theme="lcd"] .install-banner, html[data-theme="lcd"] .qg-head, html[data-theme="lcd"] .qg-card, html[data-theme="lcd"] .moon-tile, html[data-theme="lcd"] .moon-next,
+        html[data-theme="lcd"] .menu-group, html[data-theme="lcd"] .theme-card, html[data-theme="lcd"] .qibla-hint, html[data-theme="lcd"] .moon-note, html[data-theme="lcd"] #sacred-events-list-container, html[data-theme="lcd"] .moon-details,
+        html[data-theme="lcd"] .world-search, html[data-theme="lcd"] .world-manual, html[data-theme="lcd"] .world-manual-grid input, html[data-theme="lcd"] .world-manual-grid select, html[data-theme="lcd"] .adjustment-input-row input[type="number"], html[data-theme="lcd"] .mode-seg {
+            background: transparent !important; color: var(--lcd-ink) !important; border: 1.5px solid rgba(26, 30, 24, 0.55) !important; filter: none !important;
+        }
+        html[data-theme="lcd"] .chip-accent, html[data-theme="lcd"] .ib-go, html[data-theme="lcd"] .modal-action-button.modal-action-button-primary, html[data-theme="lcd"] .today-pill,
+        html[data-theme="lcd"] .city-list-item.selected, html[data-theme="lcd"] .nav-item.active, html[data-theme="lcd"] .mode-seg button.active, html[data-theme="lcd"] .qg-card.now,
+        html[data-theme="lcd"] .qibla-guide.emph .qg-head, html[data-theme="lcd"] .world-gps, html[data-theme="lcd"] .theme-card.active {
+            background: var(--lcd-ink) !important; color: var(--lcd-bg) !important; border-color: var(--lcd-ink) !important;
+        }
+        html[data-theme="lcd"] .qg-card.now * { color: var(--lcd-bg) !important; }
+        html[data-theme="lcd"] .bottom-nav { background: transparent !important; border: 1.5px solid rgba(26, 30, 24, 0.55) !important; }
+        html[data-theme="lcd"] .nav-item { color: var(--lcd-ink) !important; border-color: transparent !important; }
+        html[data-theme="lcd"] .sheet, html[data-theme="lcd"] .modal-content { background: linear-gradient(160deg, var(--lcd-bg), var(--lcd-bg-2)) !important; border: 0.45rem solid #070807 !important; color: var(--lcd-ink) !important; }
+        html[data-theme="lcd"] .sheet-overlay, html[data-theme="lcd"] .modal-overlay { background: rgba(0, 0, 0, 0.6) !important; }
+        html[data-theme="lcd"] .ribbon { background: var(--lcd-ink) !important; color: var(--lcd-bg) !important; border: none !important; }
+        html[data-theme="lcd"] .ribbon::before, html[data-theme="lcd"] .ribbon::after { display: none !important; }
+        html[data-theme="lcd"] .switch { background: transparent !important; border: 1.5px solid var(--lcd-ink) !important; }
+        html[data-theme="lcd"] .switch::after { background: var(--lcd-ink) !important; top: 0.15rem; }
+        html[data-theme="lcd"] .switch:checked { background: var(--lcd-ink) !important; }
+        html[data-theme="lcd"] .switch:checked::after { background: var(--lcd-bg) !important; }
+        html[data-theme="lcd"][data-counter="strip"] #countdown { font-size: clamp(1.6rem, 5dvh, 2.6rem) !important; }
+        html[data-theme="lcd"][data-counter="strip"] #countdown-text { font-size: 0.75rem; white-space: nowrap; }
+        html[data-theme="lcd"][data-counter="strip"] .counter-core { flex-wrap: wrap; row-gap: 0; }
+        html[data-theme="lcd"] #elapsed-fill { background: var(--lcd-ink) !important; }
+        html[data-theme="lcd"] .elapsed-bar { background: rgba(26, 30, 24, 0.15) !important; }
+        html[data-theme="lcd"] #sacred-day-info { background: transparent !important; color: var(--lcd-ink) !important; border: 1.5px solid var(--lcd-ink) !important; }
+        html[data-theme="lcd"] #current-day.is-friday, html[data-theme="lcd"] #current-day.is-weekend { color: var(--lcd-ink) !important; }
+        html[data-theme="lcd"] input, html[data-theme="lcd"] select, html[data-theme="lcd"] textarea { color: var(--lcd-ink) !important; background: transparent !important; }
+        html[data-theme="lcd"] ::placeholder { color: rgba(26, 30, 24, 0.45) !important; }
+        html[data-theme="lcd"] .message-box, html[data-theme="lcd"] #message-box { background: var(--lcd-ink) !important; color: var(--lcd-bg) !important; }
+        /* броячите (циферблат и лента) */
+        html[data-theme="lcd"] .vz-ring { fill: rgba(26, 30, 24, 0.1); }
+        html[data-theme="lcd"] .vz-p { fill: transparent; }
+        html[data-theme="lcd"] .vz-night { fill: rgba(26, 30, 24, 0.06); }
+        html[data-theme="lcd"] .vz-ker { fill: rgba(26, 30, 24, 0.2); }
+        html[data-theme="lcd"] .vz-sep, html[data-theme="lcd"] .vz-tick, html[data-theme="lcd"] .vz-tmark { stroke: var(--lcd-ink); opacity: 1; }
+        html[data-theme="lcd"] .vz-pop { fill: var(--lcd-ink); stroke: var(--lcd-bg); filter: none; }
+        html[data-theme="lcd"] .vz-label, html[data-theme="lcd"] .vz-hour, html[data-theme="lcd"] .vz-xlabel, html[data-theme="lcd"] .vz-tlabel, html[data-theme="lcd"] .vz-ttime { fill: var(--lcd-ink); }
+        html[data-theme="lcd"] .vz-label.vz-pop-t { fill: var(--lcd-bg); }
+        html[data-theme="lcd"] .vz-extra, html[data-theme="lcd"] .vz-third { fill: rgba(26, 30, 24, 0.28); }
+        html[data-theme="lcd"] .vz-hub { fill: var(--lcd-bg); stroke: var(--lcd-ink); }
+        html[data-theme="lcd"] .vz-needle { stroke: var(--lcd-ink); }
+        html[data-theme="lcd"] .vz-needle-dot { fill: var(--lcd-ink); }
+        /* къбле */
+        html[data-theme="lcd"] .qd-ring { fill: var(--lcd-ink); }
+        html[data-theme="lcd"] .qd-l { fill: var(--lcd-ink); }
+        html[data-theme="lcd"] .qibla-dial svg [fill^="#"], html[data-theme="lcd"] .qibla-dial svg [fill^="rgb"] { fill: var(--lcd-ink); }
+        html[data-theme="lcd"] .qibla-dial svg [stroke^="#"], html[data-theme="lcd"] .qibla-dial svg [stroke^="rgb"] { stroke: var(--lcd-ink); }
+        html[data-theme="lcd"] .qibla-dial svg text { fill: var(--lcd-bg); }
+        html[data-theme="lcd"] .qd-n { fill: var(--lcd-bg) !important; }
+        html[data-theme="lcd"] .qibla-status, html[data-theme="lcd"] .qibla-status.warn, html[data-theme="lcd"] .qibla-turn, html[data-theme="lcd"] .qibla-facts { color: var(--lcd-ink) !important; }
+        html[data-theme="lcd"] [style*="color"] { color: var(--lcd-ink) !important; }
+        /* луна: осветената част е „включен“ сегмент */
+        html[data-theme="lcd"] [id^="mlit"] stop { stop-color: var(--lcd-ink) !important; }
+        html[data-theme="lcd"] [id^="mglow"] stop { stop-opacity: 0 !important; }
+        html[data-theme="lcd"] svg circle[fill="#21352b"] { fill: var(--lcd-bg); }
+        html[data-theme="lcd"] svg circle[fill="#3a5245"] { fill: rgba(26, 30, 24, 0.12); }
+        html[data-theme="lcd"] svg circle[stroke^="rgba(184"] { stroke: var(--lcd-ink); }
+        html[data-theme="lcd"] svg g[fill="#000"] { fill: var(--lcd-bg); opacity: 0.25; }
+        /* картинки и цветни иконки → едноцветни */
+        html[data-theme="lcd"] img { filter: grayscale(1) contrast(1.4) brightness(0.55) !important; mix-blend-mode: multiply; }
+    </style>
 </head>
 <body class="antialiased">
     <div class="container">
@@ -3216,8 +3344,9 @@
         const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
         // Надпис в период: един ред или два (ако така става по-едър)
         function vzLabel(label, len, width, maxFs, cls, x, y, rot) {
-            const one = Math.min(maxFs, len / (label.length * 0.64), width / 1.05);
-            const parts = label.split(' '), two = parts.length === 2 ? Math.min(maxFs, len / (Math.max(parts[0].length, parts[1].length) * 0.64), width / 2.3) : 0;
+            const cwf = document.documentElement.getAttribute('data-theme') === 'lcd' ? 0.74 : 0.64;   // ширина на знак спрямо размера
+            const one = Math.min(maxFs, len / (label.length * cwf), width / 1.05);
+            const parts = label.split(' '), two = parts.length === 2 ? Math.min(maxFs, len / (Math.max(parts[0].length, parts[1].length) * cwf), width / 2.3) : 0;
             const tr = `transform="rotate(${rot.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})"`;
             if (two >= one * 0.95 && two >= 6.5) {
                 return `<text class="${cls}" style="font-size:${two.toFixed(1)}px" x="${x.toFixed(1)}" y="${y.toFixed(1)}" ${tr}><tspan x="${x.toFixed(1)}" dy="-0.55em">${esc(parts[0])}</tspan><tspan x="${x.toFixed(1)}" dy="1.1em">${esc(parts[1])}</tspan></text>`;
@@ -4040,7 +4169,7 @@
             if (/Android/i.test(navigator.userAgent)) return 'android';
             return 'kompyutar';
         }
-        const APP_VERSION = 'v28';   // сменяйте заедно с VERSION в sw.js — вижда се кои устройства са обновени
+        const APP_VERSION = 'v29';   // сменяйте заедно с VERSION в sw.js — вижда се кои устройства са обновени
         // Ползване на функции: всяка се отчита най-много веднъж на ден от устройство (без лични данни)
         function statsUseState() {
             const today = formatDateForInputAndLookup(new Date());
@@ -4188,7 +4317,8 @@
             { id: 'red', name: 'Червена', accent: '#c62828', meta: '#5e0d12', metaDark: '#22080a' },
             { id: 'blue', name: 'Синя', accent: '#1e7fd8', meta: '#0b2c57', metaDark: '#081020' },
             { id: 'green', name: 'Зелена', accent: '#24a356', meta: '#0a4a2a', metaDark: '#071a0f' },
-            { id: 'amber', name: 'Кехлибарена', accent: '#e08700', meta: '#6a3505', metaDark: '#1e1103' }
+            { id: 'amber', name: 'Кехлибарена', accent: '#e08700', meta: '#6a3505', metaDark: '#1e1103' },
+            { id: 'lcd', name: 'LCD часовник', accent: '#1a1e18', meta: '#0d0f0d', metaDark: '#0d0f0d' }
         ];
         const MODE_NAMES = { light: 'светла', dark: 'тъмна', auto: 'авто' };
         let appTheme = document.documentElement.getAttribute('data-theme') || 'classic';
@@ -4199,6 +4329,7 @@
             const mode = appThemeMode === 'auto' ? (darkQuery && darkQuery.matches ? 'dark' : 'light') : appThemeMode;
             document.documentElement.setAttribute('data-theme', appTheme);
             document.documentElement.setAttribute('data-mode', mode);
+            if (typeof lcdGhostSync === 'function') lcdGhostSync(null);
             const t = THEMES.find(x => x.id === appTheme) || THEMES[0];
             const meta = document.querySelector('meta[name="theme-color"]');
             if (meta) meta.setAttribute('content', mode === 'dark' ? t.metaDark : t.meta);
@@ -4206,6 +4337,30 @@
             if (note) note.textContent = `${t.name} · ${MODE_NAMES[appThemeMode]}`;
         }
         if (darkQuery && darkQuery.addEventListener) darkQuery.addEventListener('change', () => { if (appThemeMode === 'auto') applyTheme(); });
+        // LCD тема: „изгасналите“ сегменти зад числата (data-ghost = същият текст, рисуван с всички сегменти)
+        var LCD_GHOST_SEL = '#countdown, #current-time, #elapsed-time, #sacred-countdown-display, .prayer-time, #current-date';
+        // В LCD темата емоджитата са едноцветни; знакът U+FE0F кара браузъра да ги рисува цветни, затова временно се маха
+        var lcdVsOrig = new WeakMap(), lcdVsOn = false;
+        function lcdStripVS(root) {
+            const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+            for (let n = root.nodeType === 3 ? root : w.nextNode(); n; n = w.nextNode()) {
+                if (n.data.indexOf('\uFE0F') !== -1) { lcdVsOrig.set(n, n.data); n.data = n.data.replace(/\uFE0F/g, ''); }
+            }
+        }
+        function lcdRestoreVS() {
+            const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            for (let n = w.nextNode(); n; n = w.nextNode()) {
+                const o = lcdVsOrig.get(n); if (o && n.data === o.replace(/\uFE0F/g, '')) n.data = o;
+            }
+        }
+        function lcdGhostSync(records) {
+            const on = document.documentElement.getAttribute('data-theme') === 'lcd';
+            if (!on) { if (lcdVsOn) { lcdVsOn = false; lcdRestoreVS(); } return; }
+            if (!lcdVsOn) { lcdVsOn = true; lcdStripVS(document.body); }
+            else if (records && records.length) records.forEach(r => { if (r.type === 'characterData') lcdStripVS(r.target); else r.addedNodes.forEach(n => { if (n.nodeType === 1 || n.nodeType === 3) lcdStripVS(n); }); });
+            document.querySelectorAll(LCD_GHOST_SEL).forEach(el => { el.classList.add('lcd-ghost'); const t = el.textContent; if (el.dataset.ghost !== t) el.dataset.ghost = t; });
+        }
+        new MutationObserver(lcdGhostSync).observe(document.body, { childList: true, subtree: true, characterData: true });
         function renderThemePicker() {
             const grid = document.getElementById('theme-grid');
             grid.innerHTML = THEMES.map(t => `<button class="theme-card${t.id === appTheme ? ' active' : ''}" data-theme-id="${t.id}">
@@ -4893,7 +5048,6 @@
                 statsUse('broyach-dokosvane', 'Смяна на брояча с докосване');
                 const order = Object.keys(COUNTER_STYLES), next = order[(order.indexOf(counterStyle) + 1) % order.length];
                 setCounterStyle(next); saveSettings();
-                showMessage(`Брояч: ${COUNTER_STYLES[next]} (докоснете пак за смяна)`);
             });
 
             // --- Инсталиране ---
