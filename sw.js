@@ -1,6 +1,6 @@
 // Service worker: пази приложението в устройството, за да работи без интернет.
 // При всяка нова версия на файловете сменете номера тук (напр. v2 → v3).
-const VERSION = 'namaz-v35';
+const VERSION = 'namaz-v36';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon.png', './badge-96.png'];
 const FONTS = 'namaz-fonts';
 

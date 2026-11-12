@@ -1263,9 +1263,9 @@
         .hc-nav .t { text-align: center; line-height: 1.2; } .hc-nav .t b { display: block; font-family: 'Oswald', sans-serif; font-size: 1.25rem; color: var(--title); letter-spacing: 0.02em; }
         .hc-nav .t span { font-size: 0.75rem; color: var(--ink-soft); font-weight: 600; }
         .hc-arrow { width: 2.2rem; height: 2.2rem; flex-shrink: 0; border-radius: 50%; background: var(--surf-1); border: 1px solid var(--surf-border); color: var(--chip-ink); font-size: 1.3rem; display: grid; place-items: center; cursor: pointer; }
-        .mode-seg.hc-mode { display: inline-grid; flex-shrink: 0; width: auto; margin: 0; grid-template-columns: auto auto; padding: 0.12rem; gap: 0.1rem; border-radius: 0.65rem; }
-        .mode-seg.hc-mode button { padding: 0.1rem 0.5rem; font-size: 0.66rem; border-radius: 0.5rem; box-shadow: none; }
-        .hc-bar { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; }
+        .mode-seg.hc-mode { display: inline-grid; flex-shrink: 0; width: auto; margin: 0; grid-template-columns: auto auto auto; padding: 0.12rem; gap: 0.1rem; border-radius: 0.65rem; }
+        .mode-seg.hc-mode button { padding: 0.1rem 0.42rem; font-size: 0.64rem; border-radius: 0.5rem; box-shadow: none; }
+        .hc-bar { display: flex; align-items: center; justify-content: center; }
         .hc-bar .hc-legend { justify-content: flex-start; gap: 0.15rem 0.5rem; font-size: 0.62rem; }
         .hc-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.22rem; }
         .hc-wd { font-size: 0.66rem; font-weight: 800; text-align: center; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; }
@@ -4388,7 +4388,7 @@
             if (/Android/i.test(navigator.userAgent)) return 'android';
             return 'kompyutar';
         }
-        const APP_VERSION = 'v35';   // сменяйте заедно с VERSION в sw.js — вижда се кои устройства са обновени
+        const APP_VERSION = 'v36';   // сменяйте заедно с VERSION в sw.js — вижда се кои устройства са обновени
         // Ползване на функции: всяка се отчита най-много веднъж на ден от устройство (без лични данни)
         function statsUseState() {
             const today = formatDateForInputAndLookup(new Date());
@@ -4974,7 +4974,7 @@
         const HC_GMF = ['януари', 'февруари', 'март', 'април', 'май', 'юни', 'юли', 'август', 'септември', 'октомври', 'ноември', 'декември'];
         const HC_WD = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
         let sdTab = 'cal', sdYear = null, hcMonth = null, hcYear = null, hcSel = null, sacredUpcoming = [];
-        let hcMode = 'hybrid';
+        let hcMode = 'hybrid', gcMonth = null, gcYear = null;
         try { hcMode = localStorage.getItem('prayerApp_calMode') || 'hybrid'; } catch (e) { /* без запазване */ }
         const hcEvSplit = (name) => { const m = name.match(/^(.*?)\s*\(([^()]*)\)\s*$/); return m ? [m[1], m[2]] : [name, '']; };
 
@@ -5012,9 +5012,14 @@
         function renderHijriCal() {
             const box = document.getElementById('hcal');
             if (hcYear === null) { const h = OfflineCalc.gregorianToHijri(new Date()); hcMonth = h.month; hcYear = h.year; }
-            const len = OfflineCalc.monthLength(hcMonth, hcYear), first = OfflineCalc.hijriToGregorian(1, hcMonth, hcYear), last = OfflineCalc.hijriToGregorian(len, hcMonth, hcYear);
+            const greg = hcMode === 'greg';
+            if (greg && gcYear === null) { const a = OfflineCalc.hijriToGregorian(15, hcMonth, hcYear); gcMonth = a.getMonth(); gcYear = a.getFullYear(); }
+            let len, first, last;
+            if (greg) { first = new Date(gcYear, gcMonth, 1); last = new Date(gcYear, gcMonth + 1, 0); len = last.getDate(); }
+            else { len = OfflineCalc.monthLength(hcMonth, hcYear); first = OfflineCalc.hijriToGregorian(1, hcMonth, hcYear); last = OfflineCalc.hijriToGregorian(len, hcMonth, hcYear); }
+            const hy0 = OfflineCalc.gregorianToHijri(first).year;
             const evs = [];
-            for (const y of [hcYear - 1, hcYear, hcYear + 1]) for (const e of sacredEventsForHijriYear(y)) evs.push(e);
+            for (const y of [hy0 - 1, hy0, hy0 + 1]) for (const e of sacredEventsForHijriYear(y)) evs.push(e);
             const phases = moonPhasesBetween(first, addDays(last, 1));
             const today = new Date().toDateString(), sel = hcSel ? hcSel.toDateString() : '';
             const lead = (first.getDay() + 6) % 7;
@@ -5022,18 +5027,30 @@
             for (let i = 0; i < lead; i++) g += '<div class="hc-c empty"></div>';
             const items = [];
             for (let d = 1; d <= len; d++) {
-                const gd = OfflineCalc.hijriToGregorian(d, hcMonth, hcYear), key = gd.toDateString();
+                const gd = greg ? new Date(gcYear, gcMonth, d) : OfflineCalc.hijriToGregorian(d, hcMonth, hcYear), key = gd.toDateString();
                 const evl = evs.filter(e => e.date.toDateString() === key), ph = phases[key];
                 evl.forEach(e => items.push({ d, gd, ev: e }));
                 if (ph) items.push({ d, gd, ph });
                 const cls = ['hc-c', gd.getDay() === 5 ? 'fr' : '', evl.length ? 'ev' : '', key === today ? 'today' : '', key === sel && key !== today ? 'sel' : ''].join(' ');
-                const gtxt = gd.getDate() === 1 || d === 1 ? `<span class="g m1">${gd.getDate()} ${HC_GM[gd.getMonth()]}</span>` : `<span class="g">${gd.getDate()}</span>`;
+                let gtxt, main = d;
+                if (greg) {   // григориански: голямо е григорианското число, отдолу — хиджри денят
+                    const hd = OfflineCalc.gregorianToHijri(gd);
+                    gtxt = hd.day === 1 || d === 1 ? `<span class="g m1">${hd.day} ${HC_MONTHS[hd.month - 1].slice(0, 4)}.</span>` : `<span class="g">${hd.day}</span>`;
+                } else gtxt = gd.getDate() === 1 || d === 1 ? `<span class="g m1">${gd.getDate()} ${HC_GM[gd.getMonth()]}</span>` : `<span class="g">${gd.getDate()}</span>`;
                 const mark = evl.length ? `<i class="hc-mk">${evl.some(e => e.night) ? '☾' : '★'}</i>` : '';
                 const moon = ph ? `<svg class="hc-moon" viewBox="-12 -12 24 24">${moonSvg(HC_PHASE[ph.type][1], HC_PHASE[ph.type][2], 11, { id: 'hc' + d })}</svg>` : '';
-                g += `<button class="${cls}" data-day="${gd.getFullYear()}-${gd.getMonth() + 1}-${gd.getDate()}">${moon}${mark}<span class="h">${d}</span>${hcMode === 'hybrid' ? gtxt : ''}</button>`;
+                g += `<button class="${cls}" data-day="${gd.getFullYear()}-${gd.getMonth() + 1}-${gd.getDate()}">${moon}${mark}<span class="h">${main}</span>${hcMode !== 'hijri' ? gtxt : ''}</button>`;
             }
-            const range = first.getMonth() === last.getMonth() ? `${HC_GMF[first.getMonth()]} ${first.getFullYear()}`
-                : `${first.getDate()} ${HC_GMF[first.getMonth()]}${first.getFullYear() !== last.getFullYear() ? ' ' + first.getFullYear() : ''} – ${last.getDate()} ${HC_GMF[last.getMonth()]} ${last.getFullYear()}`;
+            let range, title;
+            if (greg) {
+                const h1 = OfflineCalc.gregorianToHijri(first), h2 = OfflineCalc.gregorianToHijri(last);
+                title = `${HC_GMF[gcMonth][0].toUpperCase()}${HC_GMF[gcMonth].slice(1)} ${gcYear}`;
+                range = `${h1.day} ${HC_MONTHS[h1.month - 1]}${h1.year !== h2.year ? ' ' + h1.year : ''} – ${h2.day} ${HC_MONTHS[h2.month - 1]} ${h2.year}`;
+            } else {
+                title = `${HC_MONTHS[hcMonth - 1]} ${hcYear}`;
+                range = first.getMonth() === last.getMonth() ? `${HC_GMF[first.getMonth()]} ${first.getFullYear()}`
+                    : `${first.getDate()} ${HC_GMF[first.getMonth()]}${first.getFullYear() !== last.getFullYear() ? ' ' + first.getFullYear() : ''} – ${last.getDate()} ${HC_GMF[last.getMonth()]} ${last.getFullYear()}`;
+            }
             const short = HC_MONTHS[hcMonth - 1].slice(0, 4) + '.';
             const list = items.length ? items.map(it => {
                 const dd = `<div class="d">${it.d} ${short}<small>${it.gd.getDate()} ${HC_GM[it.gd.getMonth()]} · ${HC_WD[it.gd.getDay()]}</small></div>`;
@@ -5045,13 +5062,18 @@
                 return `<div class="hc-ev">${dd}<div class="n">${it.ev.night ? '☾' : '★'} ${nm}${sub ? `<small>${sub}</small>` : ''}</div></div>`;
             }).join('') : '<div class="hc-ev hc-empty">Няма свещени дни през този месец</div>';
             box.innerHTML = `
-                <div class="hc-nav"><button class="hc-arrow" id="hc-prev" aria-label="Предишен месец">‹</button><div class="t"><b>${HC_MONTHS[hcMonth - 1]} ${hcYear}</b><span>${range}</span></div><button class="hc-arrow" id="hc-next" aria-label="Следващ месец">›</button></div>
-                <div class="hc-bar"><div class="hc-legend"><span><i style="background:var(--green)"></i>днес</span><span><i style="background:rgba(var(--g-rgb),.6)"></i>свещен ден</span><span><i style="background:rgba(var(--a-rgb),.2)"></i>петък</span><span>🌕 фаза</span></div><div class="mode-seg hc-mode"><button data-mode="hijri" class="${hcMode === 'hijri' ? 'active' : ''}">Хиджри</button><button data-mode="hybrid" class="${hcMode === 'hybrid' ? 'active' : ''}">Хибриден</button></div></div>
+                <div class="hc-nav"><button class="hc-arrow" id="hc-prev" aria-label="Предишен месец">‹</button><div class="t"><b>${title}</b><span>${range}</span></div><button class="hc-arrow" id="hc-next" aria-label="Следващ месец">›</button></div>
+                <div class="hc-bar"><div class="mode-seg hc-mode"><button data-mode="hijri" class="${hcMode === 'hijri' ? 'active' : ''}">Хиджри</button><button data-mode="hybrid" class="${hcMode === 'hybrid' ? 'active' : ''}">Хибриден</button><button data-mode="greg" class="${hcMode === 'greg' ? 'active' : ''}">Григориански</button></div></div>
                 <div class="hc-grid ${hcMode === 'hijri' ? 'hijri-only' : ''}">${g}</div>
-                ${OfflineCalc.gregorianToHijri(new Date()).month !== hcMonth || OfflineCalc.gregorianToHijri(new Date()).year !== hcYear ? '<button class="chip hc-today" id="hc-today">↺ Към днешния месец</button>' : ''}
+                <div class="hc-legend"><span><i style="background:var(--green)"></i>днес</span><span><i style="background:rgba(var(--g-rgb),.6)"></i>свещен ден</span><span><i style="background:rgba(var(--a-rgb),.2)"></i>петък</span><span>🌕 фаза</span></div>
+                ${(greg ? (new Date().getMonth() !== gcMonth || new Date().getFullYear() !== gcYear) : (OfflineCalc.gregorianToHijri(new Date()).month !== hcMonth || OfflineCalc.gregorianToHijri(new Date()).year !== hcYear)) ? '<button class="chip hc-today" id="hc-today">↺ Към днешния месец</button>' : ''}
                 `;
         }
         function hcShift(n) {
+            if (hcMode === 'greg') {
+                const a = new Date(gcYear, gcMonth + n, 1); gcMonth = a.getMonth(); gcYear = a.getFullYear();
+                return renderHijriCal();
+            }
             hcMonth += n;
             if (hcMonth < 1) { hcMonth = 12; hcYear--; }
             if (hcMonth > 12) { hcMonth = 1; hcYear++; }
@@ -5068,9 +5090,12 @@
                 if (!e.target.closest('#hcal')) return;
                 if (e.target.closest('#hc-prev')) return hcShift(-1);
                 if (e.target.closest('#hc-next')) return hcShift(1);
-                if (e.target.closest('#hc-today')) { const h = OfflineCalc.gregorianToHijri(new Date()); hcMonth = h.month; hcYear = h.year; return renderHijriCal(); }
+                if (e.target.closest('#hc-today')) { const n = new Date(), h = OfflineCalc.gregorianToHijri(n); hcMonth = h.month; hcYear = h.year; gcMonth = n.getMonth(); gcYear = n.getFullYear(); return renderHijriCal(); }
                 const mb = e.target.closest('.hc-mode button');
-                if (mb) { hcMode = mb.dataset.mode; try { localStorage.setItem('prayerApp_calMode', hcMode); } catch (x) { /* без запазване */ } return renderHijriCal(); }
+                if (mb) {   // при смяна на изгледа оставаме около същите дни
+                    if (mb.dataset.mode === 'greg' && hcMode !== 'greg') { const a = hcSel || OfflineCalc.hijriToGregorian(15, hcMonth, hcYear); gcMonth = a.getMonth(); gcYear = a.getFullYear(); }
+                    if (mb.dataset.mode !== 'greg' && hcMode === 'greg') { const h = OfflineCalc.gregorianToHijri(hcSel || new Date(gcYear, gcMonth, 15)); hcMonth = h.month; hcYear = h.year; }
+                    hcMode = mb.dataset.mode; try { localStorage.setItem('prayerApp_calMode', hcMode); } catch (x) { /* без запазване */ } return renderHijriCal(); }
                 const cell = e.target.closest('.hc-c[data-day]');
                 if (cell) {   // докосване на ден → карта на деня
                     const [y, m, d] = cell.dataset.day.split('-').map(Number);
@@ -5142,6 +5167,7 @@
             hcSel = dcDate;
             const h = OfflineCalc.gregorianToHijri(dcDate);
             if (h.month !== hcMonth || h.year !== hcYear) { hcMonth = h.month; hcYear = h.year; }
+            gcMonth = dcDate.getMonth(); gcYear = dcDate.getFullYear();
             renderHijriCal();
             const card = document.getElementById('day-card');
             card.innerHTML = dayCardHtml(dcDate, dcBig);
@@ -5196,7 +5222,7 @@
             statsUse('svesheni-dni', 'Свещени дни');
             if (tab === 'cal') statsUse('hidzhri-kalendar', 'Хиджри календар');
             if (tab === 'cal' && (date || hcYear === null)) {
-                const h = OfflineCalc.gregorianToHijri(date || new Date()); hcMonth = h.month; hcYear = h.year; hcSel = date || null;
+                const h = OfflineCalc.gregorianToHijri(date || new Date()); hcMonth = h.month; hcYear = h.year; hcSel = date || null; gcMonth = (date || new Date()).getMonth(); gcYear = (date || new Date()).getFullYear();
             }
             hideClockView();
             prayerTimesView.classList.add('hidden');
