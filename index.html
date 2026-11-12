@@ -1244,6 +1244,83 @@
         .ck-cdl { fill: var(--ink-soft); font-size: 9.5px; font-weight: 600; text-anchor: middle; }
         html[data-theme="lcd"] .ck-bezel { fill: var(--lcd-ink); } html[data-theme="lcd"] .ck-glow circle { stroke: rgba(255, 255, 255, 0.6); }
         html[data-theme="lcd"] .ck-cur { fill: var(--lcd-ink); stroke: var(--lcd-bg); } html[data-theme="lcd"] .ck-lab-on, html[data-theme="lcd"] .ck-lab-k { fill: var(--lcd-bg); }
+
+        /* свещени дни: раздели, година, хиджри календар */
+        .sd-tabs { flex-shrink: 0; margin: 0 0 clamp(0.35rem, 1.2dvh, 0.7rem); width: 100%; }
+        .mode-seg.sd-tabs button { font-size: 0.8rem; padding: 0.42rem 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+        .mode-seg.sd-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .moon-top .sd-tabs { margin-top: 0.1rem; }
+        .sd-pane:not(.hidden) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+        #sd-cal-pane:not(.hidden) { overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+        #sd-cal-pane::-webkit-scrollbar { display: none; }
+        .sd-controls { display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; }
+        .sd-year { display: flex; align-items: center; gap: 0.3rem; }
+        .sd-year .chip { padding: 0.15rem 0.7rem; font-size: 1.1rem; line-height: 1.2; }
+        .sd-year-label { background: none; border: 0; color: var(--title); line-height: 1.1; padding: 0 0.2rem; cursor: pointer; }
+        .sd-year-label b { font-family: 'Oswald', sans-serif; font-size: 1.05rem; } .sd-year-label span { display: block; font-size: 0.68rem; color: var(--ink-soft); font-weight: 600; }
+        #hcal { display: flex; flex-direction: column; gap: 0.45rem; }
+        .hc-nav { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; }
+        .hc-nav .t { text-align: center; line-height: 1.2; } .hc-nav .t b { display: block; font-family: 'Oswald', sans-serif; font-size: 1.25rem; color: var(--title); letter-spacing: 0.02em; }
+        .hc-nav .t span { font-size: 0.75rem; color: var(--ink-soft); font-weight: 600; }
+        .hc-arrow { width: 2.2rem; height: 2.2rem; flex-shrink: 0; border-radius: 50%; background: var(--surf-1); border: 1px solid var(--surf-border); color: var(--chip-ink); font-size: 1.3rem; display: grid; place-items: center; cursor: pointer; }
+        .mode-seg.hc-mode { display: inline-grid; flex-shrink: 0; width: auto; margin: 0; grid-template-columns: auto auto; padding: 0.12rem; gap: 0.1rem; border-radius: 0.65rem; }
+        .mode-seg.hc-mode button { padding: 0.1rem 0.5rem; font-size: 0.66rem; border-radius: 0.5rem; box-shadow: none; }
+        .hc-bar { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; }
+        .hc-bar .hc-legend { justify-content: flex-start; gap: 0.15rem 0.5rem; font-size: 0.62rem; }
+        .hc-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.22rem; }
+        .hc-wd { font-size: 0.66rem; font-weight: 800; text-align: center; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; }
+        .hc-wd.fr { color: var(--green-dark); }
+        .hc-c { position: relative; border-radius: 0.6rem; background: linear-gradient(180deg, var(--surf-1), var(--surf-2)); border: 1px solid var(--surf-border); min-height: 2.55rem; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; padding: 0; cursor: pointer; color: var(--ink); font: inherit; }
+        .hc-c.fr { background: linear-gradient(180deg, rgba(var(--a-rgb), 0.13), rgba(var(--a-rgb), 0.06)); }
+        .hc-c .h { font-weight: 800; font-size: 1.02rem; color: var(--ink); } .hc-c .g { font-size: 0.62rem; font-weight: 600; color: var(--ink-soft); margin-top: 0.12rem; }
+        .hc-c .g.m1 { color: var(--green-dark); font-weight: 800; }
+        .hc-c.ev { background: linear-gradient(180deg, rgba(var(--g-rgb), 0.38), rgba(var(--g-rgb), 0.18)); border-color: rgba(var(--g-rgb), 0.85); }
+        .hc-mk { position: absolute; top: 1px; right: 3px; font-size: 0.6rem; font-style: normal; color: var(--title); }
+        .hc-moon { position: absolute; top: 2px; left: 2px; width: 0.72rem; height: 0.72rem; }
+        .hc-c.today { background: linear-gradient(180deg, var(--accent-hi), var(--green-dark)); border-color: rgba(255, 255, 255, 0.6); }
+        .hc-c.today .h, .hc-c.today .g, .hc-c.today .hc-mk { color: #fff; }
+        .hc-c.sel { box-shadow: 0 0 0 2px var(--green); }
+        .hc-c.empty { background: none; border: 0; cursor: default; }
+        .hijri-only .hc-c { min-height: 2.3rem; } .hijri-only .hc-c .h { font-size: 1.12rem; }
+        .hc-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.3rem 0.8rem; font-size: 0.68rem; color: var(--ink-soft); font-weight: 600; }
+        .hc-legend i { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 0.2rem; vertical-align: -0.1em; margin-right: 0.25rem; }
+        .hc-today { align-self: center; font-size: 0.78rem; padding: 0.25rem 0.8rem; }
+        .hc-list { display: flex; flex-direction: column; gap: 0.3rem; }
+        .hc-ev { display: flex; align-items: center; gap: 0.55rem; padding: 0.4rem 0.6rem; border-radius: 0.7rem; background: linear-gradient(180deg, var(--surf-1), var(--surf-2)); border: 1px solid var(--surf-border); font-size: 0.8rem; color: var(--ink); }
+        .hc-ev .d { min-width: 3.7rem; text-align: center; font-weight: 800; color: var(--title); line-height: 1.1; } .hc-ev .d small { display: block; font-size: 0.62rem; color: var(--ink-soft); font-weight: 600; }
+        .hc-ev .n { font-weight: 700; line-height: 1.2; } .hc-ev .n small { display: block; font-weight: 500; color: var(--ink-soft); font-size: 0.7rem; }
+        .hc-ev-moon .n { font-weight: 600; }
+        .hc-moon-l { width: 1rem; height: 1rem; display: inline-block; vertical-align: -0.2em; margin-right: 0.35rem; }
+        .hc-empty { justify-content: center; color: var(--ink-soft); }
+        #sacred-events-list .prayer-row .sd-hd { display: block; font-size: 0.7rem; font-weight: 600; color: var(--ink-soft); }
+        #sacred-events-list .prayer-row.highlighted-prayer .sd-hd { color: rgba(255, 255, 255, 0.85); }
+
+        /* карта на деня */
+        .day-card { position: absolute; left: 0.55rem; right: 0.55rem; z-index: 40; border-radius: 1.25rem; padding: 0.4rem 0.75rem 0.65rem; display: flex; flex-direction: column;
+            background: linear-gradient(160deg, var(--panel-1), var(--panel-2)); border: 1px solid var(--surf-border); color: var(--ink);
+            box-shadow: 0 -10px 34px rgba(0, 0, 0, 0.35), inset 0 1px 0 var(--surf-border);
+            backdrop-filter: blur(26px) saturate(170%); -webkit-backdrop-filter: blur(26px) saturate(170%); animation: dcIn 0.22s ease-out; }
+        @keyframes dcIn { from { transform: translateY(14px); opacity: 0; } to { transform: none; opacity: 1; } }
+        .day-card.hidden { display: none; }
+        .dc-handle { width: 2.6rem; height: 0.27rem; border-radius: 9px; background: rgba(var(--p-rgb), 0.28); margin: 0 auto 0.35rem; flex-shrink: 0; cursor: pointer; padding: 0; }
+        html[data-mode="dark"] .dc-handle { background: rgba(255, 255, 255, 0.3); }
+        .dc-hd { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-shrink: 0; }
+        .dc-hd b { font-family: 'Oswald', sans-serif; font-size: 1.05rem; color: var(--title); letter-spacing: 0.02em; } .dc-hd span { font-size: 0.75rem; color: var(--ink-soft); font-weight: 600; margin-left: 0.35rem; }
+        .dc-x { width: 1.75rem; height: 1.75rem; border-radius: 50%; background: var(--surf-1); border: 1px solid var(--surf-border); display: grid; place-items: center; color: var(--ink-soft); font-size: 0.85rem; flex-shrink: 0; cursor: pointer; }
+        .dc-ev { margin-top: 0.35rem; display: flex; gap: 0.5rem; align-items: center; padding: 0.3rem 0.55rem; border-radius: 0.7rem; background: linear-gradient(180deg, rgba(var(--g-rgb), 0.38), rgba(var(--g-rgb), 0.18)); border: 1px solid rgba(var(--g-rgb), 0.8); font-weight: 700; font-size: 0.85rem; line-height: 1.2; flex-shrink: 0; }
+        .dc-ev small { display: block; font-weight: 500; color: var(--ink-soft); font-size: 0.72rem; } .dc-evi { font-size: 1.05rem; color: var(--title); }
+        .dc-ms { margin-top: 0.4rem; display: flex; gap: 0.75rem; align-items: center; padding: 0.45rem 0.6rem; border-radius: 0.8rem; background: linear-gradient(180deg, var(--surf-1), var(--surf-2)); border: 1px solid var(--surf-border); flex-shrink: 0; text-align: left; color: inherit; font: inherit; cursor: pointer; width: 100%; }
+        .dc-ms svg { width: 3.4rem; height: 3.4rem; flex-shrink: 0; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)); }
+        .dc-ms .nm { font-weight: 800; color: var(--title); font-size: 1rem; line-height: 1.15; } .dc-ms .il { font-size: 0.78rem; color: var(--ink-soft); font-weight: 600; }
+        .dc-ms .rs { display: flex; gap: 0.9rem; font-size: 0.76rem; color: var(--ink-soft); font-weight: 600; margin-top: 0.15rem; } .dc-ms .rs b { color: var(--ink); }
+        .dc-more { margin-top: 0.35rem; background: none; border: 0; font-size: 0.75rem; font-weight: 700; color: var(--value); cursor: pointer; }
+        .day-card.big .dc-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin-top: 0.35rem; scrollbar-width: none; }
+        .day-card.big .dc-body::-webkit-scrollbar { display: none; }
+        .dc-hero { display: flex; align-items: center; gap: 0.9rem; padding: 0.2rem 0.2rem 0.5rem; }
+        .dc-hero svg { width: 7.2rem; height: 7.2rem; flex-shrink: 0; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35)); }
+        .dc-hero .nm { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.45rem; color: var(--title); line-height: 1.1; }
+        .dc-hero .il { font-size: 0.85rem; color: var(--ink-soft); font-weight: 600; margin-top: 0.2rem; } .dc-hero .il b { color: var(--time); }
+        .dc-body .moon-grid { margin-bottom: 0.45rem; } .dc-body .moon-sub { margin: 0.3rem 0; } .dc-body .moon-note { margin-top: 0.45rem; }
         /* изглед на брояча */
         .counter-stage { display: contents; }
         .counter-viz:empty { display: none; }
@@ -1799,26 +1876,29 @@
         <!-- Sacred Events View (Initially Hidden) -->
         <div id="sacred-events-view" class="hidden">
             <div class="text-center flex flex-col items-center">
-                <h3 class="ribbon text-base mb-4">Свещени дни и нощи</h3>
-                <!-- NEW: Main countdown for Sacred Events -->
-                <div class="flex flex-col items-center justify-center gap-1 mb-4">
-                    <div id="sacred-countdown-display" class="text-5xl md:text-6xl lg:text-7xl">-- дни --</div>
-                    <div id="sacred-countdown-text" class="countdown-text">зареждане...</div>
+                <h3 class="ribbon text-base mb-4">Календар</h3>
+            </div>
+            <div class="mode-seg sd-tabs"><button data-tab="cal">🗓️ Месец</button><button data-tab="list">★ Свещени дни</button></div>
+            <div id="sd-list-pane" class="sd-pane">
+                <div class="text-center flex flex-col items-center">
+                    <div class="flex flex-col items-center justify-center gap-1 mb-4 sd-count">
+                        <div id="sacred-countdown-display" class="text-5xl md:text-6xl lg:text-7xl">-- дни --</div>
+                        <div id="sacred-countdown-text" class="countdown-text">зареждане...</div>
+                    </div>
+                    <div class="sacred-events-controls sd-controls">
+                        <div class="sd-year"><button id="sd-year-prev" class="chip" aria-label="Предишна година">‹</button><button id="sd-year-label" class="sd-year-label" title="Към текущата година"></button><button id="sd-year-next" class="chip" aria-label="Следваща година">›</button></div>
+                        <button id="sd-year-now" class="chip chip-accent hidden">↺ Текущата година</button>
+                        <button id="toggle-sacred-events-countdown-btn" class="chip">⏳ <span id="sacred-mode-label">Покажи оставащите дни</span></button>
+                    </div>
                 </div>
-
-                <!-- NEW: Button group for sacred events view -->
-                <div class="sacred-events-controls">
-                    <button id="toggle-sacred-events-countdown-btn" class="chip">⏳ <span id="sacred-mode-label">Покажи оставащите дни</span></button>
+                <div id="sacred-events-loading-indicator" class="flex justify-center items-center py-4 hidden">
+                    <div class="loading-spinner"></div>
+                </div>
+                <div id="sacred-events-list-container" class="max-h-96 overflow-y-auto mb-4">
+                    <div id="sacred-events-list" class="flex flex-col gap-1"></div>
                 </div>
             </div>
-            <div id="sacred-events-loading-indicator" class="flex justify-center items-center py-4 hidden">
-                <div class="loading-spinner"></div>
-            </div>
-            <div id="sacred-events-list-container" class="max-h-96 overflow-y-auto mb-4">
-                <div id="sacred-events-list" class="flex flex-col gap-1">
-                    <!-- Sacred events will be populated here -->
-                </div>
-            </div>
+            <div id="sd-cal-pane" class="sd-pane hidden"><div id="hcal"></div></div>
         </div>
 
         <!-- Къбле -->
@@ -1891,6 +1971,7 @@
         <div id="moon-view" class="hidden">
             <div class="text-center flex flex-col items-center moon-top">
                 <h3 class="ribbon text-base">Фази на Луната</h3>
+
                 <div class="moon-daynav">
                     <button id="moon-prev" class="chip moon-arrow" aria-label="Предишен ден">‹</button>
                     <div class="moon-daylabel"><b id="moon-date-label">—</b><span id="moon-hijri-label">—</span></div>
@@ -1925,9 +2006,10 @@
         </div>
 
         <!-- Долна навигация -->
+        <div id="day-card" class="day-card hidden" role="dialog" aria-label="Подробности за деня"></div>
         <nav id="bottom-nav" class="bottom-nav" aria-label="Навигация">
             <button id="nav-prayers" class="nav-item active"><span class="nav-icon">🕌</span><span>Намаз</span></button>
-            <button id="nav-sacred" class="nav-item"><span class="nav-icon">✨</span><span>Свещени дни</span></button>
+            <button id="nav-sacred" class="nav-item"><span class="nav-icon">🗓️</span><span>Календар</span></button>
             <button id="nav-qibla" class="nav-item"><span class="nav-icon">🧭</span><span>Къбле</span></button>
             <button id="nav-menu" class="nav-item"><span class="nav-icon">☰</span><span>Меню</span></button>
         </nav>
@@ -1953,17 +2035,6 @@
                     <span class="menu-chev">›</span>
                     <input type="date" id="menu-date-input" class="hidden-date-input" aria-label="Изберете дата">
                 </div>
-                <button id="menu-clock" class="menu-row">
-                    <span class="menu-icon">🕛</span>
-                    <span class="menu-label">Часовник<small>Целият ден върху циферблат</small></span>
-                    <span class="menu-chev">›</span>
-                </button>
-                <button id="menu-moon" class="menu-row">
-                    <span class="menu-icon" id="menu-moon-icon">🌙</span>
-                    <span class="menu-label">Фази на Луната</span>
-                    <span id="menu-moon-value" class="menu-value"></span>
-                    <span class="menu-chev">›</span>
-                </button>
             </div>
 
             <div class="menu-group">
@@ -2652,15 +2723,12 @@
         // type "lastDayBefore" = последният ден преди 1-во число на месеца (Арефе преди Рамазан Байрам)
         const SACRED_EVENT_DEFINITIONS = [
             { nameBg: "Начало на Трите Месеца (1 Реджеб)", hMonth: 7, hDay: 1, type: "fixed", key: "UcAylar" },
-            { nameBg: "Нощта на Регаиб (срещу първия петък на Реджеб)", hMonth: 7, type: "regaib", key: "Regaib" },
-            { nameBg: "Нощта на Мирадж (срещу 27 Реджеб)", hMonth: 7, hDay: 27, type: "eveBefore", key: "Miraj" },
-            { nameBg: "Нощта на Берат (срещу 15 Шабан)", hMonth: 8, hDay: 15, type: "eveBefore", key: "Berat" },
+            { nameBg: "Нощта Регаиб (срещу първия петък на Реджеб)", hMonth: 7, type: "regaib", key: "Regaib" },
+            { nameBg: "Нощта Мирадж (срещу 27 Реджеб)", hMonth: 7, hDay: 27, type: "eveBefore", key: "Miraj" },
+            { nameBg: "Нощта Берат (срещу 15 Шабан)", hMonth: 8, hDay: 15, type: "eveBefore", key: "Berat" },
             { nameBg: "Начало на Рамазан (1 Рамазан)", hMonth: 9, hDay: 1, type: "fixed", key: "RamadanStart" },
-            { nameBg: "Нощта Кадир (срещу 27 Рамазан)", hMonth: 9, hDay: 27, type: "eveBefore", key: "Kadir" },
-            { nameBg: "Арефе (преди Рамазан Байрам)", hMonth: 10, type: "lastDayBefore", key: "RamazanArefe" },
-            { nameBg: "Рамазан Байрам - Ден 1 (1 Шеввал)", hMonth: 10, hDay: 1, type: "fixed", key: "RamazanBayram1" },
-            { nameBg: "Рамазан Байрам - Ден 2 (2 Шеввал)", hMonth: 10, hDay: 2, type: "fixed", key: "RamazanBayram2" },
-            { nameBg: "Рамазан Байрам - Ден 3 (3 Шеввал)", hMonth: 10, hDay: 3, type: "fixed", key: "RamazanBayram3" },
+            { nameBg: "Нощта Кадр (срещу 27 Рамазан)", hMonth: 9, hDay: 27, type: "eveBefore", key: "Kadir" },
+            { nameBg: "Рамазан Байрам (1 Шеввал)", hMonth: 10, hDay: 1, type: "fixed", key: "RamazanBayram1" },
             { nameBg: "Денят Арафа (9 Зилхидже)", hMonth: 12, hDay: 9, type: "fixed", key: "Arafa" },
             { nameBg: "Курбан Байрам - Ден 1 (10 Зилхидже)", hMonth: 12, hDay: 10, type: "fixed", key: "KurbanBayram1" },
             { nameBg: "Курбан Байрам - Ден 2 (11 Зилхидже)", hMonth: 12, hDay: 11, type: "fixed", key: "KurbanBayram2" },
@@ -2668,7 +2736,7 @@
             { nameBg: "Курбан Байрам - Ден 4 (13 Зилхидже)", hMonth: 12, hDay: 13, type: "fixed", key: "KurbanBayram4" },
             { nameBg: "Нова Хиджри година (1 Мухаррем)", hMonth: 1, hDay: 1, type: "fixed", key: "NewHijriYear" },
             { nameBg: "Ашура (10 Мухаррем)", hMonth: 1, hDay: 10, type: "fixed", key: "Ashura" },
-            { nameBg: "Мевлид Кандили (срещу 12 Рабиюлеввел)", hMonth: 3, hDay: 12, type: "eveBefore", key: "Mawlid" }
+            { nameBg: "Рождество на Пратеника (саас) (срещу 12 Рабиюлеввел)", hMonth: 3, hDay: 12, type: "eveBefore", key: "Mawlid" }
         ];
 
         const addDays = (date, n) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + n);
@@ -2688,7 +2756,7 @@
                     const firstFriday = addDays(first, (5 - first.getDay() + 7) % 7);
                     date = addDays(firstFriday, -1);
                 }
-                return { nameBg: def.nameBg, date, key: `${def.key}_${hYear}` };
+                return { nameBg: def.nameBg, date, key: `${def.key}_${hYear}`, night: def.type === 'eveBefore' || def.type === 'regaib' };
             });
         }
 
@@ -4286,6 +4354,7 @@
         function showQiblaView() {
             statsUse('kuble', 'Къбле – отворен екран');
             hideClockView();
+            document.getElementById('day-card').classList.add('hidden');
             prayerTimesView.classList.add('hidden');
             sacredEventsView.classList.add('hidden');
             hideMoonView();
@@ -4319,7 +4388,7 @@
             if (/Android/i.test(navigator.userAgent)) return 'android';
             return 'kompyutar';
         }
-        const APP_VERSION = 'v32';   // сменяйте заедно с VERSION в sw.js — вижда се кои устройства са обновени
+        const APP_VERSION = 'v35';   // сменяйте заедно с VERSION в sw.js — вижда се кои устройства са обновени
         // Ползване на функции: всяка се отчита най-много веднъж на ден от устройство (без лични данни)
         function statsUseState() {
             const today = formatDateForInputAndLookup(new Date());
@@ -4736,7 +4805,7 @@
             sacredEventsView.classList.add('hidden');
             hideQiblaView();
             moonView.classList.remove('hidden');
-            setActiveNav(null);
+            setActiveNav(navSacredBtn);
             clearInterval(individualCountdownIntervalId); individualCountdownIntervalId = null;
             clearInterval(sacredEventsCountdownIntervalId); clearInterval(sacredEventsMainCountdownIntervalId);
             renderMoonView();
@@ -4818,7 +4887,7 @@
             const ring = (half, R1, R2, rs) => {
                 const lo = half * 720, hi = lo + 720; let out = '';
                 for (const s of m.seg) {
-                    for (const sh of [-1440, 0, 1440]) {
+                    for (const sh of [0]) {
                         const A = Math.max(s[1] + sh, lo), B = Math.min(s[2] + sh, hi); if (B <= A) continue;
                         const on = s === cur && sh === 0 && (am ? half === 0 : half === 1);
                         out += `<path class="ck-seg ck-${s[3]}${on ? ' ck-cur' : ''}" d="${arc(R2 - (on ? 3 : 0), R1 + (on ? 4 : 0), A, B)}"/>`;
@@ -4826,14 +4895,14 @@
                     }
                 }
                 for (const s of m.sub) {
-                    for (const sh of [-1440, 0, 1440]) {
+                    for (const sh of [0]) {
                         const A = Math.max(s[1] + sh, lo), B = Math.min(s[2] + sh, hi); if (B <= A) continue;
                         out += `<path class="ck-sub ck-sub-${s[3]}" d="${arc(R2 - rs, R2 - 1.5, A, B)}"/>`;
                         if (s[0]) out += label(R2 - rs - 7, (A + B) / 2, s[0], 9, 'ck-lab ck-lab-s', Math.max(B - A, 90));
                     }
                 }
                 for (const [x, l] of m.thirds) {
-                    const xm = [x, x - 1440, x + 1440].find(v => v >= lo && v < hi); if (xm === undefined) continue;
+                    const xm = (x >= lo && x < hi) ? x : undefined; if (xm === undefined) continue;
                     const [x1, y1] = pt(R2 - rs, xm), [x2, y2] = pt(R1, xm);
                     out += `<line class="ck-third" x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}"/>` + label(R2 - rs - 8, xm, l, 12, 'ck-lab ck-lab-t', 200);
                 }
@@ -4879,6 +4948,7 @@
         }
         function showClockView() {
             statsUse('chasovnik', 'Часовник');
+            document.getElementById('day-card').classList.add('hidden');
             prayerTimesView.classList.add('hidden');
             sacredEventsView.classList.add('hidden');
             hideQiblaView();
@@ -4898,9 +4968,218 @@
             clockView.classList.add('hidden');
             clearInterval(clockTimer); clockTimer = null;
         }
+        // --- Свещени дни: раздели „Списък“, „Календар“ (хиджри) и „Луна“ ---
+        const HC_MONTHS = ["Мухаррем", "Сафер", "Рабиюлеввел", "Рабиюлахир", "Джемазиюлеввел", "Джемазиюлахир", "Реджеб", "Шабан", "Рамазан", "Шеввал", "Зилкаде", "Зилхидже"];
+        const HC_GM = ['яну', 'фев', 'мар', 'апр', 'май', 'юни', 'юли', 'авг', 'сеп', 'окт', 'ное', 'дек'];
+        const HC_GMF = ['януари', 'февруари', 'март', 'април', 'май', 'юни', 'юли', 'август', 'септември', 'октомври', 'ноември', 'декември'];
+        const HC_WD = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+        let sdTab = 'cal', sdYear = null, hcMonth = null, hcYear = null, hcSel = null, sacredUpcoming = [];
+        let hcMode = 'hybrid';
+        try { hcMode = localStorage.getItem('prayerApp_calMode') || 'hybrid'; } catch (e) { /* без запазване */ }
+        const hcEvSplit = (name) => { const m = name.match(/^(.*?)\s*\(([^()]*)\)\s*$/); return m ? [m[1], m[2]] : [name, '']; };
+
+        function setSdTabs(tab) {
+            document.querySelectorAll('.sd-tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+        }
+        function setSdPane(tab) {
+            sdTab = tab;
+            setSdTabs(tab);
+            document.getElementById('sd-list-pane').classList.toggle('hidden', tab !== 'list');
+            document.getElementById('sd-cal-pane').classList.toggle('hidden', tab !== 'cal');
+            const card = document.getElementById('day-card');
+            if (tab === 'cal') { renderHijriCal(); if (dcDate) { card.classList.remove('hidden'); placeDayCard(); } }
+            else { card.classList.add('hidden'); placeDayCard(); scrollSacredToUpcoming(); }
+        }
+        function hijriYearSpan(y) {
+            const a = OfflineCalc.hijriToGregorian(1, 1, y), b = OfflineCalc.hijriToGregorian(OfflineCalc.monthLength(12, y), 12, y);
+            return a.getFullYear() === b.getFullYear() ? `${a.getFullYear()}` : `${a.getFullYear()}–${b.getFullYear()}`;
+        }
+        function updateSdYearLabel() {
+            document.getElementById('sd-year-label').innerHTML = `<b>${sdYear} г.</b> <span>${hijriYearSpan(sdYear)}</span>`;
+            document.getElementById('sd-year-now').classList.toggle('hidden', sdYear === OfflineCalc.gregorianToHijri(new Date()).year);
+        }
+
+        function moonPhasesBetween(fromDate, toDate) {
+            const out = {};
+            for (const p of OfflineCalc.nextMoonPhases(fromDate.getTime() - 86400000, 8)) {
+                const d = new Date(p.ms);
+                if (d >= fromDate && d < toDate) out[d.toDateString()] = p;
+            }
+            return out;
+        }
+        const HC_PHASE = { 0: ['Новолуние', 0, true], 90: ['Първа четвърт', 0.5, true], 180: ['Пълнолуние', 1, true], 270: ['Последна четвърт', 0.5, false] };
+
+        function renderHijriCal() {
+            const box = document.getElementById('hcal');
+            if (hcYear === null) { const h = OfflineCalc.gregorianToHijri(new Date()); hcMonth = h.month; hcYear = h.year; }
+            const len = OfflineCalc.monthLength(hcMonth, hcYear), first = OfflineCalc.hijriToGregorian(1, hcMonth, hcYear), last = OfflineCalc.hijriToGregorian(len, hcMonth, hcYear);
+            const evs = [];
+            for (const y of [hcYear - 1, hcYear, hcYear + 1]) for (const e of sacredEventsForHijriYear(y)) evs.push(e);
+            const phases = moonPhasesBetween(first, addDays(last, 1));
+            const today = new Date().toDateString(), sel = hcSel ? hcSel.toDateString() : '';
+            const lead = (first.getDay() + 6) % 7;
+            let g = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((d, i) => `<div class="hc-wd${i === 4 ? ' fr' : ''}">${d}</div>`).join('');
+            for (let i = 0; i < lead; i++) g += '<div class="hc-c empty"></div>';
+            const items = [];
+            for (let d = 1; d <= len; d++) {
+                const gd = OfflineCalc.hijriToGregorian(d, hcMonth, hcYear), key = gd.toDateString();
+                const evl = evs.filter(e => e.date.toDateString() === key), ph = phases[key];
+                evl.forEach(e => items.push({ d, gd, ev: e }));
+                if (ph) items.push({ d, gd, ph });
+                const cls = ['hc-c', gd.getDay() === 5 ? 'fr' : '', evl.length ? 'ev' : '', key === today ? 'today' : '', key === sel && key !== today ? 'sel' : ''].join(' ');
+                const gtxt = gd.getDate() === 1 || d === 1 ? `<span class="g m1">${gd.getDate()} ${HC_GM[gd.getMonth()]}</span>` : `<span class="g">${gd.getDate()}</span>`;
+                const mark = evl.length ? `<i class="hc-mk">${evl.some(e => e.night) ? '☾' : '★'}</i>` : '';
+                const moon = ph ? `<svg class="hc-moon" viewBox="-12 -12 24 24">${moonSvg(HC_PHASE[ph.type][1], HC_PHASE[ph.type][2], 11, { id: 'hc' + d })}</svg>` : '';
+                g += `<button class="${cls}" data-day="${gd.getFullYear()}-${gd.getMonth() + 1}-${gd.getDate()}">${moon}${mark}<span class="h">${d}</span>${hcMode === 'hybrid' ? gtxt : ''}</button>`;
+            }
+            const range = first.getMonth() === last.getMonth() ? `${HC_GMF[first.getMonth()]} ${first.getFullYear()}`
+                : `${first.getDate()} ${HC_GMF[first.getMonth()]}${first.getFullYear() !== last.getFullYear() ? ' ' + first.getFullYear() : ''} – ${last.getDate()} ${HC_GMF[last.getMonth()]} ${last.getFullYear()}`;
+            const short = HC_MONTHS[hcMonth - 1].slice(0, 4) + '.';
+            const list = items.length ? items.map(it => {
+                const dd = `<div class="d">${it.d} ${short}<small>${it.gd.getDate()} ${HC_GM[it.gd.getMonth()]} · ${HC_WD[it.gd.getDay()]}</small></div>`;
+                if (it.ph) {
+                    const t = new Date(it.ph.ms);
+                    return `<div class="hc-ev hc-ev-moon">${dd}<div class="n"><svg class="hc-moon-l" viewBox="-12 -12 24 24">${moonSvg(HC_PHASE[it.ph.type][1], HC_PHASE[it.ph.type][2], 11, { id: 'hl' + it.d })}</svg>${HC_PHASE[it.ph.type][0]}<small>в ${formatTime(t)} ч.</small></div></div>`;
+                }
+                const [nm, sub] = hcEvSplit(it.ev.nameBg);
+                return `<div class="hc-ev">${dd}<div class="n">${it.ev.night ? '☾' : '★'} ${nm}${sub ? `<small>${sub}</small>` : ''}</div></div>`;
+            }).join('') : '<div class="hc-ev hc-empty">Няма свещени дни през този месец</div>';
+            box.innerHTML = `
+                <div class="hc-nav"><button class="hc-arrow" id="hc-prev" aria-label="Предишен месец">‹</button><div class="t"><b>${HC_MONTHS[hcMonth - 1]} ${hcYear}</b><span>${range}</span></div><button class="hc-arrow" id="hc-next" aria-label="Следващ месец">›</button></div>
+                <div class="hc-bar"><div class="hc-legend"><span><i style="background:var(--green)"></i>днес</span><span><i style="background:rgba(var(--g-rgb),.6)"></i>свещен ден</span><span><i style="background:rgba(var(--a-rgb),.2)"></i>петък</span><span>🌕 фаза</span></div><div class="mode-seg hc-mode"><button data-mode="hijri" class="${hcMode === 'hijri' ? 'active' : ''}">Хиджри</button><button data-mode="hybrid" class="${hcMode === 'hybrid' ? 'active' : ''}">Хибриден</button></div></div>
+                <div class="hc-grid ${hcMode === 'hijri' ? 'hijri-only' : ''}">${g}</div>
+                ${OfflineCalc.gregorianToHijri(new Date()).month !== hcMonth || OfflineCalc.gregorianToHijri(new Date()).year !== hcYear ? '<button class="chip hc-today" id="hc-today">↺ Към днешния месец</button>' : ''}
+                `;
+        }
+        function hcShift(n) {
+            hcMonth += n;
+            if (hcMonth < 1) { hcMonth = 12; hcYear--; }
+            if (hcMonth > 12) { hcMonth = 1; hcYear++; }
+            renderHijriCal();
+        }
+        function initSacredTabs() {
+            document.addEventListener('click', (e) => {
+                const tb = e.target.closest('.sd-tabs button');
+                if (tb) {
+                    const tab = tb.dataset.tab;
+                    if (sacredEventsView.classList.contains('hidden')) showSacredEventsView(tab); else setSdPane(tab);
+                    return;
+                }
+                if (!e.target.closest('#hcal')) return;
+                if (e.target.closest('#hc-prev')) return hcShift(-1);
+                if (e.target.closest('#hc-next')) return hcShift(1);
+                if (e.target.closest('#hc-today')) { const h = OfflineCalc.gregorianToHijri(new Date()); hcMonth = h.month; hcYear = h.year; return renderHijriCal(); }
+                const mb = e.target.closest('.hc-mode button');
+                if (mb) { hcMode = mb.dataset.mode; try { localStorage.setItem('prayerApp_calMode', hcMode); } catch (x) { /* без запазване */ } return renderHijriCal(); }
+                const cell = e.target.closest('.hc-c[data-day]');
+                if (cell) {   // докосване на ден → карта на деня
+                    const [y, m, d] = cell.dataset.day.split('-').map(Number);
+                    openDayCard(new Date(y, m - 1, d), false);
+                }
+            });
+            document.getElementById('sd-year-prev').addEventListener('click', () => { sdYear--; populateSacredEventsList(); });
+            document.getElementById('sd-year-next').addEventListener('click', () => { sdYear++; populateSacredEventsList(); });
+            document.getElementById('sd-year-label').addEventListener('click', () => { sdYear = OfflineCalc.gregorianToHijri(new Date()).year; populateSacredEventsList(); });
+            document.getElementById('sd-year-now').addEventListener('click', () => { sdYear = OfflineCalc.gregorianToHijri(new Date()).year; populateSacredEventsList(); });
+            let hcTouchX = null;   // плъзгане наляво/надясно сменя месеца
+            const pane = document.getElementById('sd-cal-pane');
+            pane.addEventListener('touchstart', (e) => { hcTouchX = e.touches.length === 1 ? e.touches[0].clientX : null; }, { passive: true });
+            pane.addEventListener('touchend', (e) => {
+                if (hcTouchX === null || !e.target.closest('.hc-grid')) return;
+                const dx = e.changedTouches[0].clientX - hcTouchX; hcTouchX = null;
+                if (Math.abs(dx) > 60) hcShift(dx < 0 ? 1 : -1);
+            }, { passive: true });
+        }
+        // --- Карта на деня в календара (малка/голяма) ---
+        let dcDate = null, dcBig = false;
+        const DC_DAYS = ['Неделя', 'Понеделник', 'Вторник', 'Сряда', 'Четвъртък', 'Петък', 'Събота'];
+        function dayCardHtml(d, big) {
+            const h = OfflineCalc.gregorianToHijri(d);
+            const evs = [];
+            for (const y of [h.year - 1, h.year, h.year + 1]) for (const e of sacredEventsForHijriYear(y)) if (e.date.toDateString() === d.toDateString()) evs.push(e);
+            const info = OfflineCalc.moonPhaseInfo(moonMomentFor(d));
+            const [lat, lon] = locationCoords();
+            const rs = OfflineCalc.moonRiseSet(lat, lon, d.getFullYear(), d.getMonth() + 1, d.getDate(), locationTz());
+            const t = (x) => x ? fmtLoc(x) : '—';
+            const evHtml = evs.map(e => { const [a, b] = hcEvSplit(e.nameBg); return `<div class="dc-ev"><span class="dc-evi">${e.night ? '☾' : '★'}</span><div>${a}${b ? `<small>${b}${e.night ? ' · вечерта на този ден' : ''}</small>` : ''}</div></div>`; }).join('');
+            let inner;
+            if (!big) {
+                inner = `${evHtml}<button class="dc-ms" aria-label="Още за Луната"><svg viewBox="-12 -12 24 24">${moonSvg(info.illum, info.waxing, 11, { id: 'dcs' })}</svg>
+                    <div><div class="nm">${moonPhaseName(info)}</div><div class="il">${(info.illum * 100).toFixed(0)}% осветена</div>
+                    <div class="rs"><span>↑ изгрев <b>${t(rs.rise)}</b></span><span>↓ залез <b>${t(rs.set)}</b></span></div></div></button>
+                    <button class="dc-more">▲ Още за Луната</button>`;
+            } else {
+                moonDate = new Date(d.getFullYear(), d.getMonth(), d.getDate()); renderMoonView();
+                const grid = document.getElementById('moon-grid').innerHTML, next = document.getElementById('moon-next-list').innerHTML, note = document.querySelector('#moon-view .moon-note').outerHTML;
+                inner = `<div class="dc-body">${evHtml}<div class="dc-hero"><svg viewBox="-110 -110 220 220">${moonSvg(info.illum, info.waxing, 90, { id: 'dcb', detail: true })}</svg>
+                    <div><div class="nm">${moonPhaseName(info)}</div><div class="il"><b>${(info.illum * 100).toFixed(1)}%</b> осветена</div></div></div>
+                    <div class="moon-grid">${grid}</div><div class="moon-sub">Следващи фази</div><div class="moon-next-list">${next}</div>${note}</div>`;
+            }
+            return `<div class="dc-handle"></div><div class="dc-hd"><div><b>${h.day} ${HC_MONTHS[h.month - 1]} ${h.year}</b><span>${DC_DAYS[d.getDay()]}, ${formatDate(d)}</span></div><button class="dc-x" aria-label="Затвори">✕</button></div>${inner}`;
+        }
+        function placeDayCard() {
+            const card = document.getElementById('day-card');
+            if (card.classList.contains('hidden')) { document.getElementById('sd-cal-pane').style.paddingBottom = ''; return; }
+            const cont = document.querySelector('.container').getBoundingClientRect();
+            const nav = document.querySelector('.bottom-nav').getBoundingClientRect();
+            card.style.bottom = `${cont.bottom - nav.top + 6}px`;
+            if (dcBig) {
+                const rib = sacredEventsView.querySelector('.ribbon').getBoundingClientRect();
+                card.style.top = `${rib.top - cont.top}px`;
+            } else card.style.top = '';
+            const pane = document.getElementById('sd-cal-pane');
+            pane.style.paddingBottom = dcBig ? '' : `${card.offsetHeight + 8}px`;
+            const sel = pane.querySelector('.hc-c.sel, .hc-c.today');
+            if (!dcBig && sel) {   // избраният ден да остава видим над картата
+                const pr = pane.getBoundingClientRect(), sr = sel.getBoundingClientRect(), limit = card.getBoundingClientRect().top - 6;
+                if (sr.bottom > limit) pane.scrollTop += sr.bottom - limit;
+                else if (sr.top < pr.top) pane.scrollTop -= pr.top - sr.top + 4;
+            }
+        }
+        function openDayCard(d, big) {
+            dcDate = new Date(d.getFullYear(), d.getMonth(), d.getDate()); dcBig = !!big;
+            if (big) statsUse('luna', 'Фази на Луната');
+            hcSel = dcDate;
+            const h = OfflineCalc.gregorianToHijri(dcDate);
+            if (h.month !== hcMonth || h.year !== hcYear) { hcMonth = h.month; hcYear = h.year; }
+            renderHijriCal();
+            const card = document.getElementById('day-card');
+            card.innerHTML = dayCardHtml(dcDate, dcBig);
+            card.classList.remove('hidden'); card.classList.toggle('big', dcBig);
+            placeDayCard();
+        }
+        function closeDayCard() {
+            const card = document.getElementById('day-card');
+            card.classList.add('hidden'); dcDate = null; dcBig = false; hcSel = null;
+            placeDayCard();
+            if (!document.getElementById('sd-cal-pane').classList.contains('hidden')) renderHijriCal();
+        }
+        function initDayCard() {
+            const card = document.getElementById('day-card');
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.dc-x')) return closeDayCard();
+                if (e.target.closest('.dc-ms, .dc-more') && !dcBig) return openDayCard(dcDate, true);
+                if (e.target.closest('.dc-handle')) return openDayCard(dcDate, !dcBig);
+            });
+            let y0 = null, fromBody = false;
+            card.addEventListener('touchstart', (e) => {
+                if (e.touches.length !== 1) return;
+                const body = e.target.closest('.dc-body');
+                fromBody = !!body && body.scrollTop > 0;
+                y0 = e.touches[0].clientY;
+            }, { passive: true });
+            card.addEventListener('touchend', (e) => {
+                if (y0 === null || fromBody) { y0 = null; return; }
+                const dy = e.changedTouches[0].clientY - y0; y0 = null;
+                if (dy < -40 && !dcBig) openDayCard(dcDate, true);
+                else if (dy > 50) { if (dcBig) openDayCard(dcDate, false); else closeDayCard(); }
+            }, { passive: true });
+            window.addEventListener('resize', placeDayCard);
+        }
         // --- View Switching Logic ---
         function showPrayerTimesView() {
             hideClockView();
+            document.getElementById('day-card').classList.add('hidden');
             sacredEventsView.classList.add('hidden');
             hideQiblaView();
             hideMoonView();
@@ -4913,8 +5192,12 @@
             fetchPrayerTimes();
         }
 
-        async function showSacredEventsView() {
+        async function showSacredEventsView(tab, date, opts) {
             statsUse('svesheni-dni', 'Свещени дни');
+            if (tab === 'cal') statsUse('hidzhri-kalendar', 'Хиджри календар');
+            if (tab === 'cal' && (date || hcYear === null)) {
+                const h = OfflineCalc.gregorianToHijri(date || new Date()); hcMonth = h.month; hcYear = h.year; hcSel = date || null;
+            }
             hideClockView();
             prayerTimesView.classList.add('hidden');
             hideQiblaView();
@@ -4925,6 +5208,8 @@
             clearInterval(individualCountdownIntervalId);
             individualCountdownIntervalId = null;
 
+            setSdPane(tab || sdTab || 'cal');
+            if ((tab || sdTab) === 'cal' && opts !== 'keep') openDayCard(date || (dcDate || new Date()), opts === 'big');
             await populateSacredEventsList();
             updateSacredEventsMainCountdown();
             clearInterval(sacredEventsMainCountdownIntervalId);
@@ -4938,7 +5223,10 @@
 
             let eventsToDisplay = [];
             try {
-                eventsToDisplay = await computeSacredEvents();
+                sacredUpcoming = await computeSacredEvents();
+                if (sdYear === null) sdYear = OfflineCalc.gregorianToHijri(new Date()).year;
+                updateSdYearLabel();
+                eventsToDisplay = sacredEventsForHijriYear(sdYear).sort((a, b) => a.date - b.date);
             } catch (e) {
                 console.error("Грешка при изчисляване на свещените събития:", e);
                 eventsToDisplay = [];
@@ -4951,7 +5239,8 @@
                 eventsToToogleDisplay = eventsToDisplay.map(ev => ({
                     name: ev.nameBg,
                     date: ev.date,
-                    key: ev.key
+                    key: ev.key,
+                    night: ev.night
                 }));
                 eventsToToogleDisplay.sort((a, b) => a.date.getTime() - b.date.getTime());
                 renderSacredEventsListDisplay();
@@ -4960,6 +5249,16 @@
         }
 
         // Function to render or update the sacred events list display (date or countdown)
+        // Списъкът започва от предстоящото събитие; отминалите са над него (виждат се с превъртане нагоре)
+        let sdScrollTarget = null;
+        function scrollSacredToUpcoming() {
+            setTimeout(() => {
+                if (document.getElementById('sd-list-pane').classList.contains('hidden')) return;
+                const c = sacredEventsListContainer;
+                if (!sdScrollTarget) { c.scrollTop = 0; return; }
+                c.scrollTop = Math.max(0, sdScrollTarget.getBoundingClientRect().top - c.getBoundingClientRect().top + c.scrollTop - 4);
+            }, 30);
+        }
         function renderSacredEventsListDisplay() {
             sacredEventsListEl.innerHTML = '';
 
@@ -4969,15 +5268,9 @@
             const now = new Date();
             const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-            let firstUpcomingEventIndex = -1;
-            for (let i = 0; i < eventsToToogleDisplay.length; i++) {
-                const eventDate = eventsToToogleDisplay[i].date;
-                const startOfEventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-                if (startOfEventDay >= startOfToday) {
-                    firstUpcomingEventIndex = i;
-                    break;
-                }
-            }
+            // зелено е само наистина следващото събитие (в другите години няма такова)
+            const nextKey = sacredUpcoming.length ? sacredUpcoming[0].key : null;
+            const firstUpcomingEventIndex = eventsToToogleDisplay.findIndex(ev => ev.key === nextKey);
 
             let elementToScrollTo = null;
 
@@ -4990,13 +5283,13 @@
                 if (index === firstUpcomingEventIndex) {
                     eventRow.classList.add('highlighted-prayer');
                     elementToScrollTo = eventRow;
-                } else if (!isSacredEventsCountdownMode && event.date < now) {
+                } else if (event.date < startOfToday) {
                     eventRow.classList.add('opacity-50');
                 }
 
                 const uniqueId = `sacred-event-time-${event.key}`;
                 eventRow.innerHTML = `
-                    <span class="prayer-name">${event.name}</span>
+                    <span class="prayer-name">${event.name}<span class="sd-hd">${(() => { const h = OfflineCalc.gregorianToHijri(event.date); return `${h.day} ${HC_MONTHS[h.month - 1]} ${h.year}`; })()}</span></span>
                     <span class="prayer-time" id="${uniqueId}">${displayValue}</span>
                 `;
                 sacredEventsListEl.appendChild(eventRow);
@@ -5015,10 +5308,8 @@
             }
 
             fitSacredListToRows(5);
-            if (elementToScrollTo) {
-                // превърта само списъка, не цялата страница
-                setTimeout(() => { sacredEventsListContainer.scrollTop = Math.max(0, elementToScrollTo.offsetTop - 6); }, 50);
-            }
+            sdScrollTarget = elementToScrollTo;
+            scrollSacredToUpcoming();
         }
 
         // Височина на списъка = точно N реда (редовете са с различна височина според дължината на името)
@@ -5040,12 +5331,12 @@
 
             let nextEvent = null;
 
-            for (let i = 0; i < eventsToToogleDisplay.length; i++) {
-                const eventDate = eventsToToogleDisplay[i].date;
+            for (let i = 0; i < sacredUpcoming.length; i++) {
+                const eventDate = sacredUpcoming[i].date;
                 const startOfEventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
 
                 if (startOfEventDay >= startOfToday) {
-                    nextEvent = eventsToToogleDisplay[i];
+                    nextEvent = sacredUpcoming[i];
                     break;
                 }
             }
@@ -5057,13 +5348,13 @@
 
                 if (diffDays === 0) {
                     sacredCountdownDisplay.textContent = 'Днес';
-                    sacredCountdownText.textContent = `е ${nextEvent.name}`;
+                    sacredCountdownText.textContent = `е ${nextEvent.nameBg}`;
                 } else if (diffDays === 1) {
                     sacredCountdownDisplay.textContent = 'Утре';
-                    sacredCountdownText.textContent = `е ${nextEvent.name}`;
+                    sacredCountdownText.textContent = `е ${nextEvent.nameBg}`;
                 } else {
                     sacredCountdownDisplay.textContent = `${diffDays} дни`;
-                    sacredCountdownText.textContent = `до ${nextEvent.name}`;
+                    sacredCountdownText.textContent = `до ${nextEvent.nameBg}`;
                 }
             } else {
                 sacredCountdownDisplay.textContent = '-- дни --';
@@ -5284,9 +5575,11 @@
             document.getElementById('theme-modal').addEventListener('click', (e) => { if (e.target.id === 'theme-modal') e.target.classList.add('hidden'); });
             applyTheme();
             // Луна
-            document.getElementById('hijri-moon-btn').addEventListener('click', () => showMoonView(selectedDate));
-            document.getElementById('menu-moon').addEventListener('click', () => { closeMenu(); showMoonView(selectedDate); });
-            document.getElementById('menu-clock').addEventListener('click', () => { closeMenu(); showClockView(); });
+            document.getElementById('hijri-moon-btn').addEventListener('click', (e) => {
+                showSacredEventsView('cal', selectedDate, e.target.closest('#hijri-moon-icon') ? 'big' : '');
+            });
+            initSacredTabs();
+            initDayCard();
             currentTimeEl.addEventListener('click', () => showClockView());
             currentTimeEl.title = 'Часовник';
             document.getElementById('moon-prev').addEventListener('click', () => { moonDate = new Date(moonDate.getFullYear(), moonDate.getMonth(), moonDate.getDate() - 1); renderMoonView(); });
