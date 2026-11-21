@@ -1,7 +1,9 @@
 // Service worker: пази приложението в устройството, за да работи без интернет.
 // При всяка нова версия на файловете сменете номера тук (напр. v2 → v3).
-const VERSION = 'namaz-v36';
-const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon.png', './badge-96.png'];
+const VERSION = 'namaz-v37';
+const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon.png', './badge-96.png',
+    // фонове и шрифтове на темите (вече са отделни файлове — пазят се за работа без интернет)
+    './assets/bg-classic.jpg', './assets/bg-red.svg', './assets/bg-blue.svg', './assets/bg-green.svg', './assets/bg-amber.svg', './assets/bg-cappuccino.svg', './assets/bg-dusk.svg', './assets/bg-glass.jpg', './assets/lcd16.woff2', './assets/lcd16-ghost.woff2', './assets/lcd-emoji.woff2'];
 const FONTS = 'namaz-fonts';
 
 self.addEventListener('install', (event) => {
