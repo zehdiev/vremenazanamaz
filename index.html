@@ -1810,6 +1810,58 @@
         /* картинки и цветни иконки → едноцветни */
         html[data-theme="lcd"] img { filter: grayscale(1) contrast(1.4) brightness(0.55) !important; mix-blend-mode: multiply; }
     </style>
+
+    <style id="sky-css">
+        /* ---------- Брояч „Слънце и Луна“ ---------- */
+        html[data-counter="sky"] .counter-stage { display: flex; flex-direction: column; align-items: center; width: 100%; }
+        html[data-counter="sky"] .counter-core { display: flex; align-items: baseline; justify-content: center; gap: 0.5rem; width: 100%; }
+        html[data-counter="sky"] .counter-core .day-switch { margin: 0; flex: 0 1 auto; width: auto; }
+        html[data-counter="sky"] #countdown { font-size: clamp(1.9rem, 5.6dvh, 3.2rem); }
+        html[data-counter="sky"] .counter-viz { order: 2; width: 100%; margin: 0.2rem 0 0.25rem; }
+        html[data-counter="sky"] .counter-viz svg { width: 100%; max-height: 24dvh; display: block; margin: 0 auto; }
+        @media (max-height: 760px) { html[data-counter="sky"] .counter-viz svg { max-height: 19dvh; } html[data-counter="sky"] #countdown { font-size: clamp(1.6rem, 5dvh, 2.6rem); } }
+        @media (max-height: 640px) { html[data-counter="sky"] .counter-viz svg { max-height: 15dvh; } html[data-counter="sky"] #countdown { font-size: clamp(1.4rem, 4.6dvh, 2.2rem); } }
+        html[data-theme="lcd"][data-counter="sky"] #countdown { font-size: clamp(1.6rem, 5dvh, 2.6rem) !important; }
+        html[data-theme="lcd"][data-counter="sky"] #countdown-text { font-size: 0.75rem; white-space: nowrap; }
+        html[data-theme="lcd"][data-counter="sky"] .counter-core { flex-wrap: wrap; row-gap: 0; }
+        .sk-s1 { stop-color: #8fd0e8; stop-opacity: 0.5; } .sk-s2 { stop-color: #cdeef7; stop-opacity: 0.22; }
+        .sk-n1 { stop-color: #1b3f55; stop-opacity: 0.26; } .sk-n2 { stop-color: #0b1d2c; stop-opacity: 0.5; }
+        html[data-mode="dark"] .sk-s1 { stop-color: #2c5d74; stop-opacity: 0.55; } html[data-mode="dark"] .sk-s2 { stop-color: #2c5d74; stop-opacity: 0.2; }
+        html[data-mode="dark"] .sk-n1 { stop-opacity: 0.5; } html[data-mode="dark"] .sk-n2 { stop-opacity: 0.8; }
+        .sk-dawn { fill: #f2b35b; opacity: 0.1; } .sk-dusk { fill: #e07a5f; opacity: 0.1; }
+        .sk-hz { stroke: rgba(255, 255, 255, 0.85); stroke-width: 1.2; } html[data-mode="dark"] .sk-hz { stroke: rgba(255, 255, 255, 0.35); }
+        .sk-hr { fill: var(--ink-soft, #4f6355); font-size: 9.5px; text-anchor: middle; opacity: 0.85; }
+        .sk-info { fill: var(--ink, #15301f); font-size: 11.5px; font-weight: 600; dominant-baseline: central; }
+        .sk-moonpath { fill: none; stroke: #eef3f8; stroke-width: 1.4; stroke-dasharray: 3 3; opacity: 0.9; }
+        html:not([data-mode="dark"]) .sk-moonpath { stroke: #8aa0b4; }
+        .sk-sunpath { fill: none; stroke: rgba(255, 255, 255, 0.75); stroke-width: 2.6; } html[data-mode="dark"] .sk-sunpath { stroke: rgba(255, 255, 255, 0.35); }
+        .sk-sundone { fill: none; stroke: #ffc53a; stroke-width: 3; stroke-linecap: round; }
+        .sk-x { fill: none; stroke-width: 5; stroke-linecap: round; opacity: 0.95; }
+        .sk-sabah { stroke: #2bb7a7; } .sk-ker { stroke: #e4572e; } .sk-ishrak { stroke: #7bd389; } .sk-duha { stroke: #bfe3a5; } .sk-evabin { stroke: #9b8de0; }
+        .sk-night { fill: #b8954a; opacity: 0.22; } .sk-third { fill: #b8954a; opacity: 0.6; }
+        .sk-tmark { stroke: #b8954a; stroke-width: 1.5; } .sk-tl { fill: var(--ink, #15301f); font-size: 9px; font-weight: 800; text-anchor: middle; }
+        .sk-drop { stroke: var(--ink, #15301f); stroke-opacity: 0.25; stroke-dasharray: 2 2; }
+        .sk-dot { fill: #fff; stroke: var(--ink, #15301f); stroke-width: 1.3; } html[data-mode="dark"] .sk-dot { fill: rgb(var(--d-rgb, 10, 30, 22)); }
+        .sk-dot-on { fill: rgb(var(--a-rgb, 26, 170, 66)) !important; stroke: #fff; stroke-width: 1.8; }
+        .sk-lab { fill: var(--ink, #15301f); font-size: 10.5px; font-weight: 700; text-anchor: middle; paint-order: stroke; stroke: rgba(255, 255, 255, 0.55); stroke-width: 2.5px; }
+        html[data-mode="dark"] .sk-lab { stroke: rgba(0, 0, 0, 0.45); }
+        .sk-lab-on { fill: rgb(var(--a-rgb, 26, 170, 66)); font-size: 11.5px; }
+        .sk-sun { fill: #ffc53a; stroke: #fff3c4; stroke-width: 2; } .sk-sun-down { opacity: 0.55; }
+        .sk-moondark { fill: #3b4a5a; } .sk-moonlit { fill: #f4f1e6; } .sk-moonrim { fill: none; stroke: rgba(255, 255, 255, 0.7); stroke-width: 0.8; }
+        /* LCD: всичко в два цвята */
+        html[data-theme="lcd"] .sk-s1, html[data-theme="lcd"] .sk-s2 { stop-opacity: 0; }
+        html[data-theme="lcd"] .sk-n1, html[data-theme="lcd"] .sk-n2 { stop-color: var(--lcd-ink); stop-opacity: 0.12; }
+        html[data-theme="lcd"] .sk-dawn, html[data-theme="lcd"] .sk-dusk { fill: var(--lcd-ink); opacity: 0.08; }
+        html[data-theme="lcd"] .sk-hz, html[data-theme="lcd"] .sk-tmark { stroke: var(--lcd-ink); }
+        html[data-theme="lcd"] .sk-hr, html[data-theme="lcd"] .sk-info, html[data-theme="lcd"] .sk-lab, html[data-theme="lcd"] .sk-tl { fill: var(--lcd-ink); stroke: none; }
+        html[data-theme="lcd"] .sk-sunpath { stroke: var(--lcd-ink); stroke-opacity: 0.3; } html[data-theme="lcd"] .sk-sundone { stroke: var(--lcd-ink); }
+        html[data-theme="lcd"] .sk-moonpath { stroke: var(--lcd-ink); opacity: 0.6; }
+        html[data-theme="lcd"] .sk-x { stroke: var(--lcd-ink); opacity: 0.55; } html[data-theme="lcd"] .sk-ker { opacity: 1; stroke-dasharray: 2 2; }
+        html[data-theme="lcd"] .sk-night, html[data-theme="lcd"] .sk-third { fill: var(--lcd-ink); }
+        html[data-theme="lcd"] .sk-dot { fill: var(--lcd-bg); stroke: var(--lcd-ink); } html[data-theme="lcd"] .sk-dot-on { fill: var(--lcd-ink) !important; stroke: var(--lcd-bg); }
+        html[data-theme="lcd"] .sk-sun { fill: var(--lcd-ink); stroke: var(--lcd-bg); } html[data-theme="lcd"] .sk-moondark { fill: var(--lcd-bg); } html[data-theme="lcd"] .sk-moonlit { fill: var(--lcd-ink); } html[data-theme="lcd"] .sk-moonrim { stroke: var(--lcd-ink); }
+        html[data-theme="lcd"] .sk-drop { stroke: var(--lcd-ink); }
+    </style>
     <style id="perf">
         /* Пулсът на текущото време — само с прозрачност на отделен слой: без прерисуване на всеки кадър (по-леко за слаби телефони) */
         .prayer-row.current-prayer, #prayer-times-list .prayer-row.current-prayer { animation: none; position: relative; }
@@ -2732,7 +2784,7 @@
                 return out;
             }
 
-            return { prayerTimesSofia, gregorianToHijri, hijriToGregorian, monthLength, qiblaGuide, qiblaBearing, formatSofiaTime, sunriseSunsetAzimuth, moonPhaseInfo, nextMoonPhases, moonRiseSet, prayerTimesAt, formatTzTime, tzMidnightUtc, tzOffsetMin };
+            return { sunAzAlt, moonAzAlt, prayerTimesSofia, gregorianToHijri, hijriToGregorian, monthLength, qiblaGuide, qiblaBearing, formatSofiaTime, sunriseSunsetAzimuth, moonPhaseInfo, nextMoonPhases, moonRiseSet, prayerTimesAt, formatTzTime, tzMidnightUtc, tzOffsetMin };
         })();
 
         // --- СВЕЩЕНИ ДНИ ПО ХИДЖРИ КАЛЕНДАРА (изчисляват се без интернет) ---
@@ -3474,7 +3526,7 @@
         }
         // --- Изглед на брояча: класически / циферблат / лента ---
         let counterStyle = 'classic', isExtendedTimes = false;
-        const COUNTER_STYLES = { classic: 'Класически', dial: 'Циферблат', strip: 'Лента' };
+        const COUNTER_STYLES = { classic: 'Класически', dial: 'Циферблат', strip: 'Лента', sky: 'Слънце и Луна' };
         const KERAHAT_MIN = 45, ISHRAK_MIN = 60, SABAH_MIN = 60, VIZ_LEAD_MIN = 90, NIGHT_SCALE = 0.5, FOCUS_GROW = 1.6, FOCUS_MIN_SHARE = 0.11;
         const FOCUS_ANIM_MS = 900;
         let vizAnim = { ctx: '', cur: null, prev: null, t0: 0 }, vizRaf = 0;
@@ -3684,6 +3736,116 @@
             if (m.now != null) { const xn = X(m.now); if (m.now >= m.start && m.now <= m.end) s += `<line class="vz-needle" x1="${xn.toFixed(1)}" y1="2" x2="${xn.toFixed(1)}" y2="${H - 1}"/><circle class="vz-needle-dot" cx="${xn.toFixed(1)}" cy="2.5" r="2.6"/>`; }
             return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${VZ_DEFS}${s}</svg>`;
         }
+
+        // --- „Слънце и Луна“: пътят на Слънцето и Луната през денонощието с времената за намаз ---
+        // Кривите се смятат веднъж за деня и мястото (кеш), а на всеки 30 с се местят само Слънцето и Луната.
+        let skyCache = { key: '' };
+        function skyData(D) {
+            const [lat, lon] = locationCoords(), tz = locationTz();
+            const y = D.getFullYear(), m1 = D.getMonth() + 1, d = D.getDate();
+            const key = `${y}-${m1}-${d}|${lat}|${lon}|${tz}`;
+            if (skyCache.key === key) return skyCache;
+            const day0 = OfflineCalc.tzMidnightUtc(y, m1, d, tz), JD = 2440587.5, STEP = 6 * 60000, N = 240;
+            const sun = [], moon = [];
+            let maxA = 20, minA = -20;
+            for (let i = 0; i <= N; i++) {
+                const t = day0 + i * STEP, jd = t / 864e5 + JD;
+                const a = OfflineCalc.sunAzAlt(jd, lat, lon).alt, b = OfflineCalc.moonAzAlt(jd, lat, lon).alt;
+                sun.push(a); moon.push(b); maxA = Math.max(maxA, a, b); minA = Math.min(minA, a);
+            }
+            let rs = null; try { rs = OfflineCalc.moonRiseSet(lat, lon, y, m1, d, tz); } catch (e) { /* без изгрев/залез на Луната */ }
+            skyCache = { key, day0, STEP, N, sun, moon, maxA, minA, rs, lat, lon };
+            return skyCache;
+        }
+        function skySvg() {
+            const D = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+            const c = skyData(D), W = 400, HZ = 112, TOP = 22, BOT = 178, H = 186;
+            const isToday = D.toDateString() === new Date().toDateString(), now = isToday ? Date.now() : null;
+            const X = (ms) => (ms - c.day0) / 864e5 * W;
+            const Yv = (a) => a >= 0 ? HZ - Math.sqrt(Math.min(1, a / c.maxA)) * (HZ - TOP) : HZ + Math.sqrt(Math.min(1, -a / -c.minA)) * (BOT - HZ);
+            const alt = (arr, ms) => { const f = (ms - c.day0) / c.STEP, i = Math.max(0, Math.min(c.N - 1, Math.floor(f))), r = f - i; return arr[i] + (arr[i + 1] - arr[i]) * r; };
+            const pathOf = (arr, from, to) => {
+                const i0 = Math.max(0, Math.floor((from - c.day0) / c.STEP)), i1 = Math.min(c.N, Math.ceil((to - c.day0) / c.STEP));
+                let p = `M${X(Math.max(from, c.day0)).toFixed(1)},${Yv(alt(arr, Math.max(from, c.day0))).toFixed(1)}`;
+                for (let i = i0 + 1; i < i1; i++) p += `L${(i * c.STEP / 864e5 * W).toFixed(1)},${Yv(arr[i]).toFixed(1)}`;
+                const e = Math.min(to, c.day0 + 864e5); p += `L${X(e).toFixed(1)},${Yv(alt(arr, e)).toFixed(1)}`;
+                return p;
+            };
+            const P = {}; for (const k of allPrayerKeys) { try { const v = adjustedPrayerDate(D, k).getTime(); if (v > 1e12) P[k] = v; } catch (e) { /* няма */ } }
+            const names = getCurrentPrayerNames(), M = 60000, end = c.day0 + 864e5;
+            let s = `<defs><linearGradient id="skG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="sk-s1"/><stop offset="1" class="sk-s2"/></linearGradient>
+                <linearGradient id="skN" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="sk-n1"/><stop offset="1" class="sk-n2"/></linearGradient>
+                <radialGradient id="skGl"><stop offset="0" stop-color="#ffd23a" stop-opacity=".6"/><stop offset="1" stop-color="#ffd23a" stop-opacity="0"/></radialGradient>
+                <clipPath id="skC"><rect x="0" y="0" width="${W}" height="${H}" rx="12"/></clipPath></defs><g clip-path="url(#skC)">`;
+            s += `<rect class="sk-day" x="0" y="0" width="${W}" height="${HZ}" fill="url(#skG)"/><rect class="sk-gnd" x="0" y="${HZ}" width="${W}" height="${H - HZ}" fill="url(#skN)"/>`;
+            if (P.Fajr && P.Sunrise) s += `<rect class="sk-dawn" x="${X(P.Fajr).toFixed(1)}" y="${HZ}" width="${(X(P.Sunrise) - X(P.Fajr)).toFixed(1)}" height="${H - HZ}"/>`;
+            if (P.Maghrib && P.Isha) s += `<rect class="sk-dusk" x="${X(P.Maghrib).toFixed(1)}" y="${HZ}" width="${(X(P.Isha) - X(P.Maghrib)).toFixed(1)}" height="${H - HZ}"/>`;
+            // нощта: третините (разширени времена)
+            if (isExtendedTimes && P.Fajr && P.Maghrib) {
+                const pd = new Date(D.getFullYear(), D.getMonth(), D.getDate() - 1), nd = new Date(D.getFullYear(), D.getMonth(), D.getDate() + 1);
+                let pm = null, nf = null; try { pm = adjustedPrayerDate(pd, 'Maghrib').getTime(); nf = adjustedPrayerDate(nd, 'Fajr').getTime(); } catch (e) { /* */ }
+                const nights = []; if (pm) nights.push([pm, P.Fajr]); if (nf) nights.push([P.Maghrib, nf]);
+                for (const [a, b] of nights) {
+                    const L = b - a, la = Math.max(c.day0, a + L * 2 / 3), lb = Math.min(end, b);
+                    const na = Math.max(c.day0, a), nb = Math.min(end, b);
+                    if (nb > na) s += `<rect class="sk-night" x="${X(na).toFixed(1)}" y="${H - 13}" width="${(X(nb) - X(na)).toFixed(1)}" height="9" rx="2"/>`;
+                    if (lb > la) s += `<rect class="sk-third" x="${X(la).toFixed(1)}" y="${H - 13}" width="${(X(lb) - X(la)).toFixed(1)}" height="9" rx="2"/>`;
+                    [[1 / 3, '⅓'], [1 / 2, '½'], [2 / 3, '⅔']].forEach(([f, l]) => { const t = a + L * f; if (t > c.day0 + 20 * M && t < end - 20 * M) s += `<line class="sk-tmark" x1="${X(t).toFixed(1)}" y1="${H - 15}" x2="${X(t).toFixed(1)}" y2="${H - 2}"/><text class="sk-tl" x="${X(t).toFixed(1)}" y="${H - 20}">${l}</text>`; });
+                }
+            }
+            s += `<line class="sk-hz" x1="0" y1="${HZ}" x2="${W}" y2="${HZ}"/>`;
+            for (let h = 3; h <= 21; h += 3) s += `<text class="sk-hr" x="${X(c.day0 + h * 36e5).toFixed(1)}" y="${HZ + 12}">${String(h).padStart(2, '0')}</text>`;
+            // Луната (пунктир) и Слънцето (изминалото — злато)
+            s += `<path class="sk-moonpath" d="${pathOf(c.moon, c.day0, end)}"/>`;
+            s += `<path class="sk-sunpath" d="${pathOf(c.sun, c.day0, end)}"/>`;
+            if (now) s += `<path class="sk-sundone" d="${pathOf(c.sun, c.day0, now)}"/>`;
+            if (isExtendedTimes && P.Sunrise && P.Dhuhr && P.Maghrib) {
+                const K = KERAHAT_MIN * M, seg = (a, b, cls) => { if (b > a) s += `<path class="sk-x ${cls}" d="${pathOf(c.sun, a, b)}"/>`; };
+                seg(Math.max(P.Fajr || 0, P.Sunrise - SABAH_MIN * M), P.Sunrise, 'sk-sabah');
+                seg(P.Sunrise, P.Sunrise + K, 'sk-ker'); seg(P.Sunrise + K, P.Sunrise + K + ISHRAK_MIN * M, 'sk-ishrak');
+                seg(P.Sunrise + K + ISHRAK_MIN * M, P.Dhuhr - K, 'sk-duha'); seg(P.Dhuhr - K, P.Dhuhr, 'sk-ker');
+                seg(P.Maghrib - K, P.Maghrib, 'sk-ker'); if (P.Isha) seg(P.Maghrib, P.Isha, 'sk-evabin');
+            }
+            // точките на времената с кратки имена (над или под кривата, без застъпване)
+            const keys = allPrayerKeys.filter(k => P[k]);
+            const nextK = now ? (keys.find(k => P[k] > now) || null) : null;
+            const SHORT = { Fajr: names.Fajr, Sunrise: names.Sunrise, Dhuhr: k => k, Asr: names.Asr, Maghrib: names.Maghrib, Isha: names.Isha };
+            const boxes = [];   // заети места за надписите
+            keys.forEach(k => { const x = X(P[k]), y = Yv(alt(c.sun, P[k])); boxes.push([x - 5, y - 5, x + 5, y + 5]); });
+            if (now) { const sx = X(now), sy = Yv(alt(c.sun, now)); boxes.push([sx - 11, sy - 11, sx + 11, sy + 11]); }
+            keys.forEach(k => {
+                const x = X(P[k]), a = alt(c.sun, P[k]), y = Yv(a), on = k === nextK;
+                let label = k === 'Dhuhr' ? getDhuhrName(D) : SHORT[k];
+                if (label.length > 8) label = label.slice(0, 6) + '.';
+                const w = label.length * 6.2 + 4, lx = Math.max(w / 2 + 2, Math.min(W - w / 2 - 2, x));
+                const cands = a > 1 ? [y - 11, y + 17, y - 24, y + 30] : [y + 17, y - 11, y + 30, y - 24];
+                for (const ly of cands) {
+                    if (ly < 30 || ly > H - 4) continue;
+                    const bx = [lx - w / 2, ly - 7, lx + w / 2, ly + 5];
+                    if (boxes.some(o => bx[0] < o[2] && bx[2] > o[0] && bx[1] < o[3] && bx[3] > o[1])) continue;
+                    boxes.push(bx); s += `<text class="sk-lab${on ? ' sk-lab-on' : ''}" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}">${esc(label)}</text>`; break;
+                }
+                s += `<line class="sk-drop" x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${x.toFixed(1)}" y2="${HZ}"/>`;
+                s += `<circle class="sk-dot${on ? ' sk-dot-on' : ''}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${on ? 4.8 : 3.4}"/>`;
+            });
+            // Луната с фаза
+            const ref = now || (c.day0 + 12 * 36e5), mp = OfflineCalc.moonPhaseInfo(ref), ill = mp.illum;
+            const moonG = (cx, cy, r) => { const k = 1 - 2 * ill, sw = mp.waxing ? 1 : 0;
+                return `<circle class="sk-moondark" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}"/><path class="sk-moonlit" d="M${cx.toFixed(1)},${(cy - r).toFixed(1)} A${r},${r} 0 0 ${sw} ${cx.toFixed(1)},${(cy + r).toFixed(1)} A${Math.abs(k * r).toFixed(2)},${r} 0 0 ${(k > 0) === !!sw ? 1 - sw : sw} ${cx.toFixed(1)},${(cy - r).toFixed(1)}Z"/><circle class="sk-moonrim" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}"/>`; };
+            if (now) {
+                const ma = alt(c.moon, now), mx = X(now), my = Yv(ma);
+                s += `<g opacity="${ma > 0 ? 1 : 0.5}">${moonG(mx, my, 8)}</g>`;
+                const sa = alt(c.sun, now), sx = X(now), sy = Yv(sa), up = sa > 0;
+                s += `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="${up ? 18 : 11}" fill="url(#skGl)"/><circle class="sk-sun${up ? '' : ' sk-sun-down'}" cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="${up ? 9 : 6.5}"/>`;
+            }
+            s += '</g>';
+            // горе: Луната (фаза, изгрев/залез) и дължината на деня
+            const pct = Math.round(ill * 100), rs = c.rs, tz = locationTz();
+            const tf = (ms) => OfflineCalc.formatTzTime(ms, tz);
+            s += `<g transform="translate(8,6)">${moonG(8, 8, 7.5)}<text class="sk-info" x="20" y="8">${pct}%${rs && rs.rise ? ` · ↑${tf(rs.rise)}` : ''}${rs && rs.set ? ` ↓${tf(rs.set)}` : ''}</text></g>`;
+            if (P.Sunrise && P.Maghrib) { const dl = (P.Maghrib - (adjustments.Maghrib || 0) * M) - (P.Sunrise - (adjustments.Sunrise || 0) * M); s += `<text class="sk-info" x="${W - 8}" y="14" text-anchor="end">☀ ${Math.floor(dl / 36e5)} ч ${Math.round(dl % 36e5 / 6e4)} мин</text>`; }
+            return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${s}</svg>`;
+        }
         function renderCounterViz(force) {
             const box = document.getElementById('counter-viz');
             document.documentElement.dataset.counter = counterStyle;
@@ -3692,6 +3854,12 @@
             const key = `${counterStyle}|${Math.floor(nowMs / 30000)}|${boundary}|${selectedDate.toDateString()}|${locationName()}|${isClassicalNamesActive}|${JSON.stringify(customPrayerAdjustments)}`;
             if (!force && key === vizKey) return;
             vizKey = key;
+            if (counterStyle === 'sky') {
+                let html = ''; try { html = skySvg(); } catch (e) { console.warn(e); }
+                vizNextAt = Infinity;
+                for (const k of allPrayerKeys) { try { const t = adjustedPrayerDate(selectedDate, k).getTime(); if (t > nowMs) vizNextAt = Math.min(vizNextAt, t); } catch (e) { /* */ } }
+                box.innerHTML = html; return;
+            }
             let m = null; try { m = vizModel(); } catch (e) { console.warn(e); }
             vizNextAt = Infinity;   // следващата граница на период — тогава рисуваме веднага
             if (m) for (const g of m.segs) { if (g.a > nowMs) vizNextAt = Math.min(vizNextAt, g.a); else if (g.b > nowMs) vizNextAt = Math.min(vizNextAt, g.b); }
